@@ -68,7 +68,7 @@
 
     .content {
       align-self: center;
-      max-width: 850px;
+      max-width: 1180px;
       padding: 54px 0;
     }
 
@@ -95,13 +95,14 @@
 
     h1 {
       margin: 0;
-      max-width: 800px;
+      max-width: 1180px;
       font-size: clamp(50px, 8.3vw, 118px);
       line-height: .92;
       letter-spacing: -.065em;
     }
 
-    h1 span { color: #468de9; }
+    h1 .keep { color: inherit; white-space: nowrap; }
+    h1 .accent { color: #468de9; }
 
     .lead {
       max-width: 650px;
@@ -158,7 +159,7 @@
       body { overflow: auto; }
       main { padding: 28px 22px; }
       .content { padding: 72px 0; }
-      h1 { font-size: clamp(52px, 17vw, 78px); }
+      h1 { font-size: clamp(44px, 14vw, 68px); }
       .lead { font-size: 17px; }
       .actions { align-items: stretch; flex-direction: column; }
       .button { width: 100%; }
@@ -178,7 +179,7 @@
 
     <section class="content" aria-labelledby="title">
       <p class="eyebrow">Estamos preparando algo novo</p>
-      <h1 id="title">Nosso site está em <span>manutenção.</span></h1>
+      <h1 id="title">Nosso site está <span class="keep">em <span class="accent">manutenção.</span></span></h1>
       <p class="lead">Estamos organizando uma nova experiência para apresentar tudo o que a Bādon cria. Enquanto isso, continuamos atendendo normalmente pelo WhatsApp.</p>
       <div class="actions">
         <a class="button" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer" aria-label="Falar com a Bādon pelo WhatsApp">
