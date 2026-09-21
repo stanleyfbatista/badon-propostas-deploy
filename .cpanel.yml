@@ -1,6 +1,11 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/public_html/propostas/dainese-a7k3
-    - /bin/mkdir -p "$DEPLOYPATH"
-    - /bin/cp index.html "$DEPLOYPATH/index.html"
+    - export ROOTPATH=$HOME/public_html
+    - export PROPOSALPATH=$HOME/public_html/propostas/dainese-a7k3
+    - export ASSETPATH=$HOME/public_html/maintenance-assets
+    - /bin/mkdir -p "$PROPOSALPATH"
+    - /bin/mkdir -p "$ASSETPATH"
+    - /bin/cp index.html "$ROOTPATH/index.html"
+    - /bin/cp propostas/dainese-a7k3/index.html "$PROPOSALPATH/index.html"
+    - /bin/cp -R maintenance-assets/. "$ASSETPATH/"
