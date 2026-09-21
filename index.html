@@ -32,7 +32,7 @@
       color: var(--white);
       font-family: Inter, "Helvetica Neue", Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     body::before,
@@ -112,6 +112,55 @@
       line-height: 1.65;
     }
 
+    .services {
+      margin-top: 42px;
+    }
+
+    .services h2 {
+      margin: 0 0 16px;
+      color: #d7d6d9;
+      font-size: 13px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 980px;
+    }
+
+    .service {
+      min-height: 126px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(21,21,25,.72);
+    }
+
+    .service span {
+      display: block;
+      margin-bottom: 18px;
+      color: #468de9;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .service h3 {
+      margin: 0 0 7px;
+      font-size: 18px;
+      letter-spacing: -.025em;
+    }
+
+    .service p {
+      margin: 0;
+      color: #85848a;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -156,11 +205,12 @@
     }
 
     @media (max-width: 620px) {
-      body { overflow: auto; }
       main { padding: 28px 22px; }
       .content { padding: 72px 0; }
       h1 { font-size: clamp(44px, 14vw, 68px); }
       .lead { font-size: 17px; }
+      .service-grid { grid-template-columns: 1fr; }
+      .service { min-height: auto; }
       .actions { align-items: stretch; flex-direction: column; }
       .button { width: 100%; }
       footer { align-items: flex-start; flex-direction: column; }
@@ -181,6 +231,28 @@
       <p class="eyebrow">Estamos preparando algo novo</p>
       <h1 id="title">Nosso site está <span class="keep">em <span class="accent">manutenção.</span></span></h1>
       <p class="lead">Estamos organizando uma nova experiência para apresentar tudo o que a Bādon cria. Enquanto isso, continuamos atendendo normalmente pelo WhatsApp.</p>
+
+      <section class="services" aria-labelledby="services-title">
+        <h2 id="services-title">Nossos serviços</h2>
+        <div class="service-grid">
+          <article class="service">
+            <span>01</span>
+            <h3>Gestão de tráfego</h3>
+            <p>Campanhas estratégicas no Google, Instagram e Facebook para gerar oportunidades reais.</p>
+          </article>
+          <article class="service">
+            <span>02</span>
+            <h3>Criação de sites</h3>
+            <p>Sites institucionais e páginas de venda construídos para comunicar e converter.</p>
+          </article>
+          <article class="service">
+            <span>03</span>
+            <h3>Identidade visual</h3>
+            <p>Marcas e sistemas visuais consistentes para fortalecer a presença do seu negócio.</p>
+          </article>
+        </div>
+      </section>
+
       <div class="actions">
         <a class="button" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer" aria-label="Falar com a Bādon pelo WhatsApp">
           <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M19.11 17.49c-.26-.13-1.53-.75-1.77-.84-.24-.09-.41-.13-.59.13-.17.26-.67.84-.82 1.01-.15.17-.3.2-.56.07-.26-.13-1.09-.4-2.08-1.29-.77-.69-1.29-1.53-1.44-1.79-.15-.26-.02-.4.11-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.32-.02-.45-.07-.13-.59-1.42-.8-1.94-.21-.51-.43-.44-.59-.45h-.5c-.17 0-.45.07-.69.32-.24.26-.91.88-.91 2.16 0 1.27.93 2.5 1.06 2.68.13.17 1.83 2.79 4.43 3.91.62.27 1.1.43 1.48.55.62.2 1.18.17 1.63.1.5-.07 1.53-.63 1.75-1.23.22-.6.22-1.12.15-1.23-.06-.11-.24-.17-.5-.3zM16.03 3.2c-7.04 0-12.77 5.73-12.77 12.77 0 2.25.59 4.45 1.71 6.39L3.15 29l6.8-1.78a12.75 12.75 0 0 0 6.08 1.55h.01c7.04 0 12.77-5.73 12.77-12.77S23.08 3.2 16.03 3.2zm0 23.41h-.01a10.6 10.6 0 0 1-5.41-1.48l-.39-.23-4.04 1.06 1.08-3.94-.25-.4a10.58 10.58 0 0 1-1.63-5.65c0-5.87 4.78-10.64 10.65-10.64 2.84 0 5.51 1.11 7.52 3.12a10.58 10.58 0 0 1 3.12 7.53c0 5.87-4.78 10.64-10.64 10.64z"/></svg>
