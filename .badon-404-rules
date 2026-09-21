@@ -1,0 +1,11 @@
+# BEGIN BADON CUSTOM 404
+ErrorDocument 404 /404.html
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/(wp-admin|wp-login\.php|wp-content|wp-includes|wp-json)(/|$) [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ - [R=404,L]
+</IfModule>
+# END BADON CUSTOM 404
+
