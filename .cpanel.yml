@@ -4,12 +4,15 @@ deployment:
     - export ROOTPATH=$HOME/public_html
     - export PROPOSALPATH=$HOME/public_html/propostas/dainese-a7k3
     - export ASSETPATH=$HOME/public_html/maintenance-assets
+    - export LINKSPATH=$HOME/public_html/links
     - /bin/mkdir -p "$PROPOSALPATH"
     - /bin/mkdir -p "$ASSETPATH"
+    - /bin/mkdir -p "$LINKSPATH"
     - /bin/cp index.html "$ROOTPATH/index.html"
     - /bin/cp 404.html "$ROOTPATH/404.html"
     - /bin/cp propostas/dainese-a7k3/index.html "$PROPOSALPATH/index.html"
     - /bin/cp -R maintenance-assets/. "$ASSETPATH/"
+    - /bin/cp -R links/. "$LINKSPATH/"
     - /bin/sh -c 'if [ -f "$ROOTPATH/.htaccess" ] && [ ! -f "$ROOTPATH/.htaccess.wordpress-backup" ]; then /bin/cp "$ROOTPATH/.htaccess" "$ROOTPATH/.htaccess.wordpress-backup"; fi'
     - /bin/sh -c '/bin/grep -q "^DirectoryIndex index.html index.php$" "$ROOTPATH/.htaccess" || /bin/sed -i "1i DirectoryIndex index.html index.php" "$ROOTPATH/.htaccess"'
     - /bin/sh -c 'if ! /bin/grep -q "^# BEGIN BADON CUSTOM 404$" "$ROOTPATH/.htaccess"; then /bin/cat .badon-404-rules "$ROOTPATH/.htaccess" > "$ROOTPATH/.htaccess.badon-tmp" && /bin/mv "$ROOTPATH/.htaccess.badon-tmp" "$ROOTPATH/.htaccess"; fi'
