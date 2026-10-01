@@ -45,6 +45,7 @@ function clean_definition(array $rows, string $mode, array $completion): array
         $routes = $rows[$index]['rules'] ?? [];
         if (!is_array($routes) || count($routes) > 20) throw new InvalidArgumentException('Use no máximo 20 condições por pergunta.');
         $field['rules'] = [];
+        if ($field['type'] === 'multiple' && $routes) throw new InvalidArgumentException('Condições de múltipla escolha ainda não estão disponíveis. Use escolha única para ramificar.');
         foreach ($routes as $raw) {
             if (!is_array($raw)) throw new InvalidArgumentException('Condição inválida.');
             $operator = text_value($raw['operator'] ?? '');
@@ -53,7 +54,7 @@ function clean_definition(array $rows, string $mode, array $completion): array
             if (!in_array($operator, $allowed, true) || $value === '' || mb_strlen($value) > 250 || !mb_check_encoding($value, 'UTF-8')) {
                 throw new InvalidArgumentException('Condição de “' . $field['label'] . '”: escolha uma comparação e preencha a resposta.');
             }
-            if ($field['type'] === 'select' && !in_array($value, $field['options'], true)) {
+            if (in_array($field['type'], ['select', 'single', 'yesno'], true) && !in_array($value, $field['options'], true)) {
                 throw new InvalidArgumentException('A resposta da condição precisa existir nas opções de “' . $field['label'] . '”.');
             }
             if ($field['type'] === 'number' && !valid_flow_number($value)) throw new InvalidArgumentException('O valor da comparação numérica é inválido.');

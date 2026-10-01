@@ -5,6 +5,19 @@ require_once __DIR__ . '/vendor/phpmailer/src/Exception.php';
 require_once __DIR__ . '/vendor/phpmailer/src/PHPMailer.php';
 require_once __DIR__ . '/vendor/phpmailer/src/SMTP.php';
 
+function studio_send_mail(string $recipient, string $subject, string $body): bool
+{
+    global $config;
+    try {
+        $m = $config['smtp']; $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->isSMTP(); $mail->Host = $m['host']; $mail->Port = (int)$m['port'];
+        $mail->SMTPAuth = !empty($m['username']); $mail->Username = $m['username']; $mail->Password = $m['password'];
+        $mail->SMTPSecure = $m['encryption'] === 'none' ? '' : $m['encryption']; $mail->SMTPAutoTLS = $m['encryption'] !== 'none';
+        $mail->Timeout = 15; $mail->CharSet = 'UTF-8'; $mail->setFrom($m['from_email'], $m['from_name']);
+        $mail->addAddress($recipient); $mail->Subject = $subject; $mail->Body = $body; $mail->send(); return true;
+    } catch (Throwable $e) { error_log('Badon account email delivery failed'); return false; }
+}
+
 function notify_lead(int $id): bool
 {
     global $config;
@@ -25,7 +38,14 @@ function notify_lead(int $id): bool
         $mail->Timeout = 15; $mail->Timelimit = 20;
         $mail->CharSet = 'UTF-8';
         $mail->setFrom($m['from_email'], $m['from_name']);
-        $mail->addAddress($m['to_email']);
+        require_once __DIR__ . '/studio.php';
+        $recipients = [];
+        if (studio_ready()) {
+            $q = db()->prepare('SELECT settings_json FROM bf_deliveries WHERE lead_id = ?'); $q->execute([$id]); $snapshot = $q->fetchColumn();
+            if ($snapshot) $recipients = json_decode($snapshot, true)['notify_emails'] ?? [];
+        }
+        if (!$recipients) $recipients = [$m['to_email']];
+        foreach ($recipients as $recipient) $mail->addBCC($recipient);
         if ($lead['reply_email']) $mail->addReplyTo($lead['reply_email']);
         $mail->Subject = 'Novo lead: ' . $lead['form_title'];
         $lines = ['Novo lead: ' . $lead['form_title'], 'Data e hora: ' . local_date($lead['created_at']) . ' (' . $config['timezone'] . ')', ''];

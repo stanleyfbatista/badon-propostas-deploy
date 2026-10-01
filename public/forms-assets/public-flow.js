@@ -9,10 +9,40 @@
   const navigation = document.querySelector('#flow-navigation'), back = document.querySelector('#flow-back');
   const nextButton = document.querySelector('#flow-next'), progress = document.querySelector('#flow-progress');
   const consent = form.elements.consent, submit = document.querySelector('#flow-submit');
-  const steps = definition.mode === 'steps'; let history = [0], reviewing = false;
-  const values = () => Object.fromEntries(fields.map((field, index) => [field.key, inputs[index].value.trim()]));
+  const bar = document.createElement('progress'); bar.className = 'flow-progress-bar'; bar.max = fields.length; bar.setAttribute('aria-label', 'Progresso do formulário'); progress.after(bar);
+  const steps = definition.mode === 'steps'; let history = [0], reviewing = false, welcoming = steps && !!definition.welcome?.title;
+  const answer = input => input.multiple ? [...input.selectedOptions].map(o => o.value).join(', ') : input.value.trim();
+  const values = () => Object.fromEntries(fields.map((field, index) => [field.key, answer(inputs[index])]));
+  const interpolate = text => text.replace(/@([a-z][a-z0-9_]{0,39})/g, (match, key) => values()[key] || match);
+  const welcome = document.createElement('section'); welcome.className = 'flow-welcome';
+  if (welcoming) {
+    const title = document.createElement('h2'), description = document.createElement('p'), start = document.createElement('button');
+    title.textContent = definition.welcome.title; description.textContent = definition.welcome.message;
+    start.type = 'button'; start.className = 'button'; start.textContent = 'Começar →';
+    start.addEventListener('click', () => { welcoming = false; render(true); });
+    welcome.append(title, description, start); form.prepend(welcome);
+  }
+  fields.forEach((field, index) => {
+    const input = inputs[index], question = questions[index];
+    input.placeholder = field.placeholder || '';
+    if (field.description) { const description = document.createElement('p'); description.className = 'muted flow-description'; description.textContent = field.description; question.querySelector('label').after(description); }
+    if (['single', 'multiple', 'yesno'].includes(field.type)) {
+      const choices = document.createElement('div'); choices.className = 'flow-choices';
+      input.classList.add('choice-source');
+      field.options.forEach((value, optionIndex) => {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'flow-choice';
+        const letter = document.createElement('kbd'); letter.textContent = optionIndex < 26 ? String.fromCharCode(65 + optionIndex) : String(optionIndex + 1);
+        button.append(letter, document.createTextNode(value)); button.dataset.choice = value;
+        button.addEventListener('click', () => {
+          if (input.multiple) { const option = [...input.options].find(o => o.value === value); option.selected = !option.selected; }
+          else input.value = value;
+          input.dispatchEvent(new Event('input', { bubbles: true })); render();
+        }); choices.append(button);
+      }); input.after(choices);
+    }
+  });
   function check(index) {
-    const input = inputs[index], field = fields[index], value = input.value.trim();
+    const input = inputs[index], field = fields[index], value = answer(input);
     let error = '';
     if (field.required && !value) error = 'Preencha esta pergunta.';
     else if (value && field.type === 'number' && !engine.validNumber(value)) error = 'Use um número de 0 a 1 trilhão, sem R$ ou separador de milhar.';
@@ -27,22 +57,27 @@
       const included = path.includes(index);
       input.disabled = !included;
       input.required = included && fields[index].required;
-      questions[index].hidden = steps ? reviewing || index !== current : !included;
+      questions[index].hidden = welcoming || (steps ? reviewing || index !== current : !included);
+      questions[index].querySelector('label').textContent = interpolate(fields[index].label) + (fields[index].required ? ' *' : '');
+      questions[index].querySelectorAll('[data-choice]').forEach(button => button.setAttribute('aria-pressed', String([...input.selectedOptions].some(o => o.value === button.dataset.choice))));
     });
-    review.hidden = steps && !reviewing;
+    welcome.hidden = !welcoming;
+    review.hidden = welcoming || (steps && !reviewing);
     consent.disabled = review.hidden;
     submit.disabled = review.hidden;
-    navigation.hidden = !steps;
+    navigation.hidden = !steps || welcoming;
     back.hidden = !reviewing && history.length === 1;
     nextButton.hidden = reviewing;
-    progress.hidden = !steps;
+    progress.hidden = !steps || welcoming || definition.theme?.progress === false;
+    bar.hidden = progress.hidden; bar.value = reviewing ? fields.length : current + 1;
+    nextButton.textContent = fields[current]?.button_text || 'Continuar →';
     progress.textContent = reviewing ? 'Última etapa · confirmar envio' : 'Pergunta ' + history.length;
     if (reviewing) {
       summary.replaceChildren(); summary.hidden = false;
       const list = document.createElement('dl');
       for (const index of history) {
         const title = document.createElement('dt'), answer = document.createElement('dd');
-        title.textContent = fields[index].label; answer.textContent = inputs[index].value || 'Não informado';
+        title.textContent = interpolate(fields[index].label); answer.textContent = values()[fields[index].key] || 'Não informado';
         list.append(title, answer);
       }
       summary.append(list);
@@ -62,13 +97,19 @@
     input.removeAttribute('aria-describedby');
     questions[index].querySelectorAll('.error-text').forEach(message => message.remove());
     // Respostas posteriores não podem vazar de um caminho antigo para o novo.
-    inputs.slice(index + 1).forEach(answer => { answer.value = ''; answer.setCustomValidity(''); });
+    inputs.slice(index + 1).forEach(answer => { if (answer.multiple) [...answer.options].forEach(o => o.selected = false); else answer.value = ''; answer.setCustomValidity(''); });
     consent.checked = false;
     if (!steps) render();
   }));
   nextButton.addEventListener('click', advance);
   form.addEventListener('keydown', event => {
-    if (steps && !reviewing && event.key === 'Enter' && event.target.tagName === 'INPUT' && !event.isComposing) {
+    if (welcoming) return;
+    const current = history[history.length - 1];
+    if (steps && !reviewing && /^[a-z]$/i.test(event.key) && !['INPUT','TEXTAREA'].includes(event.target.tagName) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const option = questions[current].querySelectorAll('[data-choice]')[event.key.toUpperCase().charCodeAt(0) - 65];
+      if (option) { event.preventDefault(); option.click(); }
+    }
+    if (steps && !reviewing && event.key === 'Enter' && ['INPUT', 'SELECT'].includes(event.target.tagName) && !event.isComposing) {
       event.preventDefault(); advance();
     }
   });

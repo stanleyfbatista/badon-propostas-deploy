@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const repo = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const tmp = fs.mkdtempSync('/tmp/badon-apache-test-');
 const root = path.join(tmp, 'public'); fs.mkdirSync(root);
-for (const [file, body] of Object.entries({ 'index.html': 'HOME', '404.html': 'NOT_FOUND', 'links/index.html': 'LINKS', 'f/index.php': 'FORM', 'admin/index.php': 'ADMIN', 'f/confirmacao.php': 'CONFIRMATION', 'api/enviar.php': 'SUBMISSION' })) {
+for (const [file, body] of Object.entries({ 'index.html': 'HOME', '404.html': 'NOT_FOUND', 'links/index.html': 'LINKS', 'f/index.php': 'FORM', 'admin/index.php': 'ADMIN', 'admin/studio/index.php': 'STUDIO', 'api/studio.php': 'STUDIO_API', 'f/confirmacao.php': 'CONFIRMATION', 'api/enviar.php': 'SUBMISSION' })) {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), body);
 }
 fs.copyFileSync(path.join(repo, '.badon-404-rules'), path.join(root, '.htaccess'));
@@ -40,7 +40,7 @@ try {
   let started = false;
   for (let i = 0; i < 40; i++) { try { await fetch(`http://127.0.0.1:${port}/`); started = true; break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   assert.ok(started, 'Apache did not start');
-  for (const [url, body, status] of [['/', 'HOME', 200], ['/links/', 'LINKS', 200], ['/f/trafego-local', 'FORM', 200], ['/f/trafego-local/', 'FORM', 200], ['/f/trafego-local?slug=outro', 'FORM', 200], ['/admin/', 'ADMIN', 200], ['/api/enviar.php', 'SUBMISSION', 200], ['/f/confirmacao.php?r=abc', 'CONFIRMATION', 200], ['/nao-existe/', 'NOT_FOUND', 404]]) {
+  for (const [url, body, status] of [['/', 'HOME', 200], ['/links/', 'LINKS', 200], ['/f/trafego-local', 'FORM', 200], ['/f/trafego-local/', 'FORM', 200], ['/f/trafego-local?slug=outro', 'FORM', 200], ['/admin/', 'ADMIN', 200], ['/admin/studio/', 'STUDIO', 200], ['/api/studio.php', 'STUDIO_API', 200], ['/api/enviar.php', 'SUBMISSION', 200], ['/f/confirmacao.php?r=abc', 'CONFIRMATION', 200], ['/nao-existe/', 'NOT_FOUND', 404]]) {
     const result = await fetch(`http://127.0.0.1:${port}${url}`);
     assert.equal(result.status, status, url); assert.equal(await result.text(), body, url);
   }

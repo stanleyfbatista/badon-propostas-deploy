@@ -1,4 +1,75 @@
-# Bādon Forms — site estático + funis PHP
+# Bādon Forms — React + PHP/MySQL na hospedagem atual
+
+## Novo painel: atualização de outubro/2026
+
+O painel React fica em **`/admin/studio/`**. O login existente da Bādon continua válido e tem papel de agência. Os clientes entram por convite e têm contas separadas, sem acesso ao painel global antigo. O site institucional e as URLs públicas dos formulários permanecem iguais.
+
+### Atualizar uma instalação existente
+
+1. Faça backup do banco pelo cPanel/phpMyAdmin e dos arquivos da aplicação antes de atualizar. Não compartilhe o backup: ele contém respostas e hashes de senha.
+2. No Git Version Control, use **Update from Remote** e depois **Deploy HEAD Commit**. O build React já está em `public/studio-assets/`; não instale Node na hospedagem.
+3. No Terminal do cPanel, execute **uma vez** (pode repetir com segurança):
+
+   ```sh
+   php /home/produ7943464/badon-app/console.php studio:migrate
+   ```
+
+   Para outra conta, substitua apenas o nome da conta no caminho. São criadas sete tabelas `bf_*`; não é necessário ALTER. Os formulários existentes são associados ao espaço Bādon, com rascunhos iniciais copiados. A versão pública e os leads existentes não são sobrescritos. Se a migração falhar, o novo painel não fica disponível; os formulários anteriores continuam independentes.
+4. Abra **https://produtorabadon.com/admin/studio/** e use seu e-mail/senha atuais.
+5. Crie um formulário de teste, adicione perguntas, **Salve o rascunho** e depois **Publique**. Abra o link numa janela separada. Confira resposta, consentimento, e-mail recebido, CSV e WhatsApp. Teste também um convite com um e-mail de cliente antes de liberar acessos reais.
+
+O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam mudar**. A versão nova requer PHP **8.2+**, já confirmado nesta conta, e `curl` caso use webhooks. Não há Supabase, assinatura nova, CDN, servidor Node em produção ou chamada a serviço de formulário externo.
+
+### Entregue nesta etapa
+
+- React/Vite/TypeScript com três colunas: blocos, prévia e propriedades; layout adaptável a telas menores.
+- Espaços por cliente, agência, administrador, editor e leitor; autorização no PHP em cada operação. Clientes nunca recebem credenciais MySQL.
+- Login por senha, link mágico de 15 minutos e convites de 48 horas; tokens de uso único armazenados somente como hash, com limites por IP/e-mail.
+- Pastas; criar, duplicar, pausar e ativar formulários. Cópias começam como rascunho.
+- Rascunho e publicação separados, com revisão para detectar edições simultâneas. Salvar não altera a versão pública; publicar exige validação completa.
+- Nome, e-mail, telefone, website, endereço, texto curto/longo, escolha única/múltipla, sim/não, dropdown, número e data. Boas-vindas e agradecimento; descrições, placeholder, texto do botão, obrigatoriedade, duplicação e reordenação por arrasto ou botões.
+- Inserção de respostas anteriores no título via `@identificador`. O seletor de respostas anteriores insere a variável correta. No WhatsApp e no agradecimento a substituição é feita no servidor, após validação.
+- Condições já existentes preservadas: comparação, saltos para perguntas posteriores e encerramentos específicos. O grafo visual fica para a Fase 2.
+- Tema com cores, três famílias de fontes locais, botões, progresso e imagem de fundo hospedada no próprio domínio. Nesta versão, a imagem é enviada pelo Gerenciador de Arquivos para `public_html/forms-media/`, não pelo editor.
+- Rastreamento opcional de UTMs/gclid/fbclid e parâmetros personalizados; referrer sem query/fragmento. Dados são capturados ao abrir a página e não aceitos como campos ocultos arbitrários no POST.
+- Respostas paginadas por formulário, detalhes, consentimento e exportação CSV. O papel de leitor pode consultar/exportar, mas não editar/publicar ou gerenciar equipe.
+- Notificações para até dez destinatários por formulário via SMTP atual, em BCC. Se vazio, utiliza o destinatário padrão do config. A lista é copiada para o envio: retries não usam configurações posteriores.
+- Webhook HTTPS com POST JSON, identificação de envio, bloqueio de IPs privados/especiais, DNS fixado por requisição, sem redirects, sem proxy e com timeout. Nunca é chamado pelo navegador.
+- Honeypot, consentimento desmarcado, mínimo de 3–60 segundos, rate limit por IP e proteção contra envio duplicado. O botão WhatsApp segue disponível somente depois de um envio confirmado.
+
+### Operação e limites
+
+- O painel anterior permanece como acesso **da agência** a leads e reenvio SMTP. Formulários associados ao novo editor não podem ser sobrescritos pelo editor antigo. Formulários novos devem ser criados no novo painel.
+- Um formulário novo só aceita respostas após publicar. **Publicar ativa** o formulário. Pausar desabilita novos envios sem apagar respostas. Alterar o slug na publicação muda o link; avise quem compartilha o formulário.
+- Uma publicação que modifica o título/perguntas invalida tickets antigos com uma mensagem para recarregar. Salvar rascunhos não os invalida.
+- Convites, link mágico e notificações usam o SMTP privado existente. Entrega real, SPF/DKIM e spam precisam ser conferidos na hospedagem; os testes automatizados usam SMTP falso local. Não mude o MX do Google para testar o envio.
+- Falhas de SMTP/webhook não descartam leads. Para retry manual: `php /home/produ7943464/badon-app/console.php mail:retry` e `php /home/produ7943464/badon-app/console.php webhook:retry`. Webhook automático inicial + até cinco tentativas no total. Configure Cron somente se desejar repetição automática. O consumidor deve deduplicar pelo cabeçalho `Idempotency-Key`.
+- O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
+- A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
+- Ainda fora desta etapa: grafo React Flow, CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico e upload direto de mídia também não foram adicionados.
+
+### Desenvolvimento e verificação
+
+```sh
+npm ci
+npm run build
+php tests/domain.php
+php tests/flow.php
+php tests/studio-domain.php
+node tests/flow-engine.mjs
+node tests/integration.mjs
+node tests/apache.mjs
+```
+
+O build gera somente `public/studio-assets/`, com manifest lido pelo PHP e nomes com hash. Commitar fonte, lockfile e build juntos antes do cPanel. Credenciais nunca entram no front. O PHP/MySQL continua sendo a autoridade para sessões, permissões, publicação e validação. Usamos CSS próprio para preservar a identidade atual; não dependemos de Tailwind/shadcn em runtime.
+
+O schema v2 existente (`fields`, regras e encerramentos) é mantido por compatibilidade, em vez de converter destrutivamente todos os formulários ao exemplo `blocks` do documento. A tabela `bf_forms.draft_json` guarda o documento do editor; `forms.fields_json` permanece o snapshot publicado lido por `/f/{slug}`. `bf_forms.published_settings` guarda apenas configurações privadas publicadas. `bf_deliveries` guarda configurações por envio para retry. Consultas de formulário/lead no novo painel passam sempre pela associação ao workspace.
+
+Testes novos cobrem migração repetível sem alteração do JSON publicado, isolamento entre espaços (incluindo detalhe/CSV/duplicação), leitor/editor/agência, revogação de acesso, token de uso único, publicação separada, conflitos de revisão, novos campos, rastreamento, destinatário SMTP por formulário e antifraude. Não substituem teste visual no navegador/iPhone nem teste de entrega real de webhook/SMTP na hospedagem.
+
+---
+
+## Instalação base e painel anterior
 
 O site existente permanece estático e **não teve seu HTML, CSS ou imagens alterados**.
 Os arquivos antigos foram movidos, sem alteração de conteúdo, para `public/`.
@@ -21,7 +92,7 @@ O link opcional de WhatsApp é aberto apenas por iniciativa do visitante após o
 
 ### 1. Requisitos
 
-- Selecione PHP **8.0 ou superior**, preferencialmente uma versão 8.x ainda suportada, no MultiPHP Manager para `produtorabadon.com`.
+- Selecione PHP **8.2 ou superior**, preferencialmente uma versão 8.x ainda suportada, no MultiPHP Manager para `produtorabadon.com`.
 - Extensões `pdo_mysql`, `mbstring`, `openssl`, `session`, `json`, `ctype`, `filter` e `hash`.
 - HTTPS válido. Em produção, o PHP exige HTTPS e usa cookies Secure/HttpOnly/SameSite.
 - MySQL 5.7+ ou MariaDB compatível, com tabelas InnoDB e utf8mb4.

@@ -65,12 +65,12 @@ function clean_fields(array $rows): array
         if ($label === '' || mb_strlen($label) > 240 || preg_match('/[\x00-\x1F]/u', $label)) {
             throw new InvalidArgumentException('Dê a cada pergunta um título de até 240 caracteres.');
         }
-        if (!in_array($type, ['text', 'email', 'tel', 'select', 'textarea', 'number'], true)) {
+        if (!in_array($type, ['text', 'name', 'email', 'tel', 'url', 'address', 'select', 'single', 'multiple', 'yesno', 'textarea', 'number', 'date'], true)) {
             throw new InvalidArgumentException('Tipo de campo inválido.');
         }
         $options = [];
-        if ($type === 'select') {
-            $raw = $row['options'] ?? '';
+        if (in_array($type, ['select', 'single', 'multiple', 'yesno'], true)) {
+            $raw = $type === 'yesno' ? ['Sim', 'Não'] : ($row['options'] ?? '');
             $raw = is_array($raw) ? $raw : preg_split('/\R/u', text_value($raw));
             foreach ($raw as $option) {
                 if (!is_string($option)) {
@@ -90,6 +90,13 @@ function clean_fields(array $rows): array
         }
         $keys[$key] = true;
         $fields[] = ['key' => $key, 'label' => $label, 'type' => $type, 'required' => !empty($row['required']), 'options' => $options];
+        foreach (['description' => 2000, 'placeholder' => 250, 'button_text' => 60] as $property => $limit) {
+            if (array_key_exists($property, $row)) {
+                $value = text_value($row[$property]);
+                if (!mb_check_encoding($value, 'UTF-8') || mb_strlen($value) > $limit) throw new InvalidArgumentException('Descrição, placeholder ou texto do botão muito longo.');
+                $fields[count($fields) - 1][$property] = $value;
+            }
+        }
     }
     return $fields;
 }
@@ -100,8 +107,16 @@ function validate_answers(array $fields, array $input): array
     foreach ($fields as $field) {
         $key = $field['key'];
         $raw = $input[$key] ?? '';
+        if ($field['type'] === 'multiple') {
+            $choices = is_array($raw) ? $raw : ($raw === '' ? [] : null);
+            if ($choices === null || count($choices) > 50 || count(array_filter($choices, 'is_string')) !== count($choices) || array_diff($choices, $field['options'])) {
+                $errors[$key] = 'Escolha somente opções disponíveis.'; $choices = [];
+            } elseif ($field['required'] && !$choices) $errors[$key] = 'Escolha pelo menos uma opção.';
+            $values[] = ['key' => $key, 'label' => $field['label'], 'value' => implode(', ', array_unique($choices ?? []))];
+            continue;
+        }
         $value = text_value($raw);
-        $limit = $field['type'] === 'textarea' ? 5000 : ($field['type'] === 'email' ? 254 : 250);
+        $limit = in_array($field['type'], ['textarea', 'address'], true) ? 5000 : ($field['type'] === 'email' ? 254 : 250);
         if (!is_string($raw) || !mb_check_encoding($value, 'UTF-8') || mb_strlen($value) > $limit || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value)) {
             $errors[$key] = 'Valor inválido ou muito longo.';
         } elseif ($field['required'] && $value === '') {
@@ -110,11 +125,15 @@ function validate_answers(array $fields, array $input): array
             $errors[$key] = 'Informe um e-mail válido.';
         } elseif ($value !== '' && $field['type'] === 'tel' && (!preg_match('/^[+0-9().\s-]+$/', $value) || strlen(preg_replace('/\D/', '', $value)) < 8 || strlen(preg_replace('/\D/', '', $value)) > 15)) {
             $errors[$key] = 'Informe telefone com DDD (8 a 15 dígitos).';
-        } elseif ($value !== '' && $field['type'] === 'select' && !in_array($value, $field['options'], true)) {
+        } elseif ($value !== '' && in_array($field['type'], ['select', 'single', 'yesno'], true) && !in_array($value, $field['options'], true)) {
             $errors[$key] = 'Escolha uma das opções disponíveis.';
         } elseif ($value !== '' && $field['type'] === 'number' && !valid_flow_number($value)) {
             $errors[$key] = 'Informe um número de 0 a 1 trilhão, sem símbolo de moeda ou separador de milhar.';
-        } elseif ($field['type'] !== 'textarea' && preg_match('/[\r\n]/', $value)) {
+        } elseif ($value !== '' && $field['type'] === 'url' && (!filter_var($value, FILTER_VALIDATE_URL) || !in_array(parse_url($value, PHP_URL_SCHEME), ['http', 'https'], true))) {
+            $errors[$key] = 'Informe um site começando com https:// ou http://.';
+        } elseif ($value !== '' && $field['type'] === 'date' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/D', $value) || !checkdate((int)substr($value, 5, 2), (int)substr($value, 8, 2), (int)substr($value, 0, 4)))) {
+            $errors[$key] = 'Informe uma data válida.';
+        } elseif (!in_array($field['type'], ['textarea', 'address'], true) && preg_match('/[\r\n]/', $value)) {
             $errors[$key] = 'Use apenas uma linha.';
         }
         if (!isset($errors[$key]) && $field['type'] === 'email' && $value !== '' && $email === null) $email = $value;

@@ -1,0 +1,350 @@
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+
+export async function studioTests({
+  base,
+  sql,
+  run,
+  php,
+  cli,
+  messages,
+  recipients,
+  Client,
+  token,
+}) {
+  const before = sql("SELECT id,fields_json FROM badon_test.forms ORDER BY id");
+  run(php, [cli, "studio:migrate"]);
+  run(php, [cli, "studio:migrate"]);
+  assert.equal(
+    sql("SELECT id,fields_json FROM badon_test.forms ORDER BY id"),
+    before,
+  );
+  assert.equal(
+    sql("SELECT COUNT(*) FROM badon_test.bf_forms").trim(),
+    sql("SELECT COUNT(*) FROM badon_test.forms").trim(),
+  );
+  sql("DELETE FROM badon_test.rate_limits");
+  const password = randomBytes(18).toString("hex");
+  run(php, [cli, "admin:password", "admin@example.invalid"], {
+    input: password + "\n",
+    stdio: ["pipe", "pipe", "ignore"],
+  });
+  class Api {
+    cookie = "";
+    csrf = "";
+    async req(action, data, query = {}) {
+      const r = await fetch(
+        base + "/api/studio.php?" + new URLSearchParams({ action, ...query }),
+        {
+          method: data === undefined ? "GET" : "POST",
+          redirect: "manual",
+          headers: {
+            Cookie: this.cookie,
+            ...(data === undefined
+              ? {}
+              : {
+                  "Content-Type": "application/json",
+                  "X-CSRF-Token": this.csrf,
+                }),
+          },
+          body: data === undefined ? undefined : JSON.stringify(data),
+        },
+      );
+      if (r.headers.get("set-cookie"))
+        this.cookie = r.headers.get("set-cookie").split(";")[0];
+      const text = await r.text();
+      let body;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        body = text;
+      }
+      if (body.csrf) this.csrf = body.csrf;
+      return { status: r.status, body, headers: r.headers };
+    }
+  }
+  const agency = new Api();
+  await agency.req("boot");
+  assert.equal(
+    (await agency.req("login", { email: "admin@example.invalid", password }))
+      .status,
+    200,
+  );
+  const boot = await agency.req("boot");
+  assert.equal(boot.body.user.agency, true);
+  const badon = Number(boot.body.workspaces[0].id);
+  const a = await agency.req("workspace-create", {
+      name: "Cliente A",
+      slug: "cliente-a",
+    }),
+    b = await agency.req("workspace-create", {
+      name: "Cliente B",
+      slug: "cliente-b",
+    });
+  const wa = a.body.id,
+    wb = b.body.id;
+  assert.ok(wa && wb);
+  const invite = async (email, role, workspace) => {
+    const response = await agency.req("invite", { email, role, workspace });
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    const raw = messages.at(-1).match(/#token=([a-f0-9]{64})/)[1];
+    const user = new Api();
+    await user.req("boot");
+    assert.equal(
+      (
+        await user.req("accept", {
+          token: raw,
+          password: randomBytes(18).toString("hex"),
+        })
+      ).status,
+      200,
+    );
+    assert.equal((await user.req("accept", { token: raw })).status, 403); // token CSRF anterior à rotação
+    await user.req("boot");
+    assert.equal((await user.req("accept", { token: raw })).status, 422);
+    return user;
+  };
+  const editor = await invite("editor@example.invalid", "editor", wa),
+    reader = await invite("reader@example.invalid", "reader", wa),
+    other = await invite("other@example.invalid", "admin", wb);
+  assert.equal(
+    (await editor.req("forms", undefined, { workspace: wb })).status,
+    403,
+  );
+  assert.equal(
+    (
+      await editor.req("invite", {
+        workspace: wa,
+        email: "elevated@example.invalid",
+        role: "admin",
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await reader.req("form-create", {
+        workspace: wa,
+        title: "Proibido",
+        slug: "proibido",
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (await other.req("workspace-create", { name: "Falso", slug: "falso" }))
+      .status,
+    403,
+  );
+  const legacy = new Client();
+  legacy.cookie = editor.cookie;
+  assert.ok(
+    (await legacy.req("/admin/?view=leads")).body.includes('type="password"'),
+  );
+  const created = await editor.req("form-create", {
+    workspace: wa,
+    title: "Contato cliente A",
+    slug: "cliente-a-form",
+  });
+  assert.equal(created.status, 200, JSON.stringify(created.body));
+  const id = created.body.id;
+  assert.equal((await other.req("form", undefined, { id })).status, 403);
+  assert.equal((await other.req("leads", undefined, { id })).status, 403);
+  assert.equal((await other.req("export", { id })).status, 403);
+  assert.equal((await other.req("duplicate", { id })).status, 403);
+  const f = (await editor.req("form", undefined, { id })).body.form;
+  assert.equal(
+    (await editor.req("publish", { id, revision: f.revision })).status,
+    422,
+  );
+  const guest = new Client();
+  assert.equal((await guest.req("/f/cliente-a-form")).status, 404);
+  const draft = f.draft;
+  draft.definition.fields = [
+    {
+      key: "nome",
+      label: "Qual é seu nome?",
+      type: "name",
+      required: true,
+      options: [],
+      rules: [],
+      otherwise: { target: "next" },
+      button_text: "Próximo",
+    },
+    {
+      key: "email",
+      label: "Seu e-mail, @nome?",
+      type: "email",
+      required: true,
+      options: [],
+      rules: [],
+      otherwise: { target: "next" },
+    },
+    {
+      key: "interesses",
+      label: "O que interessa?",
+      type: "multiple",
+      required: true,
+      options: ["Site", "Tráfego"],
+      rules: [],
+      otherwise: { target: "next" },
+    },
+    {
+      key: "data",
+      label: "Qual data?",
+      type: "date",
+      required: true,
+      options: [],
+      rules: [],
+      otherwise: { target: "next" },
+    },
+  ];
+  draft.whatsapp_message = "Oi, sou @nome";
+  draft.definition.completion.title = "Obrigado, @nome";
+  draft.settings = {
+    notify_emails: ["client-notify@example.invalid"],
+    tracking: true,
+    hidden_fields: ["vendedor"],
+    minimum_seconds: 3,
+  };
+  let saved = await editor.req("save", { id, revision: f.revision, draft });
+  assert.equal(saved.status, 200, JSON.stringify(saved.body));
+  assert.equal(
+    (await reader.req("save", { id, revision: saved.body.revision, draft }))
+      .status,
+    403,
+  );
+  assert.equal(
+    (await editor.req("save", { id, revision: f.revision, draft })).status,
+    422,
+  );
+  let revision = saved.body.revision;
+  assert.equal((await editor.req("publish", { id, revision })).status, 200);
+  const published = sql(
+    `SELECT fields_json FROM badon_test.forms WHERE id=${id}`,
+  );
+  const ticket = await guest.req(
+    "/f/cliente-a-form?utm_source=google&vendedor=stanley&senha=nao-salvar",
+  );
+  assert.equal(ticket.status, 200);
+  assert.ok(!ticket.body.includes("client-notify@example.invalid"));
+  assert.ok(!ticket.body.includes("wa.me/"));
+  draft.title = "Rascunho novo";
+  draft.definition.fields[0].label = "Pergunta ainda não publicada";
+  saved = await editor.req("save", { id, revision, draft });
+  revision = saved.body.revision;
+  assert.equal(
+    sql(`SELECT fields_json FROM badon_test.forms WHERE id=${id}`),
+    published,
+  );
+  assert.ok(
+    (await guest.req("/f/cliente-a-form")).body.includes("Qual é seu nome?"),
+  );
+  const payload = {
+    csrf: token(ticket.body, "csrf"),
+    submission: token(ticket.body, "submission"),
+    form_id: String(id),
+    consent: "1",
+    "fields[nome]": "Stanley",
+    "fields[email]": "newlead@example.invalid",
+    "fields[interesses][]": "Site",
+    "fields[data]": "2026-10-12",
+  };
+  assert.equal((await guest.req("/api/enviar.php", payload)).status, 429);
+  await new Promise((r) => setTimeout(r, 3100));
+  assert.equal(
+    (
+      await guest.req("/api/enviar.php", {
+        ...payload,
+        "fields[data]": "2026-02-31",
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (
+      await guest.req("/api/enviar.php", {
+        ...payload,
+        "fields[interesses][]": "Inventado",
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (await guest.req("/api/enviar.php", { ...payload, consent: "" })).status,
+    422,
+  );
+  const sent = await guest.req("/api/enviar.php", payload);
+  assert.equal(sent.status, 303);
+  assert.ok(recipients.at(-1).includes('client-notify@example.invalid'));
+  const confirm = await guest.req(sent.headers.get("location"));
+  assert.ok(confirm.body.includes("Obrigado, Stanley"));
+  assert.ok(confirm.body.includes("Oi%2C+sou+Stanley"));
+  const rows = (await reader.req("leads", undefined, { id })).body.leads;
+  assert.equal(rows.length, 1);
+  assert.ok(rows[0].values_json.includes("google"));
+  assert.ok(!rows[0].values_json.includes("nao-salvar"));
+  assert.equal((await reader.req("export", { id })).status, 200);
+  assert.equal(
+    sql(`SELECT email_status FROM badon_test.leads WHERE form_id=${id}`).trim(),
+    "sent",
+  );
+  assert.equal(
+    sql(
+      `SELECT COUNT(*) FROM badon_test.bf_deliveries WHERE lead_id=${rows[0].id}`,
+    ).trim(),
+    "1",
+  );
+  // Salvar um rascunho não invalidou o ticket da versão publicada.
+  assert.equal((await guest.req("/api/enviar.php", payload)).status, 303);
+  assert.equal((await editor.req("publish", { id, revision })).status, 200);
+  assert.ok(
+    (await guest.req("/f/cliente-a-form")).body.includes("Pergunta ainda"),
+  );
+  const dup = await editor.req("duplicate", { id });
+  assert.equal(dup.status, 200);
+  assert.equal(
+    (await editor.req("form", undefined, { id: dup.body.id })).body.form.active,
+    false,
+  );
+  await agency.req("folder-create", { workspace: wb, name: "Privado B" });
+  const folders = (await other.req("forms", undefined, { workspace: wb })).body
+    .folders;
+  assert.equal(
+    (
+      await editor.req("save", {
+        id,
+        revision,
+        draft,
+        folder_id: folders[0].id,
+      })
+    ).status,
+    422,
+  );
+  draft.settings.webhook_url = "http://127.0.0.1/private";
+  assert.equal((await editor.req("save", { id, revision, draft })).status, 422);
+  delete draft.settings.webhook_url;
+  assert.equal((await editor.req("status", { id, active: false })).status, 200);
+  assert.equal((await guest.req("/f/cliente-a-form")).status, 404);
+  const member = (
+    await agency.req("members", undefined, { workspace: wa })
+  ).body.members.find((m) => m.email === "reader@example.invalid");
+  await agency.req("member-remove", { workspace: wa, id: member.id });
+  assert.equal((await reader.req("leads", undefined, { id })).status, 403);
+  const magic = new Api();
+  await magic.req("boot");
+  assert.equal(
+    (await magic.req("magic", { email: "editor@example.invalid" })).status,
+    200,
+  );
+  const magicToken = messages.at(-1).match(/#token=([a-f0-9]{64})/)[1];
+  assert.equal((await magic.req("accept", { token: magicToken })).status, 200);
+  assert.equal((await magic.req("boot")).body.user.agency, false);
+  assert.equal(
+    (await agency.req("forms", undefined, { workspace: badon })).status,
+    200,
+  );
+  console.log(
+    "OK: React/PHP, migração aditiva, workspaces isolados, papéis, convites/link mágico, rascunho/publicação, SMTP, rastreamento, antifraude, CSV e revogação.",
+  );
+}

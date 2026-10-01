@@ -29,11 +29,11 @@ function limit_body(): void
 }
 function page_start(string $title, bool $admin = false): void
 {
-    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon Forms</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css?v=2"><link rel="stylesheet" href="/forms-assets/flow.css?v=2"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="' . ($admin ? '/admin/' : '/') . '">Bādon<span>.</span><small class="brand-product">Forms</small></a>';
+    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon Forms</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css?v=2"><link rel="stylesheet" href="/forms-assets/flow.css?v=3"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="' . ($admin ? '/admin/' : '/') . '">Bādon<span>.</span><small class="brand-product">Forms</small></a>';
     if ($admin && !empty($_SESSION['admin_id'])) {
         echo '<nav aria-label="Painel"><a href="/admin/">Formulários</a><a href="/admin/?view=leads">Leads</a><form action="/admin/" method="post">' . csrf_input() . '<input type="hidden" name="action" value="logout"><button class="text-button">Sair</button></form></nav>';
     }
-    echo '</header>';
+    echo '</header>' . ($GLOBALS['studio_theme_css'] ?? '');
 }
 function page_end(): void { echo '<footer>Produtora Bādon · <a href="/privacidade/">Privacidade</a></footer></main></body></html>'; }
 function fail_page(int $status, string $message): void
@@ -88,6 +88,9 @@ function submission_ticket(array $form): string
     if (count($_SESSION['tickets'] ?? []) >= 20) array_shift($_SESSION['tickets']);
     $nonce = bin2hex(random_bytes(32));
     $_SESSION['tickets'][$nonce] = ['form_id' => (int)$form['id'], 'time' => time(), 'schema' => hash('sha256', $form['fields_json']), 'title' => $form['title'], 'consent' => consent_text($form['title']), 'privacy_url' => $config['privacy_url']];
+    require_once __DIR__ . '/studio-public.php';
+    $settings = studio_settings((int)$form['id']);
+    if ($settings !== null) $_SESSION['tickets'][$nonce] += ['settings' => $settings, 'tracking' => studio_tracking($settings)];
     return $nonce;
 }
 function render_form(array $form, array $old = [], array $errors = [], ?string $nonce = null): void
@@ -96,6 +99,8 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     $definition = form_definition($form['fields_json']);
     $fields = $definition['fields'];
     $nonce = $nonce ?? submission_ticket($form);
+    require_once __DIR__ . '/studio-public.php';
+    studio_theme($definition['theme'] ?? []);
     page_start($form['title']);
     echo '<section class="panel public-flow"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Responda no seu ritmo. As perguntas com * são obrigatórias. Seus dados só serão enviados ao confirmar no final.</p>';
     if ($errors) alert_box('Confira os campos destacados e confirme seu consentimento para enviar.');
@@ -104,15 +109,16 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
         $key = $field['key']; $id = 'field-' . $key; $value = text_value($old[$key] ?? '');
         $attrs = ' id="' . h($id) . '" name="fields[' . h($key) . ']" data-answer="' . h($key) . '"' . (isset($errors[$key]) ? ' aria-invalid="true" aria-describedby="error-' . h($key) . '"' : '');
         echo '<div class="field flow-question" data-question="' . h($key) . '"><label for="' . h($id) . '">' . h($field['label']) . ($field['required'] ? ' <span aria-hidden="true">*</span>' : '') . '</label>';
-        if ($field['type'] === 'select') {
-            echo '<select' . $attrs . '><option value="">Selecione</option>';
-            foreach ($field['options'] as $option) echo '<option value="' . h($option) . '"' . ($value === $option ? ' selected' : '') . '>' . h($option) . '</option>';
+        if (in_array($field['type'], ['select', 'single', 'yesno', 'multiple'], true)) {
+            if ($field['type'] === 'multiple') $attrs = str_replace('name="fields[' . h($key) . ']"', 'name="fields[' . h($key) . '][]"', $attrs);
+            echo '<select' . $attrs . ($field['type'] === 'multiple' ? ' multiple size="' . min(6, count($field['options'])) . '"' : '') . '>' . ($field['type'] === 'multiple' ? '' : '<option value="">Selecione</option>');
+            foreach ($field['options'] as $option) echo '<option value="' . h($option) . '"' . (($field['type'] === 'multiple' ? in_array($option, is_array($old[$key] ?? null) ? $old[$key] : [], true) : $value === $option) ? ' selected' : '') . '>' . h($option) . '</option>';
             echo '</select>';
-        } elseif ($field['type'] === 'textarea') {
+        } elseif (in_array($field['type'], ['textarea', 'address'], true)) {
             echo '<textarea' . $attrs . ' rows="5" maxlength="5000">' . h($value) . '</textarea>';
         } else {
             $auto = $field['type'] === 'email' ? 'email' : ($field['type'] === 'tel' ? 'tel' : 'off');
-            echo '<input' . $attrs . ' type="' . h($field['type'] === 'number' ? 'text' : $field['type']) . '"' . ($field['type'] === 'number' ? ' inputmode="decimal"' : '') . ' autocomplete="' . $auto . '" maxlength="' . ($field['type'] === 'email' ? '254' : '250') . '" value="' . h($value) . '">';
+            echo '<input' . $attrs . ' type="' . h(in_array($field['type'], ['number', 'name'], true) ? 'text' : $field['type']) . '"' . ($field['type'] === 'number' ? ' inputmode="decimal"' : '') . ' autocomplete="' . $auto . '" maxlength="' . ($field['type'] === 'email' ? '254' : '250') . '" value="' . h($value) . '">';
             if ($field['type'] === 'number') echo '<small>Digite somente o número, sem R$ e sem separador de milhar. Ex.: 1500 ou 1500,50.</small>';
         }
         if (isset($errors[$key])) echo '<small class="error-text" id="error-' . h($key) . '">' . h($errors[$key]) . '</small>';
@@ -122,6 +128,6 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     // Nunca marcado automaticamente, nem ao reapresentar erros.
     echo '<section id="flow-review"><h2>Confirmar envio</h2><div id="flow-summary" hidden></div><label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
     if (isset($errors['consent'])) echo '<p class="error-text">' . h($errors['consent']) . '</p>';
-    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=2" defer></script><script src="/forms-assets/public-flow.js?v=2" defer></script></section>';
+    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=2" defer></script><script src="/forms-assets/public-flow.js?v=3" defer></script></section>';
     page_end();
 }

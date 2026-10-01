@@ -7,6 +7,11 @@ function form_version(array $form): string
 }
 function save_form(array $input): int
 {
+    require_once __DIR__ . '/studio.php';
+    if (!empty($input['id']) && studio_ready()) {
+        $q = db()->prepare('SELECT form_id FROM bf_forms WHERE form_id = ?'); $q->execute([(int)$input['id']]);
+        if ($q->fetchColumn()) throw new InvalidArgumentException('Este formulário usa rascunho e publicação. Edite no novo Bādon Forms em /admin/studio/.');
+    }
     $title = text_value($input['title'] ?? ''); $slug = text_value($input['slug'] ?? '');
     $message = text_value($input['whatsapp_message'] ?? '');
     if ($title === '' || mb_strlen($title) > 150 || preg_match('/[\x00-\x1F]/u', $title)) throw new InvalidArgumentException('Título inválido: use até 150 caracteres, sem quebras de linha.');

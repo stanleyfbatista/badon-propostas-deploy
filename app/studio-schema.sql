@@ -1,0 +1,60 @@
+CREATE TABLE IF NOT EXISTS bf_workspaces (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(150) NOT NULL,
+ slug VARCHAR(100) NOT NULL UNIQUE,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_users (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ email VARCHAR(190) NOT NULL UNIQUE,
+ password_hash VARCHAR(255) NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_members (
+ workspace_id BIGINT UNSIGNED NOT NULL,
+ user_id BIGINT UNSIGNED NOT NULL,
+ role VARCHAR(12) NOT NULL,
+ PRIMARY KEY (workspace_id, user_id),
+ FOREIGN KEY (workspace_id) REFERENCES bf_workspaces(id),
+ FOREIGN KEY (user_id) REFERENCES bf_users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_folders (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ workspace_id BIGINT UNSIGNED NOT NULL,
+ name VARCHAR(100) NOT NULL,
+ UNIQUE (workspace_id, name),
+ FOREIGN KEY (workspace_id) REFERENCES bf_workspaces(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_forms (
+ form_id BIGINT UNSIGNED PRIMARY KEY,
+ workspace_id BIGINT UNSIGNED NOT NULL,
+ folder_id BIGINT UNSIGNED NULL,
+ draft_json JSON NOT NULL,
+ published_settings JSON NOT NULL,
+ revision BIGINT UNSIGNED NOT NULL DEFAULT 1,
+ published_revision BIGINT UNSIGNED NULL,
+ published_at DATETIME NULL,
+ FOREIGN KEY (form_id) REFERENCES forms(id),
+ FOREIGN KEY (workspace_id) REFERENCES bf_workspaces(id),
+ FOREIGN KEY (folder_id) REFERENCES bf_folders(id),
+ INDEX (workspace_id, folder_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_tokens (
+ token_hash CHAR(64) PRIMARY KEY,
+ kind VARCHAR(10) NOT NULL,
+ email VARCHAR(190) NOT NULL,
+ workspace_id BIGINT UNSIGNED NULL,
+ role VARCHAR(12) NULL,
+ expires_at DATETIME NOT NULL,
+ accepted_at DATETIME NULL,
+ FOREIGN KEY (workspace_id) REFERENCES bf_workspaces(id),
+ INDEX (email, expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_deliveries (
+ lead_id BIGINT UNSIGNED PRIMARY KEY,
+ settings_json JSON NOT NULL,
+ webhook_status VARCHAR(12) NOT NULL DEFAULT 'pending',
+ attempted_at DATETIME NULL,
+ attempts INT NOT NULL DEFAULT 0,
+ FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

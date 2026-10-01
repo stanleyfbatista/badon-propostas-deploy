@@ -6,6 +6,7 @@ import net from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { studioTests } from './studio-integration.mjs';
 
 const repo = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const php = process.env.PHP_BIN || '/opt/homebrew/opt/php@8.4/bin/php';
@@ -20,6 +21,7 @@ const sql = query => run(path.join(mysqlBin, 'mariadb'), ['--no-defaults', '--so
 let dbProc, phpProc, smtp;
 let rejectMail = false;
 const messages = [];
+const recipients = [];
 const log = (text) => console.log('OK:', text);
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function ready(fn) { for (let i = 0; i < 80; i++) { try { if (await fn()) return; } catch {} await wait(100); } throw new Error('Service did not start'); }
@@ -70,7 +72,7 @@ try {
           if (line === '.') { messages.push(data.join('\r\n')); data = []; dataMode = false; client.write('250 accepted\r\n'); }
           else data.push(line);
         } else if (/^(EHLO|HELO)/.test(line)) client.write('250-localhost\r\n250 8BITMIME\r\n');
-        else if (/^RCPT/.test(line) && rejectMail) client.write('550 rejected for testing\r\n');
+        else if (/^RCPT/.test(line)) { recipients.push(line); client.write(rejectMail ? '550 rejected for testing\r\n' : '250 OK\r\n'); }
         else if (line === 'DATA') { dataMode = true; client.write('354 continue\r\n'); }
         else if (line === 'QUIT') client.end('221 bye\r\n');
         else client.write('250 OK\r\n');
@@ -162,7 +164,7 @@ try {
   assert.ok(builder.body.includes('Bādon Forms') && builder.body.includes('data-definition=') && builder.body.includes('/forms-assets/admin.js?v=2'));
   const flowGuest = new Client();
   const publicFunnel = await flowGuest.req('/f/funil-condicional');
-  assert.ok(publicFunnel.body.includes('/forms-assets/public-flow.js?v=2') && !publicFunnel.body.includes('wa.me/'));
+  assert.ok(publicFunnel.body.includes('/forms-assets/public-flow.js?v=3') && !publicFunnel.body.includes('wa.me/'));
   const flowSend = { csrf: token(publicFunnel.body, 'csrf'), submission: token(publicFunnel.body, 'submission'), form_id: funnelId, website_url: '', consent: '1', 'fields[email]': 'funil@example.invalid', 'fields[investimento]': '500', 'fields[cidade]': 'FORGED-SKIPPED', outcome: 'completed', whatsapp: '1' };
   const countBefore = Number(sql('SELECT COUNT(*) FROM badon_test.leads').trim());
   assert.equal((await flowGuest.req('/api/enviar.php', { ...flowSend, consent: '' })).status, 422);
@@ -223,6 +225,7 @@ try {
   run(php, [cli, 'admin:password', 'admin@example.invalid'], { input: randomBytes(18).toString('hex') + '\n', stdio: ['pipe', 'pipe', 'ignore'] });
   assert.ok((await admin.req('/admin/')).body.includes('type="password"'));
   log('troca de senha invalida sessões anteriores');
+  await studioTests({base,sql,run,php,cli,messages,recipients,Client,token});
   // Validar configuração de produção sem qualquer conexão SMTP externa.
   const productionConfig = config.replace("'environment'=>'development'", "'environment'=>'production'").replace("'base_url'=>'http:", "'base_url'=>'https:").replace("'encryption'=>'none','username'=>'','password'=>''", "'encryption'=>'tls','username'=>'test','password'=>'test'");
   fs.writeFileSync(path.join(account, 'badon-config/config.php'), productionConfig, { mode: 0o600 });

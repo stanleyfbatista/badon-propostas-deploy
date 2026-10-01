@@ -42,3 +42,11 @@ button:disabled{opacity:.5;cursor:default}
 .public-flow p,.notice,.editor-control{overflow-wrap:anywhere}
 @media(max-width:850px){.builder-layout{grid-template-columns:minmax(0,1fr)}.flow-outline{position:static;max-height:220px}.rule-card .two-columns{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.brand-product{font-size:16px}.field-editor{padding:16px}.rule-card{padding:13px}.builder-layout{gap:18px}.public-flow .flow-question>label{font-size:22px}.flow-navigation{gap:12px}.editor-save>.button{width:100%}}
+/* Blocos de escolha acessíveis; o select original garante envio e fallback sem JS. */
+.choice-source{position:absolute;width:1px!important;height:1px!important;padding:0!important;opacity:0;pointer-events:none}
+.flow-progress-bar{display:block;width:100%;height:6px;accent-color:#085bcc;margin:0 0 26px;border:0}.flow-progress-bar[hidden]{display:none}
+.flow-choices{display:grid;gap:10px;margin:22px 0}
+.flow-choice{display:flex;align-items:center;gap:14px;text-align:left;padding:15px 18px;border:1px solid #c6d5e9;border-radius:10px;background:#f5f8fd;color:#153350;font:inherit;cursor:pointer}
+.flow-choice[aria-pressed=true]{background:#e4efff;border-color:#0862ca;box-shadow:0 0 0 1px #0862ca}
+.flow-choice kbd{font:inherit;font-size:.75em;min-width:25px;text-align:center;border:1px solid #b3c9e7;border-radius:4px;padding:3px}
+.flow-welcome{padding:25px 0 35px}.flow-welcome p,.flow-description{white-space:pre-wrap}.flow-welcome h2{font-size:clamp(27px,5vw,42px)}
