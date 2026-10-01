@@ -5,6 +5,18 @@ require_once __DIR__ . '/vendor/phpmailer/src/Exception.php';
 require_once __DIR__ . '/vendor/phpmailer/src/PHPMailer.php';
 require_once __DIR__ . '/vendor/phpmailer/src/SMTP.php';
 
+function configure_mail_encryption(PHPMailer\PHPMailer\PHPMailer $mail, string $mode): void
+{
+    // O nome da configuração da aplicação não é o valor interno da biblioteca.
+    $mail->SMTPSecure = match ($mode) {
+        'smtps' => PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS,
+        'tls' => PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS,
+        'none' => '', // Permitido pela validação somente em desenvolvimento.
+        default => throw new InvalidArgumentException('Invalid SMTP encryption mode'),
+    };
+    $mail->SMTPAutoTLS = $mode !== 'none';
+}
+
 function configure_mail_timeouts(PHPMailer\PHPMailer\PHPMailer $mail): void
 {
     $mail->Timeout = 10;
@@ -27,7 +39,7 @@ function studio_send_mail(string $recipient, string $subject, string $body): boo
         $m = $config['smtp']; $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         $mail->isSMTP(); $mail->Host = $m['host']; $mail->Port = (int)$m['port'];
         $mail->SMTPAuth = !empty($m['username']); $mail->Username = $m['username']; $mail->Password = $m['password'];
-        $mail->SMTPSecure = $m['encryption'] === 'none' ? '' : $m['encryption']; $mail->SMTPAutoTLS = $m['encryption'] !== 'none';
+        configure_mail_encryption($mail, $m['encryption']);
         configure_mail_timeouts($mail); $mail->CharSet = 'UTF-8'; $mail->setFrom($m['from_email'], $m['from_name']);
         $mail->addAddress($recipient); $mail->Subject = $subject; $mail->Body = $body; $mail->send(); return true;
     } catch (Throwable $e) { log_incident($e, 'account-mail'); return false; }
@@ -48,8 +60,7 @@ function notify_lead(int $id): bool
         $mail->Host = $m['host']; $mail->Port = (int)$m['port'];
         $mail->SMTPAuth = !empty($m['username']);
         $mail->Username = $m['username']; $mail->Password = $m['password'];
-        $mail->SMTPSecure = $m['encryption'] === 'none' ? '' : $m['encryption'];
-        $mail->SMTPAutoTLS = $m['encryption'] !== 'none';
+        configure_mail_encryption($mail, $m['encryption']);
         configure_mail_timeouts($mail);
         $mail->CharSet = 'UTF-8';
         $mail->setFrom($m['from_email'], $m['from_name']);
