@@ -3,87 +3,104 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Links oficiais de Stanley e da Produtora Bādon.">
-  <meta name="theme-color" content="#071222">
-  <title>Stanley · Bādon — Links</title>
+  <meta name="description" content="Stanley Batista — estratégia, gestão de tráfego e criação de conteúdo. Conheça os serviços da Bādon e entre em contato pelo WhatsApp.">
+  <meta name="theme-color" content="#f6f6f4">
+  <title>Stanley Batista — Links</title>
   <link rel="icon" href="/maintenance-assets/favicon.svg" type="image/svg+xml">
   <style>
-    :root{--bg:#071222;--panel:#0c1a2d;--panel-hover:#112745;--white:#f5f7fb;--muted:#a6afbc;--blue:#1266dc;--blue-light:#4c91ef;--line:rgba(255,255,255,.13)}
+    :root{color-scheme:light;--paper:#f6f6f4;--ink:#10223b;--blue:#0757bd;--muted:#68717b}
     *{box-sizing:border-box}
-    html{min-height:100%;background:var(--bg)}
-    body{margin:0;min-height:100svh;background:radial-gradient(circle at 50% -12rem,rgba(18,102,220,.38),transparent 30rem),linear-gradient(180deg,#081526 0%,var(--bg) 100%);color:var(--white);font-family:Inter,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-    body:before,body:after{content:"";position:fixed;border:1px solid rgba(76,145,239,.17);border-radius:50%;pointer-events:none}
-    body:before{width:28rem;height:28rem;right:-21rem;top:20%}
-    body:after{width:34rem;height:34rem;left:-26rem;bottom:-18rem}
-    main{width:min(100%,620px);margin:0 auto;padding:42px 22px 34px;position:relative;z-index:1}
-    .profile{text-align:center}
-    .portrait{width:132px;height:132px;margin:0 auto 20px;padding:4px;border:2px solid rgba(76,145,239,.72);border-radius:50%;background:transparent;box-shadow:none}
-    .portrait img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
-    h1{margin:0;font-size:clamp(30px,8vw,42px);line-height:1;letter-spacing:-.05em}
-    .bio{max-width:460px;margin:13px auto 0;color:var(--muted);font-size:15px;line-height:1.6}
-    .section{margin-top:34px}
-    .section-title{margin:0 0 11px;color:#7f8b9b;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
-    .links{display:grid;gap:10px}
-    .link{min-height:70px;padding:13px 17px;border:1px solid var(--line);border-radius:17px;background:rgba(12,26,45,.9);color:var(--white);text-decoration:none;display:flex;align-items:center;gap:15px;transition:transform .2s ease,border-color .2s ease,background .2s ease}
-    .link:hover{transform:translateY(-2px);border-color:rgba(76,145,239,.7);background:var(--panel-hover)}
-    .link:focus-visible{outline:3px solid var(--blue-light);outline-offset:3px}
-    .link.primary{border-color:transparent;background:linear-gradient(100deg,var(--blue),#00449f);box-shadow:0 15px 38px rgba(18,102,220,.24)}
-    .icon{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.1);font-size:19px;font-weight:800}
-    .icon img{display:block;width:22px;height:22px;object-fit:contain}
-    .link.primary .icon img{filter:invert(1)}
-    .icon.brand-icon{background:#eef4ff}
-    .icon.brand-icon img{width:25px;height:25px}
-    .link-copy{min-width:0;flex:1}
-    .link strong,.link small{display:block}
-    .link strong{font-size:15px}
-    .link small{margin-top:4px;color:#aeb9c9;font-size:12px;line-height:1.35}
-    .link.primary small{color:#dceaff}
-    .arrow{color:#7e8da1;font-size:22px;transition:transform .2s ease}
-    .link.primary .arrow{color:#fff}
-    .link:hover .arrow{transform:translateX(3px)}
-    .coming{min-height:82px;padding:17px;border:1px dashed rgba(255,255,255,.18);border-radius:17px;display:flex;align-items:center;gap:15px;color:#727f91}
-    .coming .icon{background:rgba(255,255,255,.04)}
-    .coming strong,.coming small{display:block}
-    .coming strong{color:#a9b2bf;font-size:14px}
-    .coming small{margin-top:4px;font-size:12px}
-    footer{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);text-align:center;color:#536174;font-size:11px}
-    @media(max-width:420px){main{padding-top:30px}.portrait{width:118px;height:118px}.link{min-height:68px}.bio{font-size:14px}}
-    @media(prefers-reduced-motion:reduce){.link,.arrow{transition:none}}
+    html{min-height:100%;background:var(--paper)}
+    body{margin:0;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    main{width:100%;max-width:492px;margin:0 auto;padding:30px 16px max(24px,env(safe-area-inset-bottom))}
+    .profile{display:flex;align-items:center;gap:13px;margin-bottom:23px}
+    .portrait{display:block;width:54px;height:54px;flex:0 0 54px;border:1px solid var(--blue);padding:3px;border-radius:50%}
+    .portrait img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
+    h1{margin:0;font-size:19px;line-height:1.25;letter-spacing:-.04em}
+    .bio{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .card{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:22px;min-width:0;min-height:188px;padding:21px;overflow:hidden;border-radius:22px;text-decoration:none;background:var(--ink);color:#fff;transition:transform .2s ease}
+    .card:focus-visible{outline:3px solid var(--blue);outline-offset:4px}
+    .wide{grid-column:1/-1}
+    .card-copy{position:relative;z-index:1}
+    .card h2{margin:0;font-size:23px;line-height:1.1;font-weight:650;letter-spacing:-.045em;overflow-wrap:break-word}
+    .card p{margin:9px 0 0;font-size:12px;line-height:1.5;color:#d1dcea}
+    .card-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .eyebrow{font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:600}
+    .arrow{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid currentColor;border-radius:50%;font-size:19px;line-height:1}
+    .icon{display:block;width:28px;height:28px;object-fit:contain}
+    svg.icon{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .service{min-height:300px;justify-content:flex-end;background:#074da3}
+    .service-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 32%;z-index:-2;transition:transform .4s ease}
+    .service:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(4,15,32,.05) 30%,rgba(4,15,32,.88) 100%)}
+    .service .card-top{position:absolute;top:21px;left:21px;right:21px;align-items:flex-start}
+    .service .eyebrow{padding:8px 11px;border:1px solid rgba(255,255,255,.55);border-radius:30px;background:rgba(4,25,57,.28)}
+    .service h2{font-size:34px}
+    .service p{max-width:290px;color:#f0f3f8;font-size:13px}
+    .whatsapp{background:#0757bd}
+    .whatsapp .icon{filter:invert(1)}
+    .site{background:#e6ecf3;color:var(--ink)}
+    .site .icon{width:38px;height:28px}
+    .site p{color:#4d5c70}
+    .traffic{min-height:234px}
+    .traffic h2{font-size:24px}
+    .traffic p{max-width:160px}
+    .product{background:#dce9fc;color:#102e56}
+    .product p{color:#415b7d}
+    .content{min-height:186px;background:#08448e}
+    .content h2{font-size:28px}
+    .content p{max-width:305px}
+    footer{padding:24px 0 4px;text-align:center;font-size:11px;line-height:1.6;color:var(--muted)}
+    @media(hover:hover){.card:hover{transform:translateY(-3px)}.service:hover .service-photo{transform:scale(1.035)}}
+    @media(max-width:374px){main{padding:22px 12px}.cards{gap:10px}.card{padding:17px;border-radius:19px}.card h2{font-size:21px}.service h2{font-size:30px}.content h2{font-size:26px}.service .card-top{top:17px;left:17px;right:17px}}
+    @media(max-width:299px){.cards{grid-template-columns:minmax(0,1fr)}.card{min-height:170px}.service{min-height:280px}.profile{align-items:flex-start}}
+    @media(prefers-reduced-motion:reduce){.card,.service-photo{transition:none}.card:hover,.service:hover .service-photo{transform:none}}
   </style>
 </head>
 <body>
   <main>
-    <section class="profile" aria-labelledby="profile-name">
-      <div class="portrait"><img src="assets/stanley-perfil.webp" width="720" height="720" alt="Retrato de Stanley" fetchpriority="high"></div>
-      <h1 id="profile-name">Stanley Batista</h1>
-      <p class="bio">Estratégia, tecnologia e criação para transformar ideias em marcas, presença digital e negócios.</p>
-    </section>
-
-    <section class="section" aria-labelledby="contact-title">
-      <h2 class="section-title" id="contact-title">Contato e Bādon</h2>
-      <div class="links">
-        <a class="link primary" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
-          <span class="icon" aria-hidden="true"><img src="assets/whatsapp.svg" alt=""></span>
-          <span class="link-copy"><strong>WhatsApp</strong><small>Entre em contato para projetos, propostas e parcerias</small></span>
-          <span class="arrow" aria-hidden="true">→</span>
-        </a>
-        <a class="link" href="/">
-          <span class="icon brand-icon" aria-hidden="true"><img src="assets/simbolo-badon.svg" alt=""></span>
-          <span class="link-copy"><strong>Site da Produtora Bādon</strong><small>Conheça nossos serviços — site em manutenção</small></span>
-          <span class="arrow" aria-hidden="true">→</span>
-        </a>
+    <header class="profile">
+      <span class="portrait"><img src="assets/stanley-perfil-2026.webp" width="900" height="900" alt="Retrato de Stanley Batista" fetchpriority="high"></span>
+      <div>
+        <h1>Stanley Batista</h1>
+        <p class="bio">Estratégia, tráfego e conteúdo.<br>À frente da Produtora Bādon.</p>
       </div>
-    </section>
+    </header>
 
-    <section class="section" aria-labelledby="products-title">
-      <h2 class="section-title" id="products-title">Produtos</h2>
-      <div class="coming" aria-label="Novos produtos em breve">
-        <span class="icon" aria-hidden="true">+</span>
-        <span><strong>Novos produtos em breve</strong><small>Este espaço está preparado para os próximos lançamentos.</small></span>
-      </div>
-    </section>
+    <nav class="cards" aria-label="Serviços e contato pelo WhatsApp">
+      <a class="card wide service" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
+        <img class="service-photo" src="assets/stanley-perfil-2026.webp" width="900" height="900" alt="" fetchpriority="high">
+        <div class="card-top"><span class="eyebrow">Vamos criar juntos</span><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-copy"><h2>Serviço</h2><p>Estratégia e criação para o próximo passo do seu negócio.</p></div>
+      </a>
 
-    <footer>© 2026 Produtora Bādon</footer>
+      <a class="card whatsapp" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
+        <div class="card-top"><img class="icon" src="assets/whatsapp.svg" width="28" height="28" alt=""><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-copy"><h2>Entrar em contato no WhatsApp</h2><p>Conte sua ideia por aqui.</p></div>
+      </a>
+
+      <a class="card site" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
+        <div class="card-top"><img class="icon" src="assets/simbolo-badon.svg" width="38" height="28" alt=""><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-copy"><h2>Site</h2><p>O site da Bādon está em manutenção. Fale comigo no WhatsApp.</p></div>
+      </a>
+
+      <a class="card traffic" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
+        <div class="card-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-copy"><h2>Gestão de tráfego para negócios locais</h2><p>Sua empresa mais perto de quem está por perto.</p></div>
+      </a>
+
+      <a class="card traffic product" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
+        <div class="card-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4M12 11v10M7.5 5l9 4v5"/></svg><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-copy"><h2>Gestão de tráfego para produto</h2><p>Campanhas para conectar sua oferta ao público certo.</p></div>
+      </a>
+
+      <a class="card wide content" href="https://wa.me/message/NTSXADH2X3BFC1" target="_blank" rel="noopener noreferrer">
+        <div class="card-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="m10 9 5 3.5-5 3.5V9ZM8 2v3M16 2v3"/></svg><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-copy"><h2>Criação de conteúdo</h2><p>Ideias que viram presença. Conteúdo com estratégia e a identidade da sua marca.</p></div>
+      </a>
+    </nav>
+
+    <footer>Escolha um assunto e fale comigo no WhatsApp.<br>© 2026 Produtora Bādon</footer>
   </main>
 </body>
 </html>
