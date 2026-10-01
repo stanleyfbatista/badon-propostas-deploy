@@ -20,6 +20,7 @@ const base = 'http://127.0.0.1:' + httpPort;
 const sql = query => run(path.join(mysqlBin, 'mariadb'), ['--no-defaults', '--socket=' + socket, '-u', 'root', '-N', '-B', '-e', query], { stdio: 'pipe' });
 let dbProc, phpProc, smtp;
 let rejectMail = false;
+let stallMail = false, smtpConnections = 0;
 const messages = [];
 const recipients = [];
 const log = (text) => console.log('OK:', text);
@@ -55,6 +56,14 @@ try {
   }
   log('deploy idempotente, credenciais privadas e páginas antigas preservadas');
   const cli = path.join(account, 'badon-app/console.php');
+  const worker = (command = 'notifications:work') => new Promise((resolve, reject) => {
+    const child = spawn(php, [cli, command], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = ''; child.stdout.on('data', chunk => output += chunk);
+    child.stderr.on('data', chunk => output += chunk);
+    const timeout = setTimeout(() => { child.kill(); reject(new Error('Worker exceeded test deadline')); }, 45000);
+    child.on('error', reject);
+    child.on('exit', code => { clearTimeout(timeout); code === 0 ? resolve(output) : reject(new Error(output)); });
+  });
   run(php, [cli, 'migrate']); run(php, [cli, 'migrate']);
   const password = randomBytes(18).toString('hex');
   run(php, [cli, 'admin:create', 'admin@example.invalid'], { input: password + '\n', stdio: ['pipe', 'pipe', 'ignore'] });
@@ -62,6 +71,9 @@ try {
   assert.ok(storedHash.startsWith('$2y$') && storedHash !== password);
   log('migração MySQL compatível e senha armazenada com hash');
   smtp = net.createServer(client => {
+    smtpConnections++;
+    client.on('error', () => {});
+    if (stallMail) { client.resume(); return; }
     client.setEncoding('utf8'); client.write('220 localhost test SMTP\r\n');
     let buffer = '', dataMode = false, data = [];
     client.on('data', chunk => {
@@ -123,6 +135,9 @@ try {
   assert.equal((await new Client().req(sent.headers.get('location'))).status, 404);
   assert.equal((await guest.req('/api/enviar.php', send)).status, 303);
   assert.equal(sql('SELECT COUNT(*) FROM badon_test.leads').trim(), '1');
+  assert.equal(sql('SELECT email_status FROM badon_test.leads').trim(), 'pending');
+  assert.equal(smtpConnections, 0, 'Public submission must not contact SMTP');
+  await worker();
   assert.equal(sql('SELECT email_status FROM badon_test.leads').trim(), 'sent');
   assert.ok(sql('SELECT consent_text FROM badon_test.leads').includes('autorizo'));
   assert.equal(messages.length, 1); assert.ok(messages[0].includes('Reply-To: lead@example.invalid'));
@@ -138,11 +153,45 @@ try {
   rejectMail = true;
   const form2 = await guest.req('/f/trafego-local');
   const failed = await guest.req('/api/enviar.php', { ...send, submission: token(form2.body, 'submission') }); assert.equal(failed.status, 303);
+  assert.equal((await guest.req(failed.headers.get('location'))).status, 200);
+  await worker();
   assert.equal(sql('SELECT email_status FROM badon_test.leads ORDER BY id DESC LIMIT 1').trim(), 'failed');
   rejectMail = false;
   assert.equal((await admin.req('/admin/', { action: 'retry-mail', csrf, id: '2' })).status, 303);
+  assert.equal(sql('SELECT email_status FROM badon_test.leads WHERE id=2').trim(), 'pending');
+  await worker();
   assert.equal(sql('SELECT email_status FROM badon_test.leads WHERE id=2').trim(), 'sent');
   log('falha de SMTP preserva lead e permite reenvio pelo painel');
+  // Servidor silencioso: a página confirma antes de qualquer trabalho SMTP.
+  stallMail = true;
+  const stalledForm = await guest.req('/f/trafego-local');
+  const beforeStall = smtpConnections, started = Date.now();
+  const stalled = await guest.req('/api/enviar.php', { ...send, submission: token(stalledForm.body, 'submission') });
+  assert.equal(stalled.status, 303);
+  assert.equal((await guest.req(stalled.headers.get('location'))).status, 200);
+  assert.ok(Date.now() - started < 2000, 'Confirmation cannot wait for SMTP');
+  assert.equal(smtpConnections, beforeStall);
+  const stalledId = sql('SELECT MAX(id) FROM badon_test.leads').trim();
+  const processing = worker();
+  await ready(() => smtpConnections > beforeStall);
+  assert.match(await worker(), /Já existe um processamento/);
+  assert.equal((await guest.req(stalled.headers.get('location'))).status, 200, 'Worker must not hold visitor session');
+  await processing;
+  assert.ok(Date.now() - started < 25000, 'SMTP command timeout must not remain at 300 seconds');
+  assert.equal(sql(`SELECT email_status FROM badon_test.leads WHERE id=${stalledId}`).trim(), 'failed');
+  const attempts = sql(`SELECT email_attempts FROM badon_test.leads WHERE id=${stalledId}`);
+  await worker();
+  assert.equal(sql(`SELECT email_attempts FROM badon_test.leads WHERE id=${stalledId}`), attempts, 'Automatic retry must back off');
+  stallMail = false;
+  sql(`UPDATE badon_test.leads SET email_status='sending', email_attempted_at=UTC_TIMESTAMP()-INTERVAL 11 MINUTE WHERE id=${stalledId}`);
+  await worker();
+  assert.equal(sql(`SELECT email_status FROM badon_test.leads WHERE id=${stalledId}`).trim(), 'sent');
+  const delivered = messages.length; await worker(); assert.equal(messages.length, delivered, 'Do not resend delivered notifications');
+  const incidents = fs.readFileSync(path.join(account, 'badon-config/incidents.log'), 'utf8');
+  assert.match(incidents, /stage=lead-mail/);
+  assert.ok(!incidents.includes('lead@example.invalid') && !incidents.includes(dbPassword));
+  assert.equal(fs.statSync(path.join(account, 'badon-config/incidents.log')).mode & 0o777, 0o600);
+  log('SMTP silencioso não bloqueia confirmação; timeout, fila, lock, backoff, recuperação e diagnóstico privado');
   const edit = await admin.req('/admin/?view=form&id=' + formId);
   const custom = { ...formData, id: String(formId), version: token(edit.body, 'version'), whatsapp_message: 'Quero conversar sobre meu projeto!' };
   assert.equal((await admin.req('/admin/', custom)).status, 303);
@@ -178,6 +227,7 @@ try {
   const earlyValues = JSON.parse(sql('SELECT values_json FROM badon_test.leads ORDER BY id DESC LIMIT 1').trim());
   assert.deepEqual(earlyValues.map(item => item.key), ['email', 'investimento', '_flow_outcome']);
   assert.ok(earlyValues.at(-1).value.includes('Encerramento condicional'));
+  await worker();
   assert.ok(messages.at(-1).includes('Resultado do funil:') && !messages.at(-1).includes('FORGED-SKIPPED'));
   assert.equal((await flowGuest.req('/api/enviar.php', flowSend)).status, 303);
   assert.equal(Number(sql('SELECT COUNT(*) FROM badon_test.leads').trim()), countBefore + 1);
@@ -225,7 +275,7 @@ try {
   run(php, [cli, 'admin:password', 'admin@example.invalid'], { input: randomBytes(18).toString('hex') + '\n', stdio: ['pipe', 'pipe', 'ignore'] });
   assert.ok((await admin.req('/admin/')).body.includes('type="password"'));
   log('troca de senha invalida sessões anteriores');
-  await studioTests({base,sql,run,php,cli,messages,recipients,Client,token});
+  await studioTests({base,sql,run,php,cli,messages,recipients,Client,token,worker});
   // Validar configuração de produção sem qualquer conexão SMTP externa.
   const productionConfig = config.replace("'environment'=>'development'", "'environment'=>'production'").replace("'base_url'=>'http:", "'base_url'=>'https:").replace("'encryption'=>'none','username'=>'','password'=>''", "'encryption'=>'tls','username'=>'test','password'=>'test'");
   fs.writeFileSync(path.join(account, 'badon-config/config.php'), productionConfig, { mode: 0o600 });

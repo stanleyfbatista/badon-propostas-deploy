@@ -44,7 +44,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Um formulário novo só aceita respostas após publicar. **Publicar ativa** o formulário. Pausar desabilita novos envios sem apagar respostas. Alterar o slug na publicação muda o link; avise quem compartilha o formulário.
 - Uma publicação que modifica o título/perguntas invalida tickets antigos com uma mensagem para recarregar. Salvar rascunhos não os invalida.
 - Convites, link mágico e notificações usam o SMTP privado existente. Entrega real, SPF/DKIM e spam precisam ser conferidos na hospedagem; os testes automatizados usam SMTP falso local. Não mude o MX do Google para testar o envio.
-- Falhas de SMTP/webhook não descartam leads. Para retry manual: `php /home/produ7943464/badon-app/console.php mail:retry` e `php /home/produ7943464/badon-app/console.php webhook:retry`. Webhook automático inicial + até cinco tentativas no total. Configure Cron somente se desejar repetição automática. O consumidor deve deduplicar pelo cabeçalho `Idempotency-Key`.
+- Falhas de SMTP/webhook não descartam leads nem bloqueiam a confirmação. O envio público apenas salva e confirma: as notificações ficam na fila do MySQL. **Configure o Cron obrigatório de notificações descrito abaixo.** O consumidor de webhook deve deduplicar pelo cabeçalho `Idempotency-Key`.
 - O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
 - A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
 - Ainda fora desta etapa: CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico, biblioteca de mídias e upload de arquivos pelos respondentes também não foram adicionados.
@@ -244,9 +244,26 @@ O editor usa um único campo JSON para não depender de `max_input_vars` ao salv
 - `password_hash`/`password_verify`, prepared statements, escape HTML, cabeçalhos de segurança, CSV protegido contra fórmulas e sem cache nas páginas dinâmicas.
 - A política incluída precisa refletir a operação real, inclusive atendimento aos titulares e retenção. É um texto inicial, não uma garantia de conformidade jurídica. Revise-o antes de receber dados reais.
 - O prazo da política **não apaga leads automaticamente**. O painel tem exclusão individual confirmada; mantenha uma rotina de revisão e trate também e-mails, exportações e backups.
-- O lead é salvo antes da tentativa SMTP. Falhas são visíveis no painel; use **Reenviar notificação**. Um timeout após aceitação pelo SMTP pode tornar necessária a conferência antes de reenviar para evitar e-mail duplicado.
+- O lead e sua fila são salvos antes da confirmação, sem conexão SMTP/webhook na requisição pública. Falhas são visíveis no painel; **Tentar novamente** recoloca a notificação na fila, sem bloquear o painel. A operação exige permissão de edição e não reenvia notificações já entregues ou em processamento recente. Um timeout após aceitação pelo SMTP pode tornar necessária a conferência da caixa de entrada antes de tentar de novo, para evitar e-mail duplicado.
 - A tela de confirmação prova que o banco recebeu o lead, não que a mensagem chegou à caixa de entrada. SPF, DKIM e entregabilidade dependem da hospedagem.
 - Nenhum envio contém arquivos anexos, campos HTML executáveis ou respostas inseridas automaticamente na mensagem do WhatsApp.
+
+### Tarefa obrigatória de notificações no cPanel
+
+Depois de **Update from Remote → Deploy HEAD Commit**, abra **Trabalhos Cron** e crie uma tarefa a cada minuto (`* * * * *`). No Terminal, `command -v php` informa o executável; use o caminho absoluto retornado no comando da tarefa:
+
+```sh
+/CAMINHO/DO/PHP /home/USUARIO/badon-app/console.php notifications:work
+```
+
+Não cole os placeholders literalmente. Nesta conta, substitua `USUARIO` por `produ7943464`. O mesmo comando pode ser executado no Terminal com `php` para testar uma rodada e recuperar a notificação antiga. **Sem Cron, os leads e confirmações continuam funcionando, mas as notificações permanecem na fila.** Não é necessária migração nova, alteração de credenciais, serviço externo ou acesso público ao worker.
+
+- Uma trava privada impede execuções simultâneas; o claim no banco protege cada notificação.
+- Cada rodada busca até 10 e-mails e 10 webhooks e para de iniciar trabalhos após 50 segundos (um trabalho iniciado pode terminar depois). Ajustes do provedor ainda podem interromper o processo; a fila permanece no banco.
+- Falhas automáticas aguardam 15 minutos entre tentativas, até cinco tentativas. Envios interrompidos há mais de 10 minutos voltam a ser elegíveis. O painel permite iniciar novo ciclo manual.
+- O SMTP tem limite de 10 segundos de conexão/leitura e de espera por comando, aplicado ao objeto SMTP correto; isso não é um limite global de toda a conversa SMTP.
+- E-mails aceitos pelo SMTP não são enviados novamente pelo worker. Aceitação não garante entrega na caixa de entrada.
+- Diagnósticos ficam em `/home/USUARIO/badon-config/incidents.log`, fora do site/Git, com permissão `0600`. Contêm referência, etapa, classe e local da falha, sem senhas, respostas, SQL ou transcrição SMTP. Revise/rotacione esse arquivo periodicamente. Os registros antigos anteriores à atualização não são recuperados automaticamente.
 
 Comandos opcionais no Terminal:
 
@@ -254,7 +271,7 @@ Comandos opcionais no Terminal:
 # Alterar uma senha sem gravá-la no histórico de comandos:
 php /home/USUARIO/badon-app/console.php admin:password SEU_EMAIL
 
-# Tentar entregar até 50 notificações pendentes/com falha:
+# Tentar até 10 notificações pendentes/com falha (manual, ignora backoff e limite de tentativas):
 php /home/USUARIO/badon-app/console.php mail:retry
 
 # Apagar apenas contadores antiabuso com mais de 48 horas (não apaga leads):

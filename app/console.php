@@ -32,23 +32,16 @@ if ($command === 'studio:migrate') {
     $version = db()->query('SELECT VERSION()')->fetchColumn();
     $count = db()->query('SELECT COUNT(*) FROM admins')->fetchColumn();
     echo "Configuração válida. Banco conectado ($version). Administradores: $count.\n";
-    echo "SMTP: configurado; o teste de entrega é feito ao enviar um formulário.\n";
-} elseif ($command === 'mail:retry') {
-    require __DIR__ . '/mail.php';
-    $stmt = db()->prepare("SELECT id FROM leads WHERE email_status IN ('pending', 'failed') OR (email_status = 'sending' AND email_attempted_at < ?) ORDER BY id LIMIT 50");
-    $stmt->execute([gmdate('Y-m-d H:i:s', time() - 600)]);
-    $ids = $stmt->fetchAll(PDO::FETCH_COLUMN); $sent = 0;
-    foreach ($ids as $id) if (notify_lead((int)$id)) $sent++;
-    echo "Notificações enviadas: $sent de " . count($ids) . ".\n";
-} elseif ($command === 'webhook:retry') {
-    require __DIR__ . '/studio-public.php';
-    $q = db()->prepare("SELECT lead_id FROM bf_deliveries WHERE attempts < 5 AND (webhook_status IN ('pending', 'failed') OR (webhook_status = 'sending' AND attempted_at < ?)) ORDER BY lead_id LIMIT 20");
-    $q->execute([gmdate('Y-m-d H:i:s', time() - 120)]); $sent = 0;
-    foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $id) if (studio_webhook((int)$id)) $sent++;
-    echo "Webhooks entregues: $sent.\n";
+    echo "SMTP: configurado. Agende notifications:work no Cron para processar a fila.\n";
+} elseif (in_array($command, ['notifications:work', 'mail:retry', 'webhook:retry'], true)) {
+    require __DIR__ . '/notifications.php';
+    $channel = ['mail:retry' => 'mail', 'webhook:retry' => 'webhook'][$command] ?? 'all';
+    $result = process_notifications($channel, $command !== 'notifications:work');
+    if ($result['busy']) echo "Já existe um processamento de notificações em andamento.\n";
+    else echo "Notificações: {$result['mail']} e-mails, {$result['webhook']} webhooks concluídos; {$result['failed']} falhas. Leads preservados.\n";
 } elseif ($command === 'security:cleanup') {
     db()->prepare('DELETE FROM rate_limits WHERE window_start < ?')->execute([time() - 172800]);
     echo "Contadores de proteção com mais de 48 horas removidos. Leads preservados.\n";
 } else {
-    echo "Comandos: migrate | studio:migrate | check | admin:create EMAIL | admin:password EMAIL | mail:retry | security:cleanup\n";
+    echo "Comandos: migrate | studio:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
 }

@@ -54,12 +54,10 @@ async function uploadCover(file: File, workspace: number): Promise<CoverMedia> {
     headers: { "X-CSRF-Token": csrf },
     body,
   });
-  const result = await response
-    .json()
-    .catch(() => ({
-      error:
-        "O servidor interrompeu o upload. Confira o tamanho do arquivo e os limites do PHP no cPanel.",
-    }));
+  const result = await response.json().catch(() => ({
+    error:
+      "O servidor interrompeu o upload. Confira o tamanho do arquivo e os limites do PHP no cPanel.",
+  }));
   if (!response.ok)
     throw new Error(result.error || "Não foi possível enviar a mídia.");
   return result.media;
@@ -1087,7 +1085,7 @@ function Editor({
         </span>
       </div>
       {tab === "responses" ? (
-        <Responses id={form.id} task={task} />
+        <Responses id={form.id} task={task} editable={editable} />
       ) : tab === "settings" ? (
         <section className="settings-grid">
           <fieldset disabled={!editable || busy} className="box">
@@ -1989,7 +1987,15 @@ function Preview({
     </div>
   );
 }
-function Responses({ id, task }: { id: number; task: Task }) {
+function Responses({
+  id,
+  task,
+  editable,
+}: {
+  id: number;
+  task: Task;
+  editable: boolean;
+}) {
   const [data, setData] = useState<{ leads: any[]; total: number }>({
       leads: [],
       total: 0,
@@ -1999,6 +2005,8 @@ function Responses({ id, task }: { id: number; task: Task }) {
   useEffect(() => {
     task(async () => setData(await api("leads", undefined, { id, page })));
   }, [id, page]);
+  const refresh = () =>
+    task(async () => setData(await api("leads", undefined, { id, page })));
   return (
     <section className="responses">
       <div className="page-heading">
@@ -2015,6 +2023,11 @@ function Responses({ id, task }: { id: number; task: Task }) {
           </Button>
         </form>
       </div>
+      <p className="muted">
+        Os contatos já estão salvos. As notificações são processadas
+        separadamente pela tarefa agendada da hospedagem.{" "}
+        <Button onClick={refresh}>Atualizar status</Button>
+      </p>
       <div className="table-wrap">
         <table>
           <thead>
@@ -2035,14 +2048,32 @@ function Responses({ id, task }: { id: number; task: Task }) {
                   ).toLocaleString("pt-BR")}
                 </td>
                 <td>
-                  {
-                    {
-                      sent: "Enviada",
-                      pending: "Pendente",
-                      failed: "Falhou",
-                      sending: "Enviando",
-                    }[l.email_status as "sent"]
-                  }
+                  {l.notification_stale
+                    ? "Interrompida"
+                    : {
+                        sent: "Enviada",
+                        pending: "Na fila",
+                        failed: "Falhou",
+                        sending: "Enviando",
+                      }[l.email_status as "sent"]}
+                  {editable && l.can_retry && (
+                    <Button
+                      onClick={() => {
+                        if (
+                          !confirm(
+                            "Recolocar a notificação na fila? Confira a caixa de entrada antes: se o servidor aceitou o e-mail mas não respondeu, a nova tentativa pode duplicar a mensagem.",
+                          )
+                        )
+                          return;
+                        task(async () => {
+                          await api("retry-mail", { id, lead_id: l.id });
+                          setData(await api("leads", undefined, { id, page }));
+                        });
+                      }}
+                    >
+                      Tentar novamente
+                    </Button>
+                  )}
                 </td>
                 <td>
                   <Button onClick={() => setLead(l)}>

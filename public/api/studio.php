@@ -126,7 +126,7 @@ try {
         db()->prepare('INSERT INTO bf_forms (form_id, workspace_id, draft_json, published_settings) VALUES (?, ?, ?, ?)')->execute([$id, $workspace, json_encode($draft, JSON_THROW_ON_ERROR), '{}']); db()->commit(); studio_json(['id' => $id]);
     }
     $id = (int)($in['id'] ?? $_GET['id'] ?? 0);
-    $level = in_array($action, ['save', 'publish', 'status'], true) ? 'edit' : 'read';
+    $level = in_array($action, ['save', 'publish', 'status', 'retry-mail'], true) ? 'edit' : 'read';
     if (in_array($action, ['save', 'publish', 'status'], true)) db()->beginTransaction();
     $f = studio_form($u, $id, $level, in_array($action, ['save', 'publish', 'status'], true));
     if ($action === 'form') studio_json(['form' => ['id' => (int)$f['id'], 'workspace_id' => (int)$f['workspace_id'], 'folder_id' => $f['folder_id'], 'draft' => json_decode($f['draft_json'], true), 'revision' => (int)$f['revision'], 'published_revision' => $f['published_revision'], 'published_at' => $f['published_at'], 'slug' => $f['slug'], 'active' => (bool)$f['active']]]);
@@ -151,8 +151,19 @@ try {
     if ($action === 'leads') {
         $page = max(1, min(1000000, (int)($_GET['page'] ?? 1)));
         $q = db()->prepare('SELECT COUNT(*) FROM leads WHERE form_id = ?'); $q->execute([$id]); $count = (int)$q->fetchColumn();
-        $q = db()->prepare('SELECT id, form_title, values_json, reply_email, consent_text, privacy_url, created_at, email_status FROM leads WHERE form_id = ? ORDER BY id DESC LIMIT 30 OFFSET ?'); $q->execute([$id, ($page - 1) * 30]);
-        studio_json(['leads' => $q->fetchAll(), 'total' => $count, 'page' => $page]);
+        $q = db()->prepare('SELECT id, form_title, values_json, reply_email, consent_text, privacy_url, created_at, email_status, email_attempted_at FROM leads WHERE form_id = ? ORDER BY id DESC LIMIT 30 OFFSET ?'); $q->execute([$id, ($page - 1) * 30]);
+        $leads = $q->fetchAll();
+        foreach ($leads as &$lead) {
+            $lead['notification_stale'] = $lead['email_status'] === 'sending' && $lead['email_attempted_at'] < gmdate('Y-m-d H:i:s', time() - 600);
+            $lead['can_retry'] = $lead['email_status'] === 'failed' || $lead['notification_stale'];
+        }
+        unset($lead);
+        studio_json(['leads' => $leads, 'total' => $count, 'page' => $page]);
+    }
+    if ($action === 'retry-mail') {
+        if (!rate_allowed('studio-mail-retry', ($u['agency'] ? 'a' : 'u') . $u['id'], 30, 3600)) studio_error(429, 'Aguarde antes de tentar mais notificações.');
+        if (!queue_lead_mail((int)($in['lead_id'] ?? 0), $id)) studio_error(409, 'A notificação já foi enviada, está na fila ou ainda está sendo processada. Atualize a lista.');
+        studio_json(['ok' => true]);
     }
     if ($action === 'export') { require BADON_APP . '/admin.php'; export_leads($id); }
     studio_error(404, 'Ação não encontrada.');

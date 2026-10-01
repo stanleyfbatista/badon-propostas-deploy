@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!rate_allowed('mail-retry', (string)$_SESSION['admin_id'], 30, 3600)) fail_page(429, 'Aguarde antes de reenviar mais notificações.');
             require BADON_APP . '/mail.php';
             $id = (int)($_POST['id'] ?? 0);
-            $_SESSION['flash'] = notify_lead($id) ? 'Notificação enviada.' : 'Não foi possível reenviar. Confira o status e as configurações SMTP.';
+            $_SESSION['flash'] = queue_lead_mail($id) ? 'Notificação recolocada na fila. A tarefa notifications:work fará o envio.' : 'A notificação já foi enviada, está na fila ou ainda está sendo processada.';
             redirect('/admin/?view=lead&id=' . $id);
         }
         if ($action === 'delete-lead') {

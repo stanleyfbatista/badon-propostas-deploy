@@ -5,6 +5,21 @@ require_once __DIR__ . '/vendor/phpmailer/src/Exception.php';
 require_once __DIR__ . '/vendor/phpmailer/src/PHPMailer.php';
 require_once __DIR__ . '/vendor/phpmailer/src/SMTP.php';
 
+function configure_mail_timeouts(PHPMailer\PHPMailer\PHPMailer $mail): void
+{
+    $mail->Timeout = 10;
+    // Timelimit pertence ao SMTP, não ao PHPMailer (a propriedade dinâmica
+    // no mailer não muda os 300 segundos usados por stream_select).
+    $mail->getSMTPInstance()->Timelimit = 10;
+}
+
+function queue_lead_mail(int $id, int $formId = 0): bool
+{
+    $q = db()->prepare("UPDATE leads SET email_status = 'pending', email_attempts = 0, email_attempted_at = NULL WHERE id = ? AND (? = 0 OR form_id = ?) AND (email_status = 'failed' OR (email_status = 'sending' AND email_attempted_at < ?))");
+    $q->execute([$id, $formId, $formId, gmdate('Y-m-d H:i:s', time() - 600)]);
+    return $q->rowCount() === 1;
+}
+
 function studio_send_mail(string $recipient, string $subject, string $body): bool
 {
     global $config;
@@ -13,9 +28,9 @@ function studio_send_mail(string $recipient, string $subject, string $body): boo
         $mail->isSMTP(); $mail->Host = $m['host']; $mail->Port = (int)$m['port'];
         $mail->SMTPAuth = !empty($m['username']); $mail->Username = $m['username']; $mail->Password = $m['password'];
         $mail->SMTPSecure = $m['encryption'] === 'none' ? '' : $m['encryption']; $mail->SMTPAutoTLS = $m['encryption'] !== 'none';
-        $mail->Timeout = 15; $mail->CharSet = 'UTF-8'; $mail->setFrom($m['from_email'], $m['from_name']);
+        configure_mail_timeouts($mail); $mail->CharSet = 'UTF-8'; $mail->setFrom($m['from_email'], $m['from_name']);
         $mail->addAddress($recipient); $mail->Subject = $subject; $mail->Body = $body; $mail->send(); return true;
-    } catch (Throwable $e) { error_log('Badon account email delivery failed'); return false; }
+    } catch (Throwable $e) { log_incident($e, 'account-mail'); return false; }
 }
 
 function notify_lead(int $id): bool
@@ -35,7 +50,7 @@ function notify_lead(int $id): bool
         $mail->Username = $m['username']; $mail->Password = $m['password'];
         $mail->SMTPSecure = $m['encryption'] === 'none' ? '' : $m['encryption'];
         $mail->SMTPAutoTLS = $m['encryption'] !== 'none';
-        $mail->Timeout = 15; $mail->Timelimit = 20;
+        configure_mail_timeouts($mail);
         $mail->CharSet = 'UTF-8';
         $mail->setFrom($m['from_email'], $m['from_name']);
         require_once __DIR__ . '/studio.php';
@@ -59,8 +74,8 @@ function notify_lead(int $id): bool
         db()->prepare("UPDATE leads SET email_status = 'sent', email_sent_at = ? WHERE id = ?")->execute([utc_now(), $id]);
         return true;
     } catch (Throwable $error) {
+        log_incident($error, 'lead-mail', $id);
         db()->prepare("UPDATE leads SET email_status = 'failed' WHERE id = ?")->execute([$id]);
-        error_log('Badon SMTP delivery failed for lead #' . $id);
         return false;
     }
 }

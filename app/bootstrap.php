@@ -7,10 +7,26 @@ ini_set('log_errors', '1');
 require_once __DIR__ . '/domain.php';
 require_once __DIR__ . '/web.php';
 
-set_exception_handler(function (Throwable $error): void {
-    // Não registrar senhas, dados do lead, consultas ou mensagens do SMTP.
+function log_incident(Throwable $error, string $stage = 'request', int $leadId = 0): string
+{
+    // Sem mensagens de exceção, senhas, respostas, SQL ou transcrição SMTP.
     $reference = bin2hex(random_bytes(6));
-    error_log('Badon incident ' . $reference . ': ' . get_class($error));
+    $line = gmdate('c') . ' Badon incident ' . $reference . ': ' . get_class($error)
+        . ' stage=' . $stage . ' source=' . basename($error->getFile()) . ':' . $error->getLine()
+        . ' lead=' . $leadId . PHP_EOL;
+    $path = dirname(__DIR__) . '/badon-config/incidents.log';
+    if (!is_link($path)) {
+        $oldMask = umask(0077);
+        try { $written = @file_put_contents($path, $line, FILE_APPEND | LOCK_EX); }
+        finally { umask($oldMask); }
+        if ($written !== false) @chmod($path, 0600);
+    }
+    error_log(trim($line));
+    return $reference;
+}
+
+set_exception_handler(function (Throwable $error): void {
+    $reference = log_incident($error);
     if (PHP_SAPI === 'cli') {
         fwrite(STDERR, "Operação interrompida. Confira a configuração. Referência: $reference\n");
         exit(1);

@@ -47,7 +47,6 @@ foreach (['title', 'message'] as $key) $_SESSION['receipts'][$receipt]['ending']
 foreach ($_SESSION['receipts'] as $key => $value) if ($value['time'] < time() - 3600) unset($_SESSION['receipts'][$key]);
 if (count($_SESSION['receipts']) > 20) array_shift($_SESSION['receipts']);
 session_write_close();
-require BADON_APP . '/mail.php';
-notify_lead($leadId);
-if (isset($ticket['settings'])) studio_webhook($leadId);
+// O commit acima já deixou e-mail/webhook pendentes. Somente o worker CLI
+// faz I/O externo: SMTP lento ou indisponível nunca bloqueia a confirmação.
 redirect('/f/confirmacao.php?r=' . $receipt);

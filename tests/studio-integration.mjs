@@ -22,6 +22,7 @@ export async function studioTests({
   recipients,
   Client,
   token,
+  worker,
 }) {
   const before = sql("SELECT id,fields_json FROM badon_test.forms ORDER BY id");
   run(php, [cli, "studio:migrate"]);
@@ -359,12 +360,49 @@ export async function studioTests({
   );
   const sent = await guest.req("/api/enviar.php", payload);
   assert.equal(sent.status, 303);
+  assert.equal(
+    sql(`SELECT email_status FROM badon_test.leads WHERE form_id=${id}`).trim(),
+    "pending",
+  );
+  await worker();
   assert.ok(recipients.at(-1).includes("client-notify@example.invalid"));
   const confirm = await guest.req(sent.headers.get("location"));
   assert.ok(confirm.body.includes("Obrigado, Stanley"));
   assert.ok(confirm.body.includes("Oi%2C+sou+Stanley"));
   const rows = (await reader.req("leads", undefined, { id })).body.leads;
   assert.equal(rows.length, 1);
+  const leadId = rows[0].id;
+  assert.equal(
+    (await reader.req("retry-mail", { id, lead_id: leadId })).status,
+    403,
+  );
+  assert.equal(
+    (await other.req("retry-mail", { id, lead_id: leadId })).status,
+    403,
+  );
+  assert.equal(
+    (await editor.req("retry-mail", { id, lead_id: leadId })).status,
+    409,
+  );
+  sql(
+    `UPDATE badon_test.leads SET email_status='sending', email_attempted_at=UTC_TIMESTAMP()-INTERVAL 11 MINUTE WHERE id=${leadId}`,
+  );
+  const staleRows = (await reader.req("leads", undefined, { id })).body.leads;
+  assert.equal(staleRows[0].notification_stale, true);
+  assert.equal(staleRows[0].can_retry, true);
+  assert.equal(
+    (await editor.req("retry-mail", { id, lead_id: 1 })).status,
+    409,
+  );
+  assert.equal(
+    (await editor.req("retry-mail", { id, lead_id: leadId })).status,
+    200,
+  );
+  assert.equal(
+    sql(`SELECT email_status FROM badon_test.leads WHERE id=${leadId}`).trim(),
+    "pending",
+  );
+  await worker();
   assert.ok(rows[0].values_json.includes("google"));
   assert.ok(!rows[0].values_json.includes("nao-salvar"));
   assert.equal((await reader.req("export", { id })).status, 200);
