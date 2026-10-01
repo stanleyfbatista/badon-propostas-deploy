@@ -47,8 +47,8 @@ function text_value($value): string
 
 function clean_fields(array $rows): array
 {
-    if (count($rows) < 1 || count($rows) > 30) {
-        throw new InvalidArgumentException('Use entre 1 e 30 campos.');
+    if (count($rows) < 1 || count($rows) > 100) {
+        throw new InvalidArgumentException('Use entre 1 e 100 perguntas.');
     }
     $fields = [];
     $keys = [];
@@ -62,10 +62,10 @@ function clean_fields(array $rows): array
         if (!preg_match('/^[a-z][a-z0-9_]{0,39}$/', $key) || isset($keys[$key])) {
             throw new InvalidArgumentException('Identificadores precisam ser únicos, sem espaços ou acentos, começando por letra.');
         }
-        if ($label === '' || mb_strlen($label) > 100 || preg_match('/[\x00-\x1F]/u', $label)) {
-            throw new InvalidArgumentException('Dê a cada campo um título de até 100 caracteres.');
+        if ($label === '' || mb_strlen($label) > 240 || preg_match('/[\x00-\x1F]/u', $label)) {
+            throw new InvalidArgumentException('Dê a cada pergunta um título de até 240 caracteres.');
         }
-        if (!in_array($type, ['text', 'email', 'tel', 'select', 'textarea'], true)) {
+        if (!in_array($type, ['text', 'email', 'tel', 'select', 'textarea', 'number'], true)) {
             throw new InvalidArgumentException('Tipo de campo inválido.');
         }
         $options = [];
@@ -112,6 +112,8 @@ function validate_answers(array $fields, array $input): array
             $errors[$key] = 'Informe telefone com DDD (8 a 15 dígitos).';
         } elseif ($value !== '' && $field['type'] === 'select' && !in_array($value, $field['options'], true)) {
             $errors[$key] = 'Escolha uma das opções disponíveis.';
+        } elseif ($value !== '' && $field['type'] === 'number' && !valid_flow_number($value)) {
+            $errors[$key] = 'Informe um número de 0 a 1 trilhão, sem símbolo de moeda ou separador de milhar.';
         } elseif ($field['type'] !== 'textarea' && preg_match('/[\r\n]/', $value)) {
             $errors[$key] = 'Use apenas uma linha.';
         }
@@ -138,3 +140,5 @@ function csv_safe(string $value): string
     if (preg_match('/^[\s\x00-\x1F]*[=+@-]/u', $value) || preg_match('/^[\t\r\n]/', $value)) return "'" . $value;
     return $value;
 }
+
+require_once __DIR__ . '/flow.php';

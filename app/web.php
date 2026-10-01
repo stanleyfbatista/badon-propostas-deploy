@@ -29,7 +29,7 @@ function limit_body(): void
 }
 function page_start(string $title, bool $admin = false): void
 {
-    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="/">Bādon<span>.</span></a>';
+    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon Forms</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css?v=2"><link rel="stylesheet" href="/forms-assets/flow.css?v=2"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="' . ($admin ? '/admin/' : '/') . '">Bādon<span>.</span><small class="brand-product">Forms</small></a>';
     if ($admin && !empty($_SESSION['admin_id'])) {
         echo '<nav aria-label="Painel"><a href="/admin/">Formulários</a><a href="/admin/?view=leads">Leads</a><form action="/admin/" method="post">' . csrf_input() . '<input type="hidden" name="action" value="logout"><button class="text-button">Sair</button></form></nav>';
     }
@@ -93,16 +93,17 @@ function submission_ticket(array $form): string
 function render_form(array $form, array $old = [], array $errors = [], ?string $nonce = null): void
 {
     global $config;
-    $fields = json_decode($form['fields_json'], true, 512, JSON_THROW_ON_ERROR);
+    $definition = form_definition($form['fields_json']);
+    $fields = $definition['fields'];
     $nonce = $nonce ?? submission_ticket($form);
     page_start($form['title']);
-    echo '<section class="panel"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Preencha os dados abaixo. Os campos com * são obrigatórios.</p>';
+    echo '<section class="panel public-flow"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Responda no seu ritmo. As perguntas com * são obrigatórias. Seus dados só serão enviados ao confirmar no final.</p>';
     if ($errors) alert_box('Confira os campos destacados e confirme seu consentimento para enviar.');
-    echo '<form action="/api/enviar.php" method="post">' . csrf_input() . '<input type="hidden" name="form_id" value="' . (int)$form['id'] . '"><input type="hidden" name="submission" value="' . h($nonce) . '">';
+    echo '<form action="/api/enviar.php" method="post" id="public-flow" data-definition="' . h(json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) . '">' . csrf_input() . '<input type="hidden" name="form_id" value="' . (int)$form['id'] . '"><input type="hidden" name="submission" value="' . h($nonce) . '"><p id="flow-progress" class="eyebrow" aria-live="polite" hidden></p><noscript><p>Sem JavaScript, todas as perguntas aparecem juntas. Responda às que se aplicam; o servidor verificará o caminho e desconsiderará as perguntas puladas.</p></noscript>';
     foreach ($fields as $field) {
         $key = $field['key']; $id = 'field-' . $key; $value = text_value($old[$key] ?? '');
-        $attrs = ' id="' . h($id) . '" name="fields[' . h($key) . ']"' . ($field['required'] ? ' required' : '') . (isset($errors[$key]) ? ' aria-invalid="true" aria-describedby="error-' . h($key) . '"' : '');
-        echo '<div class="field"><label for="' . h($id) . '">' . h($field['label']) . ($field['required'] ? ' <span aria-hidden="true">*</span>' : '') . '</label>';
+        $attrs = ' id="' . h($id) . '" name="fields[' . h($key) . ']" data-answer="' . h($key) . '"' . (isset($errors[$key]) ? ' aria-invalid="true" aria-describedby="error-' . h($key) . '"' : '');
+        echo '<div class="field flow-question" data-question="' . h($key) . '"><label for="' . h($id) . '">' . h($field['label']) . ($field['required'] ? ' <span aria-hidden="true">*</span>' : '') . '</label>';
         if ($field['type'] === 'select') {
             echo '<select' . $attrs . '><option value="">Selecione</option>';
             foreach ($field['options'] as $option) echo '<option value="' . h($option) . '"' . ($value === $option ? ' selected' : '') . '>' . h($option) . '</option>';
@@ -111,15 +112,16 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
             echo '<textarea' . $attrs . ' rows="5" maxlength="5000">' . h($value) . '</textarea>';
         } else {
             $auto = $field['type'] === 'email' ? 'email' : ($field['type'] === 'tel' ? 'tel' : 'off');
-            echo '<input' . $attrs . ' type="' . h($field['type']) . '" autocomplete="' . $auto . '" maxlength="' . ($field['type'] === 'email' ? '254' : '250') . '" value="' . h($value) . '">';
+            echo '<input' . $attrs . ' type="' . h($field['type'] === 'number' ? 'text' : $field['type']) . '"' . ($field['type'] === 'number' ? ' inputmode="decimal"' : '') . ' autocomplete="' . $auto . '" maxlength="' . ($field['type'] === 'email' ? '254' : '250') . '" value="' . h($value) . '">';
+            if ($field['type'] === 'number') echo '<small>Digite somente o número, sem R$ e sem separador de milhar. Ex.: 1500 ou 1500,50.</small>';
         }
         if (isset($errors[$key])) echo '<small class="error-text" id="error-' . h($key) . '">' . h($errors[$key]) . '</small>';
         echo '</div>';
     }
     echo '<div class="honeypot" aria-hidden="true"><label for="website-url">Deixe vazio</label><input id="website-url" name="website_url" type="text" tabindex="-1" autocomplete="off"></div>';
     // Nunca marcado automaticamente, nem ao reapresentar erros.
-    echo '<label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
+    echo '<section id="flow-review"><h2>Confirmar envio</h2><div id="flow-summary" hidden></div><label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
     if (isset($errors['consent'])) echo '<p class="error-text">' . h($errors['consent']) . '</p>';
-    echo '<button class="button" type="submit">Enviar formulário</button></form></section>';
+    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=2" defer></script><script src="/forms-assets/public-flow.js?v=2" defer></script></section>';
     page_end();
 }

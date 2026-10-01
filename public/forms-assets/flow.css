@@ -1,0 +1,44 @@
+[hidden]{display:none!important}
+.brand{display:inline-flex;align-items:baseline;white-space:nowrap}
+.brand-product{display:inline;margin:0 0 0 9px;font-size:18px;font-weight:500;letter-spacing:-.4px;color:var(--muted)}
+.builder-intro{margin:30px 0 22px;padding-top:26px;border-top:1px solid var(--border)}
+.builder-intro h2{font-size:30px;letter-spacing:-.04em}
+.builder-layout{display:grid;grid-template-columns:minmax(170px,230px) minmax(0,1fr);gap:28px;margin:26px 0 36px;align-items:start}
+.flow-outline{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:18px;position:sticky;top:16px;max-height:80vh;overflow:auto}
+.flow-outline h3{margin:0 0 8px;font-size:16px}
+.flow-outline p{font-size:13px}
+.flow-outline ol{padding-left:21px;margin:16px 0 24px}
+.flow-outline li{padding:0 0 16px 3px;overflow-wrap:anywhere;font-size:14px}
+.flow-outline a{font-weight:650;text-decoration:none}
+.flow-outline small{font-size:12px}
+.field-editor{margin:0 0 28px;padding:24px;scroll-margin-top:20px}
+.field-editor legend{color:var(--blue)}
+.editor-control{margin-bottom:16px}
+.rules-editor{border-top:1px solid var(--border);padding-top:8px}
+.rules-editor h3{font-size:16px;margin:14px 0}
+.rules-editor p{font-size:14px}
+.rule-card{border:1px solid #cbdcf2;border-left:3px solid var(--blue);border-radius:12px;background:#f8faff;padding:18px;margin:16px 0}
+.rule-card .heading{margin:0 0 16px;gap:8px}
+.rule-card .actions{gap:12px;font-size:12px}
+.rule-card .two-columns{gap:12px}
+.route-editor{margin-top:20px}
+.ending-editor{padding:16px;background:#edf3fc;border:1px solid #d4e2f5;border-radius:10px}
+.ending-editor .check{margin:16px 0 0}
+.question-actions{border-top:1px solid var(--border);margin-top:24px;padding-top:12px;font-size:14px}
+.completion-editor{border-top:1px solid var(--border);padding-top:26px;margin-top:30px}
+.completion-editor>.ending-editor{max-width:740px}
+.empty-builder{border:1px dashed #98b7df;border-radius:14px;background:#f8faff;padding:26px}
+.editor-save{border-top:1px solid var(--border);padding-top:24px;margin-top:24px}
+.editor-save span{font-size:13px}
+button:disabled{opacity:.5;cursor:default}
+#builder-error{margin:24px 0 0}
+.public-flow .flow-question{margin:28px 0 32px}
+.public-flow .flow-question>label{font-size:clamp(20px,4vw,27px);font-weight:650;line-height:1.35;letter-spacing:-.025em;overflow-wrap:anywhere}
+.flow-navigation{margin-top:26px;justify-content:space-between}
+.flow-navigation .button:only-child{margin-left:auto}
+#flow-review h2{margin-top:26px}
+#flow-summary{border:1px solid var(--border);border-radius:12px;padding:0 18px 20px;background:var(--paper)}
+.return-link{margin:24px 0 0}
+.public-flow p,.notice,.editor-control{overflow-wrap:anywhere}
+@media(max-width:850px){.builder-layout{grid-template-columns:minmax(0,1fr)}.flow-outline{position:static;max-height:220px}.rule-card .two-columns{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.brand-product{font-size:16px}.field-editor{padding:16px}.rule-card{padding:13px}.builder-layout{gap:18px}.public-flow .flow-question>label{font-size:22px}.flow-navigation{gap:12px}.editor-save>.button{width:100%}}

@@ -14,10 +14,11 @@ if (!$form || !(int)$form['active']) fail_page(404, 'Formulário indisponível.'
 if (!hash_equals($ticket['schema'], hash('sha256', $form['fields_json'])) || $ticket['title'] !== $form['title']) fail_page(409, 'O formulário foi atualizado. Abra o link novamente para preencher a versão atual.');
 $input = $_POST['fields'] ?? [];
 if (!is_array($input)) fail_page(422, 'Campos inválidos.');
-$fields = json_decode($form['fields_json'], true, 512, JSON_THROW_ON_ERROR);
-[$values, $errors, $email] = validate_answers($fields, $input);
+$definition = form_definition($form['fields_json']);
+[$values, $errors, $email, $outcome] = validate_flow($definition, $input);
 if (($_POST['consent'] ?? '') !== '1') $errors['consent'] = 'É necessário aceitar o tratamento dos dados para enviar.';
 if ($errors) { http_response_code(422); render_form($form, $input, $errors, $nonce); exit; }
+$values[] = outcome_value($outcome);
 $submissionHash = hash('sha256', $nonce);
 try {
     $stmt = db()->prepare('INSERT INTO leads (form_id, form_title, values_json, reply_email, consent_text, consent_accepted, privacy_url, created_at, submission_hash) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)');
@@ -32,7 +33,7 @@ try {
 $receipt = bin2hex(random_bytes(24));
 $_SESSION['tickets'][$nonce]['receipt'] = $receipt;
 // Não colocar respostas nem ID do lead na URL pública.
-$_SESSION['receipts'][$receipt] = ['title' => $form['title'], 'message' => $form['whatsapp_message'], 'time' => time()];
+$_SESSION['receipts'][$receipt] = ['title' => $form['title'], 'message' => $form['whatsapp_message'], 'ending' => $outcome['ending'], 'time' => time()];
 foreach ($_SESSION['receipts'] as $key => $value) if ($value['time'] < time() - 3600) unset($_SESSION['receipts'][$key]);
 if (count($_SESSION['receipts']) > 20) array_shift($_SESSION['receipts']);
 session_write_close();

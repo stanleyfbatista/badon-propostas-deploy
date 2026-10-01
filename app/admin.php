@@ -12,8 +12,9 @@ function save_form(array $input): int
     if ($title === '' || mb_strlen($title) > 150 || preg_match('/[\x00-\x1F]/u', $title)) throw new InvalidArgumentException('Título inválido: use até 150 caracteres, sem quebras de linha.');
     if (strlen($slug) > 100 || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) throw new InvalidArgumentException('Slug inválido. Use letras minúsculas, números e hífens.');
     if (mb_strlen($message) > 2000) throw new InvalidArgumentException('A mensagem de WhatsApp pode ter até 2.000 caracteres.');
-    $fields = clean_fields(is_array($input['fields'] ?? null) ? $input['fields'] : []);
-    $json = json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    $draft = editor_definition_input($input);
+    $definition = clean_definition($draft['fields'], $draft['mode'], $draft['completion']);
+    $json = json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     $id = (int)($input['id'] ?? 0); $active = empty($input['active']) ? 0 : 1;
     db()->beginTransaction();
     try {
@@ -34,16 +35,21 @@ function save_form(array $input): int
     }
 }
 
-function render_field_editor(string $index, array $field): void
+function editor_definition_input(array $input): array
 {
-    $name = 'fields[' . $index . ']';
-    $options = $field['options'] ?? [];
-    $options = is_array($options) ? implode("\n", array_filter($options, 'is_string')) : text_value($options);
-    echo '<fieldset class="field-editor"><legend>Campo</legend><div class="two-columns"><label>Título do campo<input name="' . $name . '[label]" value="' . h(text_value($field['label'] ?? '')) . '" maxlength="100" required></label><label>Identificador<input name="' . $name . '[key]" value="' . h(text_value($field['key'] ?? '')) . '" maxlength="40" pattern="[a-z][a-z0-9_]*" required placeholder="nome_do_campo"></label><label>Tipo<select name="' . $name . '[type]">';
-    foreach (['text' => 'Texto', 'email' => 'E-mail', 'tel' => 'Telefone', 'select' => 'Seleção', 'textarea' => 'Texto longo'] as $type => $label) {
-        echo '<option value="' . $type . '"' . (($field['type'] ?? '') === $type ? ' selected' : '') . '>' . $label . '</option>';
+    if (isset($input['fields_payload'])) {
+        try {
+            $draft = json_decode(text_value($input['fields_payload']), true, 32, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new InvalidArgumentException('Não foi possível ler o funil. Reabra o editor e tente novamente.');
+        }
+        if (!is_array($draft) || !is_array($draft['fields'] ?? null) || !is_array($draft['completion'] ?? null) || !is_string($draft['mode'] ?? null)) {
+            throw new InvalidArgumentException('Estrutura do funil inválida.');
+        }
+        return $draft;
     }
-    echo '</select></label><label>Opções (para seleção, uma por linha)<textarea name="' . $name . '[options]" rows="3" maxlength="8000">' . h($options) . '</textarea></label></div><div class="heading"><label class="check"><input type="checkbox" name="' . $name . '[required]" value="1"' . (!empty($field['required']) ? ' checked' : '') . '>Obrigatório</label><div class="actions"><button type="button" class="text-button" data-move="up">Subir</button><button type="button" class="text-button" data-move="down">Descer</button><button type="button" class="text-button danger" data-remove>Remover campo</button></div></div></fieldset>';
+    // Aceitar o formato anterior sem obrigar a migração dos formulários existentes.
+    return ['fields' => is_array($input['fields'] ?? null) ? $input['fields'] : [], 'mode' => 'all', 'completion' => default_ending()];
 }
 
 function leads_filter(int $formId): array
@@ -73,14 +79,14 @@ function render_leads(): void
     $page = max(1, min(1000000, (int)($_GET['page'] ?? 1))); $offset = ($page - 1) * 30;
     [$where, $params] = leads_filter($filter);
     $count = db()->prepare('SELECT COUNT(*) FROM leads' . $where); $count->execute($params); $total = (int)$count->fetchColumn();
-    $stmt = db()->prepare('SELECT id, form_title, reply_email, created_at, email_status FROM leads' . $where . ' ORDER BY id DESC LIMIT 30 OFFSET ?');
+    $stmt = db()->prepare('SELECT id, form_title, reply_email, created_at, email_status, values_json FROM leads' . $where . ' ORDER BY id DESC LIMIT 30 OFFSET ?');
     foreach ($params as $index => $param) $stmt->bindValue($index + 1, $param, PDO::PARAM_INT);
     $stmt->bindValue(count($params) + 1, $offset, PDO::PARAM_INT); $stmt->execute();
     $forms = db()->query('SELECT id, title FROM forms ORDER BY title')->fetchAll();
     echo '<h1>Leads</h1><section class="panel"><div class="heading"><form method="get" action="/admin/" class="filter"><input type="hidden" name="view" value="leads"><label>Formulário<select name="form_id"><option value="0">Todos</option>';
     foreach ($forms as $form) echo '<option value="' . (int)$form['id'] . '"' . ($filter === (int)$form['id'] ? ' selected' : '') . '>' . h($form['title']) . '</option>';
-    echo '</select></label><button class="button secondary">Filtrar</button></form><form method="post" action="/admin/">' . csrf_input() . '<input type="hidden" name="action" value="export"><input type="hidden" name="form_id" value="' . $filter . '"><button class="button secondary">Exportar CSV</button></form></div><p>' . $total . ' contatos · horários em America/Sao_Paulo (ou fuso configurado).</p><div class="table-wrap"><table><thead><tr><th>Formulário</th><th>E-mail</th><th>Recebido</th><th>E-mail ao administrador</th><th>Detalhes</th></tr></thead><tbody>';
-    foreach ($stmt as $lead) echo '<tr><td>' . h($lead['form_title']) . '</td><td>' . h($lead['reply_email'] ?? 'Não informado') . '</td><td>' . h(local_date($lead['created_at'])) . '</td><td>' . h(mail_label($lead['email_status'])) . '</td><td><a href="/admin/?view=lead&id=' . (int)$lead['id'] . '">Abrir #' . (int)$lead['id'] . '</a></td></tr>';
+    echo '</select></label><button class="button secondary">Filtrar</button></form><form method="post" action="/admin/">' . csrf_input() . '<input type="hidden" name="action" value="export"><input type="hidden" name="form_id" value="' . $filter . '"><button class="button secondary">Exportar CSV</button></form></div><p>' . $total . ' contatos · horários em America/Sao_Paulo (ou fuso configurado).</p><div class="table-wrap"><table><thead><tr><th>Formulário</th><th>E-mail</th><th>Resultado do funil</th><th>Recebido</th><th>E-mail ao administrador</th><th>Detalhes</th></tr></thead><tbody>';
+    foreach ($stmt as $lead) echo '<tr><td>' . h($lead['form_title']) . '</td><td>' . h($lead['reply_email'] ?? 'Não informado') . '</td><td>' . h(lead_outcome($lead['values_json'])) . '</td><td>' . h(local_date($lead['created_at'])) . '</td><td>' . h(mail_label($lead['email_status'])) . '</td><td><a href="/admin/?view=lead&id=' . (int)$lead['id'] . '">Abrir #' . (int)$lead['id'] . '</a></td></tr>';
     echo '</tbody></table></div><nav class="pagination" aria-label="Paginação">';
     if ($page > 1) echo '<a href="/admin/?view=leads&form_id=' . $filter . '&page=' . ($page - 1) . '">Anterior</a>';
     if ($page * 30 < $total) echo '<a href="/admin/?view=leads&form_id=' . $filter . '&page=' . ($page + 1) . '">Próxima</a>';

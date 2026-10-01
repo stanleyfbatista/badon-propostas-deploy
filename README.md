@@ -1,4 +1,4 @@
-# Bādon — site estático + formulários PHP
+# Bādon Forms — site estático + funis PHP
 
 O site existente permanece estático e **não teve seu HTML, CSS ou imagens alterados**.
 Os arquivos antigos foram movidos, sem alteração de conteúdo, para `public/`.
@@ -110,9 +110,30 @@ Não foi criado instalador público, para evitar tomada de conta durante a insta
 
 **O push para o GitHub, sozinho, não ativa o sistema.** Banco, arquivo privado, administrador e deploy precisam estar concluídos no servidor. Sem configuração, somente as novas páginas de formulário retornam 503; as páginas estáticas continuam disponíveis.
 
+## Funis condicionais (atualização v2)
+
+Faça **Update from Remote → Deploy HEAD Commit** no mesmo repositório. Não é necessário recriar banco, senha, administrador ou configuração; não há novas tabelas nem `ALTER TABLE` nesta atualização.
+
+1. Em **Novo formulário**, defina título e slug. Não existem perguntas obrigatórias de modelo: clique em **Adicionar pergunta** e monte de 1 a 100 perguntas.
+2. Escolha texto curto, e-mail, telefone, seleção, número/valor ou texto longo. Marque as perguntas obrigatórias. Para receber um Reply-To útil, inclua uma pergunta de e-mail antes de possíveis encerramentos.
+3. Em **Regras de caminho**, adicione condições. Alternativas e texto permitem igualdade/diferença (texto exato, incluindo maiúsculas); números também permitem menor/maior, com ou sem igualdade. Valores numéricos aceitam de 0 a 1 trilhão, até duas casas decimais, ponto ou vírgula decimal, sem R$ ou separador de milhar.
+4. Escolha o destino: próxima pergunta, outra pergunta posterior ou encerramento personalizado. A primeira condição correspondente vence; se nenhuma combinar, vale o destino padrão. Resposta opcional vazia não aciona condições, nem “diferente”.
+5. Configure título, mensagem e presença do WhatsApp em cada encerramento. O encerramento padrão cobre caminhos que chegam ao fim; encerramentos condicionais começam com WhatsApp desabilitado. Exemplo: investimento menor que `1000` → encerrar com mensagem; demais respostas → próxima pergunta.
+6. Salve e use o link público para testar cada caminho com dados fictícios. O modo **Uma pergunta por vez** permite avançar e voltar. Alterar uma resposta anterior limpa as respostas posteriores para evitar misturar caminhos. Também existe o modo de perguntas do caminho na mesma página.
+
+Não são permitidos saltos para trás ou para perguntas removidas. Revise as regras após reordenar/remover perguntas; o editor e o servidor recusam destinos inválidos. A ordem das condições também pode ser alterada.
+
+**Encerrar não descarta automaticamente o contato nem grava dados antes do consentimento.** Mesmo em encerramento antecipado, a pessoa revisa e confirma o envio com consentimento desmarcado por padrão. Só então são gravadas as respostas do caminho percorrido, o resultado do funil e a data/hora. Abandonos sem confirmar não geram leads. A tela final e o WhatsApp configurados aparecem após essa confirmação.
+
+O resultado fica visível na lista/detalhe de leads e nas respostas do CSV e e-mail. Campos pulados são ignorados no servidor mesmo quando enviados manualmente; campos obrigatórios só são exigidos no caminho efetivo. O navegador não decide o resultado salvo. Uma alteração no funil invalida versões públicas que já estavam abertas, pedindo novo preenchimento.
+
+As definições usam um objeto versionado em `forms.fields_json`; listas JSON antigas continuam sendo lidas como formulários de página única, sem alterar leads anteriores. O resultado novo é uma resposta reservada `_flow_outcome` em `values_json`, mantendo os consumidores existentes. Configurações/regras presentes no formulário público não são informações confidenciais: não inclua segredos nas perguntas ou condições.
+
+O editor usa um único campo JSON para não depender de `max_input_vars` ao salvar muitas perguntas. O limite total de requisição permanece em 200 KB; o editor verifica o tamanho codificado antes de enviar. JavaScript é necessário para editar o funil e para a experiência de uma pergunta por vez; sem ele, a página pública exibe as perguntas juntas e valida o caminho no servidor.
+
 ## Operação e proteção
 
-- Formulários: até 30 campos, seleção com até 50 opções. É possível reordenar/remover campos e pausar o formulário sem excluir leads antigos.
+- Formulários: até 100 perguntas, até 20 condições por pergunta e seleção com até 50 opções, respeitando o tamanho total. É possível reordenar/remover perguntas e pausar o formulário sem excluir leads antigos.
 - Campos são JSON no MySQL; cada lead guarda uma cópia dos títulos/valores e do texto aceito. Editar um formulário não reescreve respostas antigas.
 - Consentimento guarda data/hora em UTC, exibidas no fuso `America/Sao_Paulo` (configurável), texto e endereço da política apresentada.
 - Honeypot e limites locais por conexão (20 tentativas/hora), além de CSRF e tokens de submissão vinculados à sessão.
@@ -147,6 +168,8 @@ O projeto não precisa de build front-end. Não faça deploy de `tests/`, `confi
 
 ```sh
 php tests/domain.php
+php tests/flow.php
+node tests/flow-engine.mjs
 node tests/integration.mjs
 # Opcional no macOS, com o Apache do sistema:
 node tests/apache.mjs
