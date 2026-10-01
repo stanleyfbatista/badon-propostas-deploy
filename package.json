@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
-    "test": "node tests/flow-engine.mjs && node tests/integration.mjs && node tests/apache.mjs"
+    "test": "node tests/logic-model.mjs && node tests/flow-engine.mjs && node tests/integration.mjs && node tests/apache.mjs"
   },
   "dependencies": {
+    "@xyflow/react": "^12.12.0",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

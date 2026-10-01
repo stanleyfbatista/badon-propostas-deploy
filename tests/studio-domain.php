@@ -13,6 +13,15 @@ check(studio_interpolate('Olá, @nome. @ausente', [['key'=>'nome','value'=>'<scr
 $legacyDraft = studio_draft(['title'=>'Antigo','slug'=>'antigo','whatsapp_message'=>'','fields_json'=>'[{"key":"nome","label":"Nome","type":"text","required":true,"options":[]}]']);
 check($legacyDraft['definition']['fields'][0]['rules'] === []);
 check($legacyDraft['definition']['fields'][0]['otherwise'] === ['target'=>'next']);
+$legacyDraft['layout'] = ['q:nome' => ['x' => 125.567, 'y' => -20], 'removed' => ['x' => 1, 'y' => 2]];
+$clean = studio_clean($legacyDraft);
+check((array)$clean['layout'] === ['q:nome' => ['x' => 125.57, 'y' => -20.0]]);
+check(!isset($clean['definition']['layout']));
+foreach ([['x' => 'NaN', 'y' => 0], ['x' => INF, 'y' => 0], ['x' => 0, 'y' => 1000001], ['x' => 1]] as $position) {
+    $invalid = $legacyDraft;
+    $invalid['layout']['q:nome'] = $position;
+    try { studio_clean($invalid); throw new RuntimeException('Unsafe layout accepted'); } catch (InvalidArgumentException $e) {}
+}
 $fields = clean_fields([
     ['key'=>'multi','label'=>'Serviços','type'=>'multiple','required'=>true,'options'=>['Site','Tráfego']],
     ['key'=>'data','label'=>'Quando','type'=>'date','required'=>true],

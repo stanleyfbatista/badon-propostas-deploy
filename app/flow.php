@@ -71,7 +71,7 @@ function clean_route($raw, array $positions, int $index): array
 {
     if (!is_array($raw)) throw new InvalidArgumentException('Destino inválido.');
     $target = text_value($raw['target'] ?? 'next');
-    if (!in_array($target, ['next', 'finish'], true) && (!isset($positions[$target]) || $positions[$target] <= $index)) {
+    if (!in_array($target, ['next', 'finish', 'end:default'], true) && (!isset($positions[$target]) || $positions[$target] <= $index)) {
         throw new InvalidArgumentException('Um salto precisa apontar para uma pergunta posterior. Confira as regras após remover ou reordenar perguntas.');
     }
     // Reservar palavras de destino, sem limitar os identificadores dos formulários antigos.
@@ -119,6 +119,7 @@ function validate_flow(array $definition, array $input): array
         if ($email === null) $email = $reply;
         if ($invalid) { $errors = $invalid; break; }
         $route = flow_route($field, $answers[0]['value']);
+        if ($route['target'] === 'end:default') break;
         if ($route['target'] === 'finish') {
             $outcome = ['kind' => 'conditional', 'question' => $field['label'], 'ending' => $route['ending']];
             break;

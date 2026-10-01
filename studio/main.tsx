@@ -41,6 +41,7 @@ import {
   slugify,
 } from "./types";
 import "./studio.css";
+import { LogicCanvas } from "./LogicCanvas";
 
 let csrf = "";
 async function api(
@@ -1250,45 +1251,56 @@ function Editor({
               Arraste para reorganizar ou use as setas nas propriedades.
             </p>
           </aside>
-          <section className="preview-area">
-            <div className="preview-toolbar">
-              <span>PRÉ-VISUALIZAÇÃO DO BLOCO</span>
-              <div>
-                <button
-                  aria-label="Prévia desktop"
-                  className={!mobile ? "selected" : ""}
-                  onClick={() => setMobile(false)}
-                >
-                  <Monitor size={18} />
-                </button>
-                <button
-                  aria-label="Prévia celular"
-                  className={mobile ? "selected" : ""}
-                  onClick={() => setMobile(true)}
-                >
-                  <Smartphone size={18} />
-                </button>
+          {tab === "logic" ? (
+            <LogicCanvas
+              draft={draft}
+              selected={selected}
+              editable={editable && !busy}
+              onSelect={setSelected}
+              onFields={(fields) => definition({ fields })}
+              onLayout={(layout) => change({ layout })}
+            />
+          ) : (
+            <section className="preview-area">
+              <div className="preview-toolbar">
+                <span>PRÉ-VISUALIZAÇÃO DO BLOCO</span>
+                <div>
+                  <button
+                    aria-label="Prévia desktop"
+                    className={!mobile ? "selected" : ""}
+                    onClick={() => setMobile(false)}
+                  >
+                    <Monitor size={18} />
+                  </button>
+                  <button
+                    aria-label="Prévia celular"
+                    className={mobile ? "selected" : ""}
+                    onClick={() => setMobile(true)}
+                  >
+                    <Smartphone size={18} />
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className={"preview-frame " + (mobile ? "mobile" : "")}>
-              <div className="browser-bar">
-                <i />
-                <i />
-                <i />
-                <span>produtorabadon.com/f/{draft.slug}</span>
+              <div className={"preview-frame " + (mobile ? "mobile" : "")}>
+                <div className="browser-bar">
+                  <i />
+                  <i />
+                  <i />
+                  <span>produtorabadon.com/f/{draft.slug}</span>
+                </div>
+                <Preview
+                  field={field}
+                  selected={selected}
+                  draft={draft}
+                  theme={theme}
+                />
               </div>
-              <Preview
-                field={field}
-                selected={selected}
-                draft={draft}
-                theme={theme}
-              />
-            </div>
-            <p className="preview-caption">
-              Esta prévia não envia respostas. Publique para testar o percurso
-              completo.
-            </p>
-          </section>
+              <p className="preview-caption">
+                Esta prévia não envia respostas. Publique para testar o percurso
+                completo.
+              </p>
+            </section>
+          )}
           <fieldset className="properties" disabled={!editable || busy}>
             {tab === "theme" ? (
               <>
@@ -1363,12 +1375,42 @@ function Editor({
               <>
                 <p className="eyebrow">SE A RESPOSTA FOR…</p>
                 <h2>Direcione a conversa.</h2>
+                <strong>{field.label}</strong>
                 <p className="muted">
                   A primeira condição atendida define o próximo passo. Os saltos
                   vão somente para perguntas posteriores.
                 </p>
                 {field.rules.map((r, i) => (
                   <div className="rule" key={i}>
+                    <div className="property-heading">
+                      <h3>Condição {i + 1}</h3>
+                      <div>
+                        <button
+                          type="button"
+                          aria-label="Priorizar condição"
+                          disabled={i === 0}
+                          onClick={() => {
+                            const rules = [...field.rules];
+                            [rules[i - 1], rules[i]] = [rules[i], rules[i - 1]];
+                            changeField({ rules });
+                          }}
+                        >
+                          <ChevronUp size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Mover condição para baixo"
+                          disabled={i === field.rules.length - 1}
+                          onClick={() => {
+                            const rules = [...field.rules];
+                            [rules[i + 1], rules[i]] = [rules[i], rules[i + 1]];
+                            changeField({ rules });
+                          }}
+                        >
+                          <ChevronDown size={16} />
+                        </button>
+                      </div>
+                    </div>
                     <select
                       aria-label="Comparação"
                       value={r.operator}
@@ -1397,17 +1439,40 @@ function Editor({
                         </option>
                       ))}
                     </select>
-                    <Input
-                      label="Resposta"
-                      value={r.value}
-                      onChange={(e) =>
-                        changeField({
-                          rules: field.rules.map((x, j) =>
-                            j === i ? { ...x, value: e.target.value } : x,
-                          ),
-                        })
-                      }
-                    />
+                    {field.options.length > 0 ? (
+                      <label className="control">
+                        <span>Resposta</span>
+                        <select
+                          value={r.value}
+                          onChange={(e) =>
+                            changeField({
+                              rules: field.rules.map((x, j) =>
+                                j === i ? { ...x, value: e.target.value } : x,
+                              ),
+                            })
+                          }
+                        >
+                          <option value="">Escolha uma resposta</option>
+                          {field.options.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : (
+                      <Input
+                        label="Resposta"
+                        value={r.value}
+                        onChange={(e) =>
+                          changeField({
+                            rules: field.rules.map((x, j) =>
+                              j === i ? { ...x, value: e.target.value } : x,
+                            ),
+                          })
+                        }
+                      />
+                    )}
                     <RouteEditor
                       route={r}
                       fields={fields.slice(fields.indexOf(field) + 1)}
@@ -1439,7 +1504,11 @@ function Editor({
                     changeField({
                       rules: [
                         ...field.rules,
-                        { operator: "eq", value: "", target: "next" },
+                        {
+                          operator: "eq",
+                          value: field.options[0] || "",
+                          target: "next",
+                        },
                       ],
                     })
                   }
@@ -1447,6 +1516,13 @@ function Editor({
                   <Plus size={15} />
                   Adicionar condição
                 </Button>
+                {field.type === "multiple" && (
+                  <p className="muted">
+                    Múltipla escolha segue um único próximo passo. Para
+                    ramificar por resposta, use Escolha única, Lista suspensa ou
+                    Sim / Não.
+                  </p>
+                )}
                 <h3>Se nenhuma condição for atendida</h3>
                 <RouteEditor
                   route={field.otherwise}
@@ -1454,6 +1530,36 @@ function Editor({
                   onChange={(otherwise) => changeField({ otherwise })}
                 />
               </>
+            ) : tab === "logic" ? (
+              selected === "ending" ? (
+                <>
+                  <p className="eyebrow">FINAL PADRÃO</p>
+                  <h2>Encerramento do funil</h2>
+                  <p className="muted">
+                    As saídas conectadas ao final padrão usam esta mensagem após
+                    confirmar o envio. Cada condição também pode ter um
+                    encerramento personalizado.
+                  </p>
+                  <EndingEditor
+                    value={draft.definition.completion}
+                    onChange={(completion) => definition({ completion })}
+                  />
+                </>
+              ) : (
+                <>
+                  <p className="eyebrow">MAPA DO FUNIL</p>
+                  <h2>Escolha uma pergunta.</h2>
+                  <p className="muted">
+                    Clique em um bloco do mapa ou na lista à esquerda para criar
+                    regras do tipo “se a resposta for…”.
+                  </p>
+                  <p className="muted">
+                    Direcione cada resposta para uma pergunta posterior, o final
+                    padrão ou um encerramento personalizado. Para mudar o texto
+                    de boas-vindas, use a aba Conteúdo.
+                  </p>
+                </>
+              )
             ) : selected === "welcome" ? (
               <>
                 <p className="eyebrow">PRIMEIRA IMPRESSÃO</p>
@@ -1726,6 +1832,7 @@ function RouteEditor({
           }
         >
           <option value="next">Próxima pergunta</option>
+          <option value="end:default">Final padrão</option>
           {fields.map((f) => (
             <option key={f.key} value={f.key}>
               {f.label}

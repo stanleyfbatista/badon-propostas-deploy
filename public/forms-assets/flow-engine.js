@@ -24,6 +24,7 @@
   }
   function next(fields, index, values) {
     const destination = route(fields[index], values[fields[index].key] || '');
+    if (destination.target === 'end:default') return { index: -1 };
     if (destination.target === 'finish') return { index: -1, ending: destination.ending };
     const nextIndex = destination.target === 'next' ? index + 1 : fields.findIndex(field => field.key === destination.target);
     if (nextIndex <= index) throw new Error('Destino inválido no funil.');

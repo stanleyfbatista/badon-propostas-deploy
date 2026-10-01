@@ -29,7 +29,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Rascunho e publicação separados, com revisão para detectar edições simultâneas. Salvar não altera a versão pública; publicar exige validação completa.
 - Nome, e-mail, telefone, website, endereço, texto curto/longo, escolha única/múltipla, sim/não, dropdown, número e data. Boas-vindas e agradecimento; descrições, placeholder, texto do botão, obrigatoriedade, duplicação e reordenação por arrasto ou botões.
 - Inserção de respostas anteriores no título via `@identificador`. O seletor de respostas anteriores insere a variável correta. No WhatsApp e no agradecimento a substituição é feita no servidor, após validação.
-- Condições já existentes preservadas: comparação, saltos para perguntas posteriores e encerramentos específicos. O grafo visual fica para a Fase 2.
+- Mapa visual React Flow na aba **Lógica**: perguntas conectadas, saídas condicionais, finais personalizados, zoom, minimapa e organização por arrasto. Regras existentes preservadas, com comparação, saltos para perguntas posteriores e encerramento antecipado no final padrão ou em um final específico.
 - Tema com cores, três famílias de fontes locais, botões, progresso e imagem de fundo hospedada no próprio domínio. Nesta versão, a imagem é enviada pelo Gerenciador de Arquivos para `public_html/forms-media/`, não pelo editor.
 - Rastreamento opcional de UTMs/gclid/fbclid e parâmetros personalizados; referrer sem query/fragmento. Dados são capturados ao abrir a página e não aceitos como campos ocultos arbitrários no POST.
 - Respostas paginadas por formulário, detalhes, consentimento e exportação CSV. O papel de leitor pode consultar/exportar, mas não editar/publicar ou gerenciar equipe.
@@ -46,7 +46,19 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Falhas de SMTP/webhook não descartam leads. Para retry manual: `php /home/produ7943464/badon-app/console.php mail:retry` e `php /home/produ7943464/badon-app/console.php webhook:retry`. Webhook automático inicial + até cinco tentativas no total. Configure Cron somente se desejar repetição automática. O consumidor deve deduplicar pelo cabeçalho `Idempotency-Key`.
 - O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
 - A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
-- Ainda fora desta etapa: grafo React Flow, CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico e upload direto de mídia também não foram adicionados.
+- Ainda fora desta etapa: CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico e upload direto de mídia também não foram adicionados.
+
+### Usar o mapa de lógica
+
+1. Crie as perguntas em **Conteúdo** e abra **Lógica**. A lista à esquerda define a ordem inicial das perguntas.
+2. Clique numa pergunta do mapa e use **Adicionar condição** nas propriedades. Por exemplo, em uma pergunta do tipo Número: **Menor que → 1000 → Encerrar formulário**. Configure a mensagem do encerramento e se haverá WhatsApp após o envio.
+3. Para perguntas de escolha única/lista/sim-não, selecione a alternativa no campo Resposta. Múltipla escolha ainda não aceita condições por alternativa, mas permite configurar seu próximo passo.
+4. Arraste uma saída azul da condição para uma pergunta posterior ou um final. A saída inferior é o caminho padrão (caso contrário). Também é possível escolher o destino sem arrastar, usando **Ir para**. Conectar um final personalizado existente copia sua mensagem para a saída nova; cada saída tem seu próprio encerramento.
+5. A primeira condição atendida vence. Use as setas nas condições para mudar sua prioridade. Voltar a perguntas anteriores não é permitido, para evitar ciclos. Se excluir/reordenar perguntas e um destino deixar de ser válido, o mapa avisa; corrija o destino antes de salvar.
+6. Arrastar blocos muda somente sua posição visual. **Organizar mapa** restaura a disposição automática sem mudar regras. As posições são salvas no rascunho, não no formulário público.
+7. Clique em **Salvar rascunho**, depois em **Publicar**. Encerrar um caminho leva à confirmação de envio com consentimento, sem exigir respostas das perguntas puladas. WhatsApp só aparece após o envio confirmado.
+
+Quem já migrou para o painel React precisa apenas de **Update from Remote + Deploy HEAD Commit** e recarregar o painel. Esta atualização do mapa não exige novas tabelas, migração, credenciais ou alteração do site institucional.
 
 ### Desenvolvimento e verificação
 
@@ -57,13 +69,14 @@ php tests/domain.php
 php tests/flow.php
 php tests/studio-domain.php
 node tests/flow-engine.mjs
+node tests/logic-model.mjs
 node tests/integration.mjs
 node tests/apache.mjs
 ```
 
 O build gera somente `public/studio-assets/`, com manifest lido pelo PHP e nomes com hash. Commitar fonte, lockfile e build juntos antes do cPanel. Credenciais nunca entram no front. O PHP/MySQL continua sendo a autoridade para sessões, permissões, publicação e validação. Usamos CSS próprio para preservar a identidade atual; não dependemos de Tailwind/shadcn em runtime.
 
-O schema v2 existente (`fields`, regras e encerramentos) é mantido por compatibilidade, em vez de converter destrutivamente todos os formulários ao exemplo `blocks` do documento. A tabela `bf_forms.draft_json` guarda o documento do editor; `forms.fields_json` permanece o snapshot publicado lido por `/f/{slug}`. `bf_forms.published_settings` guarda apenas configurações privadas publicadas. `bf_deliveries` guarda configurações por envio para retry. Consultas de formulário/lead no novo painel passam sempre pela associação ao workspace.
+O schema v2 existente (`fields`, regras e encerramentos) é mantido por compatibilidade, em vez de converter destrutivamente todos os formulários ao exemplo `blocks` do documento. A tabela `bf_forms.draft_json` guarda o documento do editor, incluindo `layout` com posições validadas dos nós; `forms.fields_json` permanece o snapshot publicado lido por `/f/{slug}`, sem posições. O destino `end:default` encerra antecipadamente usando a mensagem final padrão; `finish` continua sendo o encerramento personalizado. `bf_forms.published_settings` guarda apenas configurações privadas publicadas. `bf_deliveries` guarda configurações por envio para retry. Consultas de formulário/lead no novo painel passam sempre pela associação ao workspace.
 
 Testes novos cobrem migração repetível sem alteração do JSON publicado, isolamento entre espaços (incluindo detalhe/CSV/duplicação), leitor/editor/agência, revogação de acesso, token de uso único, publicação separada, conflitos de revisão, novos campos, rastreamento, destinatário SMTP por formulário e antifraude. Não substituem teste visual no navegador/iPhone nem teste de entrega real de webhook/SMTP na hospedagem.
 
@@ -235,7 +248,7 @@ Backups das regras antigas ficam em `public_html/.htaccess.badon-backup-*`.
 
 ## Desenvolvimento e verificação
 
-O projeto não precisa de build front-end. Não faça deploy de `tests/`, `config.example.php` ou desta documentação no diretório público.
+O painel PHP anterior não precisa de build; o painel React usa `npm run build` localmente e os arquivos gerados entram no Git. Não faça deploy de `tests/`, `config.example.php` ou desta documentação no diretório público.
 
 ```sh
 php tests/domain.php

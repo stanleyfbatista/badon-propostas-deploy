@@ -1,0 +1,177 @@
+.logic-area {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f7f9fc;
+}
+.logic-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 8px;
+}
+.logic-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.logic-toolbar .btn {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.logic-help,
+.logic-status {
+  margin: 0;
+  padding: 10px 24px 16px;
+  color: #586d88;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.logic-status {
+  min-height: 58px;
+  border-top: 1px solid #e0e7f1;
+}
+.logic-board {
+  height: max(560px, calc(100vh - 370px));
+  min-height: 560px;
+}
+.logic-warning {
+  margin: 0 20px 12px;
+  padding: 8px 14px;
+  border: 1px solid #e8bd76;
+  border-radius: 10px;
+  background: #fff6e6;
+  color: #714917;
+  font-size: 12px;
+  max-height: 130px;
+  overflow: auto;
+}
+.flow-card {
+  width: 310px;
+  border: 2px solid #d8e1ed;
+  border-radius: 13px;
+  background: white;
+  color: #12243d;
+  box-shadow: 0 2px 5px #12243d0c;
+  cursor: pointer;
+}
+.flow-card.active {
+  border-color: #075bc5;
+  outline: 3px solid #075bc523;
+  outline-offset: 3px;
+}
+.flow-card.ending {
+  background: #e8f8ef;
+  border-color: #81d9a5;
+}
+.flow-card.start {
+  background: #eff5ff;
+}
+.flow-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 20px;
+}
+.flow-card-icon {
+  color: #075bc5;
+  background: #f6f9fe;
+  border-radius: 9px;
+  padding: 10px;
+  display: flex;
+}
+.flow-card.ending .flow-card-icon {
+  color: #148449;
+  background: #f3fff8;
+}
+.flow-card-heading > div {
+  min-width: 0;
+}
+.flow-card small {
+  display: block;
+  color: #617998;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 9px;
+}
+.flow-card strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.flow-port {
+  position: relative;
+  border-top: 1px solid #e4ebf4;
+  padding: 12px 24px 12px 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #617998;
+}
+.flow-port span {
+  display: block;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flow-port.conditional {
+  color: #075bc5;
+  background: #f7faff;
+}
+.flow-port:last-child {
+  border-radius: 0 0 11px 11px;
+}
+.logic-board .react-flow__handle {
+  width: 13px;
+  height: 13px;
+  background: #8395ad;
+  border: 3px solid #fff;
+}
+.logic-board .flow-port.conditional .react-flow__handle {
+  background: #075bc5;
+}
+.logic-board .react-flow__handle.connectingto {
+  background: #148449;
+  width: 18px;
+  height: 18px;
+}
+.logic-board .react-flow__controls-button {
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 6px;
+  border-radius: 0;
+}
+.logic-board .react-flow__minimap {
+  width: 130px;
+  height: 90px;
+  border: 1px solid #d8e1ed;
+}
+.logic-board .react-flow__edge-text {
+  font-size: 11px;
+  fill: #075bc5;
+}
+.logic-board .react-flow__node:focus-visible .flow-card {
+  outline: 3px solid #075bc5;
+  outline-offset: 4px;
+}
+@media (max-width: 550px) {
+  .logic-toolbar {
+    padding: 16px 12px 8px;
+  }
+  .logic-help,
+  .logic-status {
+    padding: 10px 12px;
+  }
+  .logic-board {
+    height: 540px;
+    min-height: 540px;
+  }
+}

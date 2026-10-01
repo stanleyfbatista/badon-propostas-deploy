@@ -23,6 +23,7 @@ export type Theme = {
   image: string;
 };
 export type Draft = {
+  layout?: Record<string, { x: number; y: number }>;
   title: string;
   slug: string;
   description: string;

@@ -112,7 +112,26 @@ function studio_clean($raw, bool $publish = false): array
     foreach ($hidden as $key) if (!is_string($key) || !preg_match('/^[a-z][a-z0-9_]{0,39}$/D', $key)) throw new InvalidArgumentException('Parâmetros: letras minúsculas, números e sublinhado.');
     $webhook = studio_text($s['webhook_url'] ?? '', 1000);
     if ($webhook !== '') studio_webhook_host($webhook);
-    return ['title' => $title, 'slug' => $slug, 'description' => studio_text($raw['description'] ?? '', 2000), 'whatsapp_message' => studio_text($raw['whatsapp_message'] ?? '', 2000), 'definition' => $definition,
+    // Map positions belong to the draft, never to the public schema or submission ticket.
+    $layout = $raw['layout'] ?? [];
+    if (!is_array($layout) || count($layout) > 2202) throw new InvalidArgumentException('Organização do mapa inválida.');
+    $validNodes = ['start' => true, 'end' => true];
+    foreach ($definition['fields'] as $field) {
+        $validNodes['q:' . $field['key']] = true;
+        if ($field['otherwise']['target'] === 'finish') $validNodes['stop:' . $field['key'] . ':default'] = true;
+        foreach ($field['rules'] as $i => $rule) if ($rule['target'] === 'finish') $validNodes['stop:' . $field['key'] . ':rule:' . $i] = true;
+    }
+    $positions = [];
+    foreach ($layout as $id => $position) {
+        if (!isset($validNodes[$id])) continue; // Discard removed nodes and unknown keys.
+        if (!is_array($position)) throw new InvalidArgumentException('Posição inválida no mapa.');
+        foreach (['x', 'y'] as $axis) {
+            $n = $position[$axis] ?? null;
+            if ((!is_int($n) && !is_float($n)) || !is_finite((float)$n) || abs($n) > 1000000) throw new InvalidArgumentException('Posição inválida no mapa.');
+        }
+        $positions[$id] = ['x' => round((float)$position['x'], 2), 'y' => round((float)$position['y'], 2)];
+    }
+    return ['title' => $title, 'slug' => $slug, 'description' => studio_text($raw['description'] ?? '', 2000), 'whatsapp_message' => studio_text($raw['whatsapp_message'] ?? '', 2000), 'definition' => $definition, 'layout' => (object)$positions,
         'settings' => ['notify_emails' => array_values(array_unique($emails)), 'webhook_url' => $webhook, 'tracking' => !empty($s['tracking']), 'hidden_fields' => array_values(array_unique($hidden)), 'minimum_seconds' => max(3, min(60, (int)($s['minimum_seconds'] ?? 3)))]];
 }
 function studio_webhook_host(string $url): string

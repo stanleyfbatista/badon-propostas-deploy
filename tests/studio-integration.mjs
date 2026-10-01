@@ -200,6 +200,10 @@ export async function studioTests({
     },
   ];
   draft.whatsapp_message = "Oi, sou @nome";
+  draft.definition.fields[0].rules = [
+    { operator: "eq", value: "Encerrar no mapa", target: "end:default" },
+  ];
+  draft.layout = { "q:nome": { x: 150, y: 280 }, end: { x: 150, y: 1200 } };
   draft.definition.completion.title = "Obrigado, @nome";
   draft.settings = {
     notify_emails: ["client-notify@example.invalid"],
@@ -209,6 +213,10 @@ export async function studioTests({
   };
   let saved = await editor.req("save", { id, revision: f.revision, draft });
   assert.equal(saved.status, 200, JSON.stringify(saved.body));
+  assert.deepEqual(
+    (await editor.req("form", undefined, { id })).body.form.draft.layout,
+    draft.layout,
+  );
   assert.equal(
     (await reader.req("save", { id, revision: saved.body.revision, draft }))
       .status,
@@ -223,12 +231,23 @@ export async function studioTests({
   const published = sql(
     `SELECT fields_json FROM badon_test.forms WHERE id=${id}`,
   );
+  assert.ok(!published.includes('"layout"'));
   const ticket = await guest.req(
     "/f/cliente-a-form?utm_source=google&vendedor=stanley&senha=nao-salvar",
   );
   assert.equal(ticket.status, 200);
   assert.ok(!ticket.body.includes("client-notify@example.invalid"));
   assert.ok(!ticket.body.includes("wa.me/"));
+  // A layout-only publication must preserve the active public submission ticket.
+  draft.layout["q:nome"].x = 240;
+  saved = await editor.req("save", { id, revision, draft });
+  revision = saved.body.revision;
+  assert.equal(saved.status, 200);
+  assert.equal((await editor.req("publish", { id, revision })).status, 200);
+  assert.equal(
+    sql(`SELECT fields_json FROM badon_test.forms WHERE id=${id}`),
+    published,
+  );
   draft.title = "Rascunho novo";
   draft.definition.fields[0].label = "Pergunta ainda não publicada";
   saved = await editor.req("save", { id, revision, draft });
@@ -276,7 +295,7 @@ export async function studioTests({
   );
   const sent = await guest.req("/api/enviar.php", payload);
   assert.equal(sent.status, 303);
-  assert.ok(recipients.at(-1).includes('client-notify@example.invalid'));
+  assert.ok(recipients.at(-1).includes("client-notify@example.invalid"));
   const confirm = await guest.req(sent.headers.get("location"));
   assert.ok(confirm.body.includes("Obrigado, Stanley"));
   assert.ok(confirm.body.includes("Oi%2C+sou+Stanley"));
@@ -300,6 +319,28 @@ export async function studioTests({
   assert.equal((await editor.req("publish", { id, revision })).status, 200);
   assert.ok(
     (await guest.req("/f/cliente-a-form")).body.includes("Pergunta ainda"),
+  );
+  const early = new Client();
+  const earlyPage = await early.req("/f/cliente-a-form");
+  await new Promise((r) => setTimeout(r, 3100));
+  const earlySent = await early.req("/api/enviar.php", {
+    csrf: token(earlyPage.body, "csrf"),
+    submission: token(earlyPage.body, "submission"),
+    form_id: String(id),
+    consent: "1",
+    "fields[nome]": "Encerrar no mapa",
+    "fields[email]": "forged-invalid-email",
+    "fields[data]": "invalid-skipped-date",
+  });
+  assert.equal(earlySent.status, 303);
+  const earlyLead = (await reader.req("leads", undefined, { id })).body
+    .leads[0];
+  assert.ok(earlyLead.values_json.includes("Encerrar no mapa"));
+  assert.ok(!earlyLead.values_json.includes("forged-invalid-email"));
+  assert.ok(
+    (await early.req(earlySent.headers.get("location"))).body.includes(
+      "Obrigado, Encerrar no mapa",
+    ),
   );
   const dup = await editor.req("duplicate", { id });
   assert.equal(dup.status, 200);
