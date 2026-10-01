@@ -57,7 +57,9 @@ function studio_form(array $u, int $id, string $level = 'read', bool $lock = fal
 }
 function studio_draft(array $f): array
 {
-    return ['title' => $f['title'], 'slug' => $f['slug'], 'description' => '', 'whatsapp_message' => $f['whatsapp_message'], 'definition' => form_definition($f['fields_json']), 'settings' => ['notify_emails' => [], 'minimum_seconds' => 3, 'tracking' => true, 'hidden_fields' => []]];
+    $definition = form_definition($f['fields_json']);
+    $definition['fields'] = array_map(static fn(array $field): array => $field + ['rules' => [], 'otherwise' => ['target' => 'next'], 'options' => []], $definition['fields']);
+    return ['title' => $f['title'], 'slug' => $f['slug'], 'description' => '', 'whatsapp_message' => $f['whatsapp_message'], 'definition' => $definition, 'settings' => ['notify_emails' => [], 'minimum_seconds' => 3, 'tracking' => true, 'hidden_fields' => []]];
 }
 function studio_migrate(): void
 {

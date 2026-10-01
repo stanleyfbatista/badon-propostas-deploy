@@ -10,6 +10,9 @@ foreach (['http://example.com','https://user:password@example.com','https://127.
 }
 check(studio_webhook_host('https://hooks.example.com/receive?account=1') === 'hooks.example.com');
 check(studio_interpolate('Olá, @nome. @ausente', [['key'=>'nome','value'=>'<script>']]) === 'Olá, <script>. @ausente');
+$legacyDraft = studio_draft(['title'=>'Antigo','slug'=>'antigo','whatsapp_message'=>'','fields_json'=>'[{"key":"nome","label":"Nome","type":"text","required":true,"options":[]}]']);
+check($legacyDraft['definition']['fields'][0]['rules'] === []);
+check($legacyDraft['definition']['fields'][0]['otherwise'] === ['target'=>'next']);
 $fields = clean_fields([
     ['key'=>'multi','label'=>'Serviços','type'=>'multiple','required'=>true,'options'=>['Site','Tráfego']],
     ['key'=>'data','label'=>'Quando','type'=>'date','required'=>true],
