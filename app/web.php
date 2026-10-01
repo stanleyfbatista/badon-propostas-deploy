@@ -1,0 +1,125 @@
+<?php
+declare(strict_types=1);
+
+function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+function utc_now(): string { return gmdate('Y-m-d H:i:s'); }
+function local_date(string $utc): string
+{
+    global $config;
+    return (new DateTimeImmutable($utc, new DateTimeZone('UTC')))->setTimezone(new DateTimeZone($config['timezone']))->format('d/m/Y H:i:s');
+}
+function redirect(string $path): void { header('Location: ' . $path, true, 303); exit; }
+function csrf_input(): string { return '<input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '">'; }
+function csrf_check(): void
+{
+    $token = $_POST['csrf'] ?? null;
+    if (!is_string($token) || !hash_equals($_SESSION['csrf'] ?? '', $token)) {
+        fail_page(403, 'Sua sessão expirou. Volte à página, atualize e tente novamente.');
+    }
+}
+function post_only(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Allow: POST'); fail_page(405, 'Este endereço aceita apenas envio de formulário.');
+    }
+}
+function limit_body(): void
+{
+    if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 200000) fail_page(413, 'O envio excede o tamanho permitido.');
+}
+function page_start(string $title, bool $admin = false): void
+{
+    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="/">Bādon<span>.</span></a>';
+    if ($admin && !empty($_SESSION['admin_id'])) {
+        echo '<nav aria-label="Painel"><a href="/admin/">Formulários</a><a href="/admin/?view=leads">Leads</a><form action="/admin/" method="post">' . csrf_input() . '<input type="hidden" name="action" value="logout"><button class="text-button">Sair</button></form></nav>';
+    }
+    echo '</header>';
+}
+function page_end(): void { echo '<footer>Produtora Bādon · <a href="/privacidade/">Privacidade</a></footer></main></body></html>'; }
+function fail_page(int $status, string $message): void
+{
+    http_response_code($status); page_start('Não foi possível continuar');
+    echo '<section class="panel"><h1>Vamos tentar novamente?</h1><p>' . h($message) . '</p><a href="/">Voltar ao site</a></section>';
+    page_end(); exit;
+}
+function alert_box(string $message, string $type = 'error'): void
+{
+    echo '<div class="notice ' . ($type === 'success' ? 'success' : '') . '" role="alert">' . h($message) . '</div>';
+}
+function authenticated(): bool
+{
+    if (empty($_SESSION['admin_id'])) return false;
+    $stmt = db()->prepare('SELECT password_hash FROM admins WHERE id = ?');
+    $stmt->execute([$_SESSION['admin_id']]);
+    $hash = $stmt->fetchColumn();
+    if (!$hash || !hash_equals(hash('sha256', $hash), $_SESSION['auth_hash'] ?? '') || time() - ($_SESSION['last_active'] ?? 0) > 1800 || time() - ($_SESSION['login_at'] ?? 0) > 28800) {
+        unset($_SESSION['admin_id'], $_SESSION['auth_hash'], $_SESSION['last_active'], $_SESSION['login_at']);
+        session_regenerate_id(true);
+        $_SESSION['csrf'] = bin2hex(random_bytes(32));
+        return false;
+    }
+    $_SESSION['last_active'] = time();
+    return true;
+}
+function require_admin(): void { if (!authenticated()) redirect('/admin/'); }
+function rate_allowed(string $scope, string $identity, int $max, int $seconds): bool
+{
+    global $config;
+    $bucket = hash_hmac('sha256', $scope . ':' . $identity, $config['app_key']);
+    $window = intdiv(time(), $seconds) * $seconds;
+    $sql = 'INSERT INTO rate_limits (bucket, window_start, hits) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE hits = IF(window_start = VALUES(window_start), hits + 1, 1), window_start = VALUES(window_start)';
+    db()->prepare($sql)->execute([$bucket, $window]);
+    $stmt = db()->prepare('SELECT hits FROM rate_limits WHERE bucket = ?'); $stmt->execute([$bucket]);
+    return (int)$stmt->fetchColumn() <= $max;
+}
+function client_identity(): string { return $_SERVER['REMOTE_ADDR'] ?? 'unknown'; }
+function get_form(int $id): ?array
+{
+    $stmt = db()->prepare('SELECT * FROM forms WHERE id = ?'); $stmt->execute([$id]);
+    return $stmt->fetch() ?: null;
+}
+function submission_ticket(array $form): string
+{
+    global $config;
+    // Tokens ficam apenas na sessão, limitados e com validade de uma hora.
+    foreach (($_SESSION['tickets'] ?? []) as $key => $ticket) {
+        if ($ticket['time'] < time() - 3600) unset($_SESSION['tickets'][$key]);
+    }
+    if (count($_SESSION['tickets'] ?? []) >= 20) array_shift($_SESSION['tickets']);
+    $nonce = bin2hex(random_bytes(32));
+    $_SESSION['tickets'][$nonce] = ['form_id' => (int)$form['id'], 'time' => time(), 'schema' => hash('sha256', $form['fields_json']), 'title' => $form['title'], 'consent' => consent_text($form['title']), 'privacy_url' => $config['privacy_url']];
+    return $nonce;
+}
+function render_form(array $form, array $old = [], array $errors = [], ?string $nonce = null): void
+{
+    global $config;
+    $fields = json_decode($form['fields_json'], true, 512, JSON_THROW_ON_ERROR);
+    $nonce = $nonce ?? submission_ticket($form);
+    page_start($form['title']);
+    echo '<section class="panel"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Preencha os dados abaixo. Os campos com * são obrigatórios.</p>';
+    if ($errors) alert_box('Confira os campos destacados e confirme seu consentimento para enviar.');
+    echo '<form action="/api/enviar.php" method="post">' . csrf_input() . '<input type="hidden" name="form_id" value="' . (int)$form['id'] . '"><input type="hidden" name="submission" value="' . h($nonce) . '">';
+    foreach ($fields as $field) {
+        $key = $field['key']; $id = 'field-' . $key; $value = text_value($old[$key] ?? '');
+        $attrs = ' id="' . h($id) . '" name="fields[' . h($key) . ']"' . ($field['required'] ? ' required' : '') . (isset($errors[$key]) ? ' aria-invalid="true" aria-describedby="error-' . h($key) . '"' : '');
+        echo '<div class="field"><label for="' . h($id) . '">' . h($field['label']) . ($field['required'] ? ' <span aria-hidden="true">*</span>' : '') . '</label>';
+        if ($field['type'] === 'select') {
+            echo '<select' . $attrs . '><option value="">Selecione</option>';
+            foreach ($field['options'] as $option) echo '<option value="' . h($option) . '"' . ($value === $option ? ' selected' : '') . '>' . h($option) . '</option>';
+            echo '</select>';
+        } elseif ($field['type'] === 'textarea') {
+            echo '<textarea' . $attrs . ' rows="5" maxlength="5000">' . h($value) . '</textarea>';
+        } else {
+            $auto = $field['type'] === 'email' ? 'email' : ($field['type'] === 'tel' ? 'tel' : 'off');
+            echo '<input' . $attrs . ' type="' . h($field['type']) . '" autocomplete="' . $auto . '" maxlength="' . ($field['type'] === 'email' ? '254' : '250') . '" value="' . h($value) . '">';
+        }
+        if (isset($errors[$key])) echo '<small class="error-text" id="error-' . h($key) . '">' . h($errors[$key]) . '</small>';
+        echo '</div>';
+    }
+    echo '<div class="honeypot" aria-hidden="true"><label for="website-url">Deixe vazio</label><input id="website-url" name="website_url" type="text" tabindex="-1" autocomplete="off"></div>';
+    // Nunca marcado automaticamente, nem ao reapresentar erros.
+    echo '<label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
+    if (isset($errors['consent'])) echo '<p class="error-text">' . h($errors['consent']) . '</p>';
+    echo '<button class="button" type="submit">Enviar formulário</button></form></section>';
+    page_end();
+}
