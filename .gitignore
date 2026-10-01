@@ -4,3 +4,5 @@
 *.log
 .DS_Store
 node_modules/
+/public/forms-media/uploads/*
+!/public/forms-media/uploads/.htaccess

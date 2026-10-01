@@ -120,6 +120,7 @@ try {
         if ($action === 'duplicate') { $source = studio_form($u, (int)($in['id'] ?? 0), 'edit'); $workspace = (int)$source['workspace_id']; $draft = json_decode($source['draft_json'], true); $draft['title'] = mb_substr($draft['title'], 0, 140) . ' (cópia)'; $draft['slug'] = rtrim(substr($draft['slug'], 0, 90), '-') . '-' . bin2hex(random_bytes(3)); }
         else $draft = ['title' => $in['title'] ?? '', 'slug' => $in['slug'] ?? '', 'description' => '', 'whatsapp_message' => '', 'definition' => ['fields' => [], 'completion' => default_ending()], 'settings' => ['tracking' => true]];
         $draft = studio_clean($draft);
+        studio_check_media($draft, $workspace);
         db()->beginTransaction();
         db()->prepare('INSERT INTO forms (title, slug, fields_json, whatsapp_message, active) VALUES (?, ?, ?, ?, 0)')->execute([$draft['title'], $draft['slug'], json_encode($draft['definition'], JSON_THROW_ON_ERROR), $draft['whatsapp_message']]); $id = (int)db()->lastInsertId();
         db()->prepare('INSERT INTO bf_forms (form_id, workspace_id, draft_json, published_settings) VALUES (?, ?, ?, ?)')->execute([$id, $workspace, json_encode($draft, JSON_THROW_ON_ERROR), '{}']); db()->commit(); studio_json(['id' => $id]);
@@ -132,6 +133,7 @@ try {
     if ($action === 'save' || $action === 'publish') {
         if ((int)($in['revision'] ?? 0) !== (int)$f['revision']) throw new InvalidArgumentException('Outra pessoa alterou este formulário. Reabra antes de salvar; suas alterações não foram sobrescritas.');
         $draft = studio_clean($action === 'save' ? ($in['draft'] ?? []) : json_decode($f['draft_json'], true), $action === 'publish');
+        studio_check_media($draft, (int)$f['workspace_id']);
         if ($draft['settings']['webhook_url'] !== '' && !function_exists('curl_init')) throw new InvalidArgumentException('Ative a extensão cURL do PHP na hospedagem antes de configurar webhooks.');
         $folder = (int)($in['folder_id'] ?? $f['folder_id'] ?? 0);
         if ($folder) { $q = db()->prepare('SELECT id FROM bf_folders WHERE id = ? AND workspace_id = ?'); $q->execute([$folder, $f['workspace_id']]); if (!$q->fetchColumn()) throw new InvalidArgumentException('Pasta inválida para este espaço.'); }

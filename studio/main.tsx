@@ -32,6 +32,7 @@ import {
   Workspace,
   Form as FormRecord,
   Draft,
+  CoverMedia,
   Field,
   Route,
   Theme,
@@ -42,8 +43,27 @@ import {
 } from "./types";
 import "./studio.css";
 import { LogicCanvas } from "./LogicCanvas";
+import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
 
 let csrf = "";
+async function uploadCover(file: File, workspace: number): Promise<CoverMedia> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch(`/api/studio-media.php?workspace=${workspace}`, {
+    method: "POST",
+    headers: { "X-CSRF-Token": csrf },
+    body,
+  });
+  const result = await response
+    .json()
+    .catch(() => ({
+      error:
+        "O servidor interrompeu o upload. Confira o tamanho do arquivo e os limites do PHP no cPanel.",
+    }));
+  if (!response.ok)
+    throw new Error(result.error || "Não foi possível enviar a mídia.");
+  return result.media;
+}
 async function api(
   action: string,
   data?: unknown,
@@ -894,6 +914,7 @@ function Editor({
     [tab, setTab] = useState("content"),
     [mobile, setMobile] = useState(false),
     [adding, setAdding] = useState(false),
+    [uploading, setUploading] = useState(false),
     [folder, setFolder] = useState(Number(initial.folder_id || 0)),
     [savedFolder, setSavedFolder] = useState(Number(initial.folder_id || 0)),
     [folders, setFolders] = useState<any[]>([]),
@@ -904,14 +925,14 @@ function Editor({
     theme = { ...defaultTheme, ...draft.definition.theme };
   useEffect(() => {
     const stop = (e: BeforeUnloadEvent) => {
-      if (dirty) {
+      if (dirty || uploading) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     addEventListener("beforeunload", stop);
     return () => removeEventListener("beforeunload", stop);
-  }, [dirty]);
+  }, [dirty, uploading]);
   useEffect(() => {
     task(async () =>
       setFolders(
@@ -990,6 +1011,7 @@ function Editor({
         <div className="editor-title">
           <Button
             aria-label="Voltar aos formulários"
+            disabled={uploading}
             onClick={() => {
               if (!dirty || confirm("Descartar as alterações não salvas?"))
                 close();
@@ -1023,13 +1045,16 @@ function Editor({
           )}
           {editable && (
             <>
-              <Button disabled={busy || !dirty} onClick={() => task(save)}>
+              <Button
+                disabled={busy || uploading || !dirty}
+                onClick={() => task(save)}
+              >
                 <Save size={16} />
                 Salvar rascunho
               </Button>
               <Button
                 kind="primary"
-                disabled={busy || dirty}
+                disabled={busy || uploading || dirty}
                 onClick={() => task(publish)}
               >
                 <Send size={16} />
@@ -1293,6 +1318,7 @@ function Editor({
                   selected={selected}
                   draft={draft}
                   theme={theme}
+                  mobile={mobile}
                 />
               </div>
               <p className="preview-caption">
@@ -1301,7 +1327,10 @@ function Editor({
               </p>
             </section>
           )}
-          <fieldset className="properties" disabled={!editable || busy}>
+          <fieldset
+            className="properties"
+            disabled={!editable || busy || uploading}
+          >
             {tab === "theme" ? (
               <>
                 <p className="eyebrow">IDENTIDADE</p>
@@ -1561,35 +1590,13 @@ function Editor({
                 </>
               )
             ) : selected === "welcome" ? (
-              <>
-                <p className="eyebrow">PRIMEIRA IMPRESSÃO</p>
-                <h2>Boas-vindas</h2>
-                <Input
-                  label="Título (vazio para não exibir)"
-                  maxLength={150}
-                  value={draft.definition.welcome?.title || ""}
-                  onChange={(e) =>
-                    definition({
-                      welcome: {
-                        title: e.target.value,
-                        message: draft.definition.welcome?.message || "",
-                      },
-                    })
-                  }
-                />
-                <Text
-                  label="Apresentação"
-                  value={draft.definition.welcome?.message || ""}
-                  onChange={(e) =>
-                    definition({
-                      welcome: {
-                        title: draft.definition.welcome?.title || "",
-                        message: e.target.value,
-                      },
-                    })
-                  }
-                />
-              </>
+              <WelcomeEditor
+                value={draft.definition.welcome}
+                workspace={initial.workspace_id}
+                onChange={(welcome) => definition({ welcome })}
+                onUpload={(file) => uploadCover(file, initial.workspace_id)}
+                onUploading={setUploading}
+              />
             ) : selected === "ending" ? (
               <>
                 <p className="eyebrow">CONVERSA INICIADA</p>
@@ -1855,12 +1862,45 @@ function Preview({
   selected,
   draft,
   theme,
+  mobile,
 }: {
   field?: Field;
   selected: string;
   draft: Draft;
   theme: Theme;
+  mobile: boolean;
 }) {
+  if (selected === "welcome")
+    return (
+      <div
+        className="cover-preview"
+        style={
+          {
+            backgroundColor: theme.background,
+            color: theme.text,
+            fontFamily:
+              theme.font === "serif"
+                ? "Georgia, serif"
+                : theme.font === "mono"
+                  ? "monospace"
+                  : "Arial, sans-serif",
+            backgroundImage: theme.image ? `url(${theme.image})` : undefined,
+            "--blue": theme.primary,
+            "--cover-radius":
+              theme.buttons === "pill"
+                ? "100px"
+                : theme.buttons === "square"
+                  ? "0px"
+                  : "12px",
+          } as React.CSSProperties
+        }
+      >
+        <WelcomeCover
+          welcome={normalizeWelcome(draft.definition.welcome)}
+          mobile={mobile}
+        />
+      </div>
+    );
   const title =
       field?.label ||
       (selected === "welcome"

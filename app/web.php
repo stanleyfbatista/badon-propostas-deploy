@@ -29,7 +29,7 @@ function limit_body(): void
 }
 function page_start(string $title, bool $admin = false): void
 {
-    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon Forms</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css?v=2"><link rel="stylesheet" href="/forms-assets/flow.css?v=3"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="' . ($admin ? '/admin/' : '/') . '">Bādon<span>.</span><small class="brand-product">Forms</small></a>';
+    echo '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($title) . ' · Bādon Forms</title><link rel="icon" href="/maintenance-assets/favicon.svg"><link rel="stylesheet" href="/forms-assets/forms.css?v=2"><link rel="stylesheet" href="/forms-assets/flow.css?v=3"><link rel="stylesheet" href="/forms-assets/welcome.css?v=1"></head><body><main class="' . ($admin ? 'admin-shell' : 'shell') . '"><header class="top"><a class="brand" href="' . ($admin ? '/admin/' : '/') . '">Bādon<span>.</span><small class="brand-product">Forms</small></a>';
     if ($admin && !empty($_SESSION['admin_id'])) {
         echo '<nav aria-label="Painel"><a href="/admin/">Formulários</a><a href="/admin/?view=leads">Leads</a><form action="/admin/" method="post">' . csrf_input() . '<input type="hidden" name="action" value="logout"><button class="text-button">Sair</button></form></nav>';
     }
@@ -102,7 +102,7 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     require_once __DIR__ . '/studio-public.php';
     studio_theme($definition['theme'] ?? []);
     page_start($form['title']);
-    echo '<section class="panel public-flow"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Responda no seu ritmo. As perguntas com * são obrigatórias. Seus dados só serão enviados ao confirmar no final.</p>';
+    echo '<section class="panel public-flow"><div class="flow-introduction"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Responda no seu ritmo. As perguntas com * são obrigatórias. Seus dados só serão enviados ao confirmar no final.</p></div>';
     if ($errors) alert_box('Confira os campos destacados e confirme seu consentimento para enviar.');
     echo '<form action="/api/enviar.php" method="post" id="public-flow" data-definition="' . h(json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) . '">' . csrf_input() . '<input type="hidden" name="form_id" value="' . (int)$form['id'] . '"><input type="hidden" name="submission" value="' . h($nonce) . '"><p id="flow-progress" class="eyebrow" aria-live="polite" hidden></p><noscript><p>Sem JavaScript, todas as perguntas aparecem juntas. Responda às que se aplicam; o servidor verificará o caminho e desconsiderará as perguntas puladas.</p></noscript>';
     foreach ($fields as $field) {
@@ -128,6 +128,6 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     // Nunca marcado automaticamente, nem ao reapresentar erros.
     echo '<section id="flow-review"><h2>Confirmar envio</h2><div id="flow-summary" hidden></div><label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
     if (isset($errors['consent'])) echo '<p class="error-text">' . h($errors['consent']) . '</p>';
-    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=3" defer></script><script src="/forms-assets/public-flow.js?v=3" defer></script></section>';
+    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=3" defer></script><script src="/forms-assets/public-flow.js?v=4" defer></script></section>';
     page_end();
 }

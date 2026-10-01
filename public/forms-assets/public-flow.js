@@ -10,17 +10,31 @@
   const nextButton = document.querySelector('#flow-next'), progress = document.querySelector('#flow-progress');
   const consent = form.elements.consent, submit = document.querySelector('#flow-submit');
   const bar = document.createElement('progress'); bar.className = 'flow-progress-bar'; bar.max = fields.length; bar.setAttribute('aria-label', 'Progresso do formulário'); progress.after(bar);
-  const steps = definition.mode === 'steps'; let history = [0], reviewing = false, welcoming = steps && !!definition.welcome?.title;
+  const cover = definition.welcome || {};
+  const steps = definition.mode === 'steps'; let history = [0], reviewing = false, welcoming = steps && (cover.enabled ?? !!cover.title);
   const answer = input => input.multiple ? [...input.selectedOptions].map(o => o.value).join(', ') : input.value.trim();
   const values = () => Object.fromEntries(fields.map((field, index) => [field.key, answer(inputs[index])]));
   const interpolate = text => text.replace(/@([a-z][a-z0-9_]{0,39})/g, (match, key) => values()[key] || match);
-  const welcome = document.createElement('section'); welcome.className = 'flow-welcome';
+  const welcome = document.createElement('section'); welcome.className = 'flow-welcome cover-container';
   if (welcoming) {
+    const content = document.createElement('section'), copy = document.createElement('div');
+    content.className = 'welcome-cover cover-' + (cover.media ? cover.layout : 'plain') + (cover.media?.type === 'video' ? ' has-video' : '');
+    copy.className = 'cover-copy';
+    if (cover.media) {
+      const frame = document.createElement('div'); frame.className = 'cover-media';
+      const media = document.createElement(cover.media.type === 'video' ? 'video' : 'img');
+      media.src = cover.media.src; media.style.objectFit = cover.fit || 'cover';
+      media.style.objectPosition = `${cover.x ?? 50}% ${cover.y ?? 50}%`;
+      if (cover.media.type === 'video') { media.controls = true; media.playsInline = true; media.preload = 'metadata'; media.setAttribute('aria-label', cover.alt || 'Vídeo de apresentação'); }
+      else { media.alt = cover.alt || ''; media.decoding = 'async'; }
+      frame.append(media); content.append(frame);
+    }
     const title = document.createElement('h2'), description = document.createElement('p'), start = document.createElement('button');
-    title.textContent = definition.welcome.title; description.textContent = definition.welcome.message;
-    start.type = 'button'; start.className = 'button'; start.textContent = 'Começar →';
-    start.addEventListener('click', () => { welcoming = false; render(true); });
-    welcome.append(title, description, start); form.prepend(welcome);
+    title.textContent = cover.title || 'Bem-vindo!'; description.textContent = cover.message || '';
+    start.type = 'button'; start.className = 'button cover-start'; start.textContent = (cover.button_text || 'Começar') + ' →';
+    start.addEventListener('click', () => { welcome.querySelector('video')?.pause(); welcoming = false; render(true); });
+    copy.append(title); if (cover.message) copy.append(description); copy.append(start);
+    content.append(copy); welcome.append(content); form.prepend(welcome);
   }
   fields.forEach((field, index) => {
     const input = inputs[index], question = questions[index];
@@ -62,6 +76,8 @@
       questions[index].querySelectorAll('[data-choice]').forEach(button => button.setAttribute('aria-pressed', String([...input.selectedOptions].some(o => o.value === button.dataset.choice))));
     });
     welcome.hidden = !welcoming;
+    const introduction = document.querySelector('.flow-introduction');
+    if (introduction) introduction.hidden = welcoming;
     review.hidden = welcoming || (steps && !reviewing);
     consent.disabled = review.hidden;
     submit.disabled = review.hidden;

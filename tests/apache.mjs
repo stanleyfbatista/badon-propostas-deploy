@@ -13,6 +13,11 @@ for (const [file, body] of Object.entries({ 'index.html': 'HOME', '404.html': 'N
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), body);
 }
 fs.copyFileSync(path.join(repo, '.badon-404-rules'), path.join(root, '.htaccess'));
+const mediaDir = path.join(root, 'forms-media/uploads/1'); fs.mkdirSync(mediaDir, { recursive: true });
+fs.copyFileSync(path.join(repo, 'public/forms-media/uploads/.htaccess'), path.join(root, 'forms-media/uploads/.htaccess'));
+fs.writeFileSync(path.join(mediaDir, 'a'.repeat(32) + '.mp4'), Buffer.alloc(512, 1));
+fs.writeFileSync(path.join(mediaDir, 'exploit.php'), '<?php echo "DO_NOT_SERVE";');
+fs.writeFileSync(path.join(mediaDir, '.upload.lock'), 'PRIVATE_LOCK');
 const port = await new Promise(resolve => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => resolve(p)); }); });
 const user = os.userInfo();
 const conf = `ServerRoot "${tmp}"
@@ -24,6 +29,9 @@ LoadModule unixd_module /usr/libexec/apache2/mod_unixd.so
 LoadModule authz_core_module /usr/libexec/apache2/mod_authz_core.so
 LoadModule dir_module /usr/libexec/apache2/mod_dir.so
 LoadModule rewrite_module /usr/libexec/apache2/mod_rewrite.so
+LoadModule mime_module /usr/libexec/apache2/mod_mime.so
+LoadModule headers_module /usr/libexec/apache2/mod_headers.so
+TypesConfig /dev/null
 User #${user.uid}
 Group #${user.gid}
 ErrorLog "${tmp}/error.log"
@@ -44,5 +52,12 @@ try {
     const result = await fetch(`http://127.0.0.1:${port}${url}`);
     assert.equal(result.status, status, url); assert.equal(await result.text(), body, url);
   }
-  console.log('OK: Apache real — rotas de formulário, admin, API, páginas estáticas e 404.');
+  const videoUrl = `http://127.0.0.1:${port}/forms-media/uploads/1/${'a'.repeat(32)}.mp4`;
+  const video = await fetch(videoUrl, { headers: { Range: 'bytes=0-99' } });
+  assert.equal(video.status, 206);
+  assert.equal(video.headers.get('content-type'), 'video/mp4');
+  assert.equal(video.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal((await video.arrayBuffer()).byteLength, 100);
+  for (const file of ['exploit.php', '.upload.lock', '']) assert.equal((await fetch(`http://127.0.0.1:${port}/forms-media/uploads/1/${file}`)).status, 403);
+  console.log('OK: Apache real — rotas, site preservado, mídia estática, Range de vídeo e arquivos/diretórios protegidos.');
 } finally { server.kill('SIGTERM'); console.log('Diagnóstico Apache:', tmp); }

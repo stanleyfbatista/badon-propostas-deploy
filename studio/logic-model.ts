@@ -73,12 +73,16 @@ export function buildGraph(draft: Draft, selected: string) {
       },
     });
   };
+  const welcomeEnabled =
+    draft.definition.welcome?.enabled ?? !!draft.definition.welcome?.title;
   addNode(
     "start",
     {
       kind: "start",
-      title: draft.definition.welcome?.title || "Início do formulário",
-      subtitle: "BOAS-VINDAS",
+      title: welcomeEnabled
+        ? draft.definition.welcome?.title || "Bem-vindo!"
+        : "Início do formulário",
+      subtitle: welcomeEnabled ? "BOAS-VINDAS" : "CAPA DESATIVADA",
       owner: "welcome",
       ports: [{ id: "default", label: "Começar", conditional: false }],
     },

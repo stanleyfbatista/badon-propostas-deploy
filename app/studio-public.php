@@ -31,7 +31,7 @@ function studio_theme(array $theme): void
     $radius = ['round' => '12px', 'pill' => '100px', 'square' => '0px'][$theme['buttons'] ?? 'round'] ?? '12px';
     $image = $theme['image'] ?? '';
     $imageCSS = preg_match('#^/(?:maintenance-assets|links/assets|forms-media)/[a-zA-Z0-9/_-]+\.(?:png|jpg|jpeg|webp)$#D', $image) ? 'background-image:url("' . $image . '");background-size:cover;background-attachment:fixed;' : '';
-    $GLOBALS['studio_theme_css'] = '<style nonce="' . $nonce . '">body{background-color:' . $colors['background'] . ';color:' . $colors['text'] . ';font-family:' . $font . ';' . $imageCSS . '} .public-flow .button{background:' . $colors['primary'] . ';border-radius:' . $radius . '} .public-flow{color:' . $colors['text'] . '}</style>';
+    $GLOBALS['studio_theme_css'] = '<style nonce="' . $nonce . '">body{background-color:' . $colors['background'] . ';color:' . $colors['text'] . ';font-family:' . $font . ';' . $imageCSS . '} .public-flow .button{background:' . $colors['primary'] . ';border-radius:' . $radius . '} .public-flow{--blue:' . $colors['primary'] . ';--cover-radius:' . $radius . ';color:' . $colors['text'] . '} .public-flow .cover-container{background-color:' . $colors['background'] . '}</style>';
 }
 function studio_webhook(int $leadId): bool
 {

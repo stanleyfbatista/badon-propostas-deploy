@@ -31,6 +31,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Inserção de respostas anteriores no título via `@identificador`. O seletor de respostas anteriores insere a variável correta. No WhatsApp e no agradecimento a substituição é feita no servidor, após validação.
 - Mapa visual React Flow na aba **Lógica**: perguntas conectadas, saídas condicionais, finais personalizados, zoom, minimapa e organização por arrasto. Regras existentes preservadas, com comparação, saltos para perguntas posteriores e encerramento antecipado no final padrão ou em um final específico.
 - Tema com cores, três famílias de fontes locais, botões, progresso e imagem de fundo hospedada no próprio domínio. Nesta versão, a imagem é enviada pelo Gerenciador de Arquivos para `public_html/forms-media/`, não pelo editor.
+- Capa opcional em **Conteúdo → Boas-vindas**, com imagem/vídeo enviado pelo painel, quatro posições, enquadramento, ponto focal, descrição acessível e texto do botão. A imagem de fundo geral do tema continua separada da mídia da capa.
 - Rastreamento opcional de UTMs/gclid/fbclid e parâmetros personalizados; referrer sem query/fragmento. Dados são capturados ao abrir a página e não aceitos como campos ocultos arbitrários no POST.
 - Respostas paginadas por formulário, detalhes, consentimento e exportação CSV. O papel de leitor pode consultar/exportar, mas não editar/publicar ou gerenciar equipe.
 - Notificações para até dez destinatários por formulário via SMTP atual, em BCC. Se vazio, utiliza o destinatário padrão do config. A lista é copiada para o envio: retries não usam configurações posteriores.
@@ -46,7 +47,23 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Falhas de SMTP/webhook não descartam leads. Para retry manual: `php /home/produ7943464/badon-app/console.php mail:retry` e `php /home/produ7943464/badon-app/console.php webhook:retry`. Webhook automático inicial + até cinco tentativas no total. Configure Cron somente se desejar repetição automática. O consumidor deve deduplicar pelo cabeçalho `Idempotency-Key`.
 - O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
 - A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
-- Ainda fora desta etapa: CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico e upload direto de mídia também não foram adicionados.
+- Ainda fora desta etapa: CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico, biblioteca de mídias e upload de arquivos pelos respondentes também não foram adicionados.
+
+### Capa com imagem ou vídeo
+
+1. Abra **Conteúdo → Boas-vindas** e ative **Exibir tela de boas-vindas**. Desativar a capa faz o formulário começar na primeira pergunta sem apagar sua configuração.
+2. Edite título, descrição e texto do botão. Clique ou arraste um arquivo na área de envio: JPG, PNG ou WebP para imagem; MP4 ou WebM para vídeo. Vídeos mantêm controles, sem autoplay, e pausam ao começar as perguntas. Não há conversão de codecs no servidor: use um vídeo compatível com os navegadores dos visitantes, preferencialmente MP4/H.264.
+3. Escolha esquerda, direita, acima do texto ou fundo. Em telas estreitas, os layouts laterais se tornam verticais, com mídia acima. No fundo há contraste escuro atrás do texto; os controles do vídeo ficam livres na base.
+4. Use **Preencher** ou **Mostrar inteiro** e ajuste o ponto focal horizontal/vertical (0–100%). A prévia e a tela pública compartilham o CSS de posicionamento. O painel informa dimensões sugeridas, não obrigatórias.
+5. **Usar sem mídia** remove a associação no rascunho; não exclui o arquivo do disco nem altera uma publicação existente. Salve e publique para atualizar o link público.
+
+O upload usa `/api/studio-media.php`, com sessão, CSRF, autorização de editor/agência, validação da extensão/MIME real, dimensões e tamanho. Arquivos recebem nomes aleatórios em `public_html/forms-media/uploads/{workspace}/`, sem nomes originais, separados por espaço. São ativos **públicos por URL**, inclusive antes de publicar; não envie arquivos confidenciais. O diretório não permite listagem, scripts nem arquivos fora da lista de formatos. Não há upload anônimo.
+
+Limites: imagem até 5 MiB e vídeo até 20 MiB, reduzidos automaticamente conforme `upload_max_filesize` e `post_max_size` do PHP. O painel mostra o limite efetivo. A extensão **Fileinfo** e `file_uploads` precisam estar habilitadas. Para arquivos maiores que o limite atual do PHP, a agência pode ajustar esses valores no cPanel (por exemplo, upload 20M e POST 24M); o aplicativo não altera o PHP da conta. Há limite de 30 tentativas por usuário/hora e 250 MiB ou 200 arquivos por espaço, incluindo uploads antigos não usados.
+
+O deploy preserva os arquivos enviados, que ficam fora do Git; apenas a proteção `.htaccess` do diretório faz parte do repositório. Inclua `public_html/forms-media/uploads/` nos backups junto do banco/config. Não há exclusão automática: revise arquivos antigos pelo gerenciador do cPanel, conferindo antes se algum rascunho ou publicação os utiliza. Não remova a proteção `.htaccess`.
+
+Esta atualização não exige migração nem novas credenciais. Use **Update from Remote + Deploy HEAD Commit** e recarregue o painel. Teste uma imagem e um vídeo na hospedagem antes de disponibilizar a capa aos clientes.
 
 ### Usar o mapa de lógica
 
@@ -68,6 +85,8 @@ npm run build
 php tests/domain.php
 php tests/flow.php
 php tests/studio-domain.php
+php tests/media.php
+node tests/welcome-preview.mjs
 node tests/flow-engine.mjs
 node tests/logic-model.mjs
 node tests/integration.mjs
@@ -78,7 +97,7 @@ O build gera somente `public/studio-assets/`, com manifest lido pelo PHP e nomes
 
 O schema v2 existente (`fields`, regras e encerramentos) é mantido por compatibilidade, em vez de converter destrutivamente todos os formulários ao exemplo `blocks` do documento. A tabela `bf_forms.draft_json` guarda o documento do editor, incluindo `layout` com posições validadas dos nós; `forms.fields_json` permanece o snapshot publicado lido por `/f/{slug}`, sem posições. O destino `end:default` encerra antecipadamente usando a mensagem final padrão; `finish` continua sendo o encerramento personalizado. `bf_forms.published_settings` guarda apenas configurações privadas publicadas. `bf_deliveries` guarda configurações por envio para retry. Consultas de formulário/lead no novo painel passam sempre pela associação ao workspace.
 
-Testes novos cobrem migração repetível sem alteração do JSON publicado, isolamento entre espaços (incluindo detalhe/CSV/duplicação), leitor/editor/agência, revogação de acesso, token de uso único, publicação separada, conflitos de revisão, novos campos, rastreamento, destinatário SMTP por formulário e antifraude. Não substituem teste visual no navegador/iPhone nem teste de entrega real de webhook/SMTP na hospedagem.
+Testes novos cobrem migração repetível sem alteração do JSON publicado, isolamento entre espaços (incluindo detalhe/CSV/duplicação), leitor/editor/agência, revogação de acesso, token de uso único, publicação separada, conflitos de revisão, novos campos, rastreamento, destinatário SMTP por formulário e antifraude. Os testes de mídia verificam upload HTTP real de imagem/vídeo, autorização/CSRF, falsificação de extensão, limites, persistência na publicação/duplicação/deploy, componente React e Range/Content-Type/proteções no Apache. A integração gera um vídeo mínimo com FFmpeg local (`FFMPEG_BIN` opcional); a hospedagem não precisa de FFmpeg. Não substituem teste visual no navegador/iPhone nem teste de entrega real de webhook/SMTP na hospedagem.
 
 ---
 

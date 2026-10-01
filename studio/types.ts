@@ -1,4 +1,17 @@
 export type Ending = { title: string; message: string; whatsapp: boolean };
+export type CoverMedia = { type: "image" | "video"; src: string };
+export type Welcome = {
+  enabled: boolean;
+  title: string;
+  message: string;
+  button_text: string;
+  media: CoverMedia | null;
+  layout: "left" | "right" | "top" | "background";
+  fit: "cover" | "contain";
+  x: number;
+  y: number;
+  alt: string;
+};
 export type Route = { target: string; ending?: Ending };
 export type Rule = Route & { operator: string; value: string };
 export type Field = {
@@ -33,7 +46,7 @@ export type Draft = {
     mode: string;
     fields: Field[];
     completion: Ending;
-    welcome?: { title: string; message: string };
+    welcome?: Partial<Welcome>;
     theme?: Theme;
   };
   settings: {

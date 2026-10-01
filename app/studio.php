@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/media.php';
 
 function studio_ready(): bool
 {
@@ -87,7 +88,7 @@ function studio_clean($raw, bool $publish = false): array
     if (!is_array($d) || !is_array($d['fields'] ?? null)) throw new InvalidArgumentException('Perguntas inválidas.');
     // Rascunhos vazios são permitidos; a publicação exige ao menos uma pergunta.
     $definition = !$d['fields'] && !$publish ? ['version' => 2, 'mode' => 'steps', 'fields' => [], 'completion' => clean_ending($d['completion'] ?? default_ending())] : clean_definition($d['fields'], 'steps', $d['completion'] ?? default_ending());
-    $definition['welcome'] = ['title' => studio_text($d['welcome']['title'] ?? '', 150), 'message' => studio_text($d['welcome']['message'] ?? '', 2000)];
+    $definition['welcome'] = clean_welcome($d['welcome'] ?? []);
     $t = $d['theme'] ?? [];
     if (!is_array($t)) throw new InvalidArgumentException('Tema inválido.');
     foreach (['primary' => '#075bc5', 'text' => '#12243d', 'background' => '#f5f7fb'] as $key => $default) {

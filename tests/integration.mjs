@@ -164,7 +164,7 @@ try {
   assert.ok(builder.body.includes('Bādon Forms') && builder.body.includes('data-definition=') && builder.body.includes('/forms-assets/admin.js?v=2'));
   const flowGuest = new Client();
   const publicFunnel = await flowGuest.req('/f/funil-condicional');
-  assert.ok(publicFunnel.body.includes('/forms-assets/public-flow.js?v=3') && !publicFunnel.body.includes('wa.me/'));
+  assert.ok(publicFunnel.body.includes('/forms-assets/public-flow.js?v=4') && !publicFunnel.body.includes('wa.me/'));
   const flowSend = { csrf: token(publicFunnel.body, 'csrf'), submission: token(publicFunnel.body, 'submission'), form_id: funnelId, website_url: '', consent: '1', 'fields[email]': 'funil@example.invalid', 'fields[investimento]': '500', 'fields[cidade]': 'FORGED-SKIPPED', outcome: 'completed', whatsapp: '1' };
   const countBefore = Number(sql('SELECT COUNT(*) FROM badon_test.leads').trim());
   assert.equal((await flowGuest.req('/api/enviar.php', { ...flowSend, consent: '' })).status, 422);

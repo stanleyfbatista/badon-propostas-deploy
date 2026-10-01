@@ -1,0 +1,192 @@
+/* Shared between the React preview and the public welcome screen. */
+.cover-container {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+}
+.flow-welcome.cover-container {
+  padding: 0;
+}
+.welcome-cover {
+  display: grid;
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  min-height: 380px;
+  gap: 24px;
+  align-items: center;
+}
+.welcome-cover.cover-left,
+.welcome-cover.cover-right {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.welcome-cover .cover-media {
+  min-width: 0;
+  width: 100%;
+  height: 440px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #142438;
+}
+.welcome-cover .cover-media > img,
+.welcome-cover .cover-media > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+}
+.welcome-cover .cover-copy {
+  min-width: 0;
+  padding: 28px 16px;
+  position: relative;
+}
+.welcome-cover .cover-copy h2 {
+  font-size: clamp(26px, 4cqw, 40px);
+  line-height: 1.17;
+  letter-spacing: -0.035em;
+  margin: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+.welcome-cover .cover-copy p {
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  opacity: 0.85;
+  margin: 0 0 24px;
+}
+.welcome-cover .cover-start {
+  display: inline-flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 13px 22px;
+  min-height: 46px;
+  max-width: 100%;
+  background: var(--blue, #075bc5);
+  color: #fff;
+  border-radius: var(--cover-radius, 12px);
+  font: inherit;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.welcome-cover.cover-right .cover-media {
+  grid-column: 2;
+  grid-row: 1;
+}
+.welcome-cover.cover-right .cover-copy {
+  grid-column: 1;
+  grid-row: 1;
+}
+.welcome-cover.cover-top {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.welcome-cover.cover-top .cover-media {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+.welcome-cover.cover-plain {
+  text-align: left;
+}
+.welcome-cover.cover-background {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 480px;
+  background: #142438;
+  color: white;
+}
+.welcome-cover.cover-background .cover-media {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  border-radius: 0;
+}
+.welcome-cover.cover-background .cover-copy {
+  align-self: end;
+  padding: 72px 28px 28px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.84));
+  pointer-events: none;
+}
+.welcome-cover.cover-background .cover-start {
+  pointer-events: auto;
+}
+.welcome-cover.cover-background.has-video .cover-copy {
+  margin-bottom: 68px;
+}
+.welcome-cover.cover-background .cover-copy p {
+  opacity: 1;
+}
+.cover-disabled {
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  background: #fff4dd;
+  color: #664917;
+  border-radius: 9px;
+}
+.cover-mobile .welcome-cover.cover-left,
+.cover-mobile .welcome-cover.cover-right {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.cover-mobile .welcome-cover.cover-right .cover-media,
+.cover-mobile .welcome-cover.cover-right .cover-copy {
+  grid-column: auto;
+  grid-row: auto;
+}
+.cover-mobile .welcome-cover .cover-media {
+  height: 320px;
+}
+.cover-mobile .welcome-cover.cover-top .cover-media {
+  height: auto;
+}
+.cover-mobile .welcome-cover.cover-background .cover-media {
+  height: 100%;
+}
+@container (max-width: 520px) {
+  .welcome-cover.cover-left,
+  .welcome-cover.cover-right {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .welcome-cover.cover-right .cover-media,
+  .welcome-cover.cover-right .cover-copy {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .welcome-cover .cover-media {
+    height: 320px;
+  }
+  .welcome-cover.cover-top .cover-media {
+    height: auto;
+  }
+  .welcome-cover.cover-background .cover-media {
+    height: 100%;
+  }
+  .welcome-cover .cover-copy {
+    padding: 24px 12px;
+  }
+  .welcome-cover.cover-background .cover-copy {
+    padding: 72px 20px 24px;
+  }
+}
+/* Fallback for browsers without container queries. */
+@media (max-width: 540px) {
+  .welcome-cover.cover-left,
+  .welcome-cover.cover-right {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .welcome-cover.cover-right .cover-media,
+  .welcome-cover.cover-right .cover-copy {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}

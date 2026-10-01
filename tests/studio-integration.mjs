@@ -1,5 +1,16 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
+import { mediaTests } from "./media-integration.mjs";
+const publicDefinition = (html) =>
+  JSON.parse(
+    html
+      .match(/data-definition="([^"]+)"/)[1]
+      .replaceAll("&quot;", '"')
+      .replaceAll("&#039;", "'")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&amp;", "&"),
+  );
 
 export async function studioTests({
   base,
@@ -160,6 +171,28 @@ export async function studioTests({
   const guest = new Client();
   assert.equal((await guest.req("/f/cliente-a-form")).status, 404);
   const draft = f.draft;
+  const media = await mediaTests({
+    base,
+    editor,
+    reader,
+    other,
+    wa,
+    wb,
+    cli,
+    run,
+  });
+  draft.definition.welcome = {
+    enabled: true,
+    title: "Conheça a Bādon",
+    message: "Sua próxima etapa.",
+    button_text: "Vamos conversar",
+    media: media.image,
+    layout: "right",
+    fit: "contain",
+    x: 25,
+    y: 75,
+    alt: "Retrato do responsável",
+  };
   draft.definition.fields = [
     {
       key: "nome",
@@ -214,6 +247,23 @@ export async function studioTests({
   let saved = await editor.req("save", { id, revision: f.revision, draft });
   assert.equal(saved.status, 200, JSON.stringify(saved.body));
   assert.deepEqual(
+    (await editor.req("form", undefined, { id })).body.form.draft.definition
+      .welcome,
+    draft.definition.welcome,
+  );
+  const forged = structuredClone(draft);
+  forged.definition.welcome.media = media.other;
+  assert.equal(
+    (
+      await editor.req("save", {
+        id,
+        revision: saved.body.revision,
+        draft: forged,
+      })
+    ).status,
+    422,
+  );
+  assert.deepEqual(
     (await editor.req("form", undefined, { id })).body.form.draft.layout,
     draft.layout,
   );
@@ -231,13 +281,21 @@ export async function studioTests({
   const published = sql(
     `SELECT fields_json FROM badon_test.forms WHERE id=${id}`,
   );
-  assert.ok(!published.includes('"layout"'));
+  assert.equal(Object.hasOwn(JSON.parse(published.trim()), "layout"), false);
   const ticket = await guest.req(
     "/f/cliente-a-form?utm_source=google&vendedor=stanley&senha=nao-salvar",
   );
   assert.equal(ticket.status, 200);
   assert.ok(!ticket.body.includes("client-notify@example.invalid"));
   assert.ok(!ticket.body.includes("wa.me/"));
+  assert.deepEqual(
+    publicDefinition(ticket.body).welcome,
+    draft.definition.welcome,
+  );
+  assert.ok(
+    ticket.body.includes("welcome.css?v=1") &&
+      ticket.body.includes("public-flow.js?v=4"),
+  );
   // A layout-only publication must preserve the active public submission ticket.
   draft.layout["q:nome"].x = 240;
   saved = await editor.req("save", { id, revision, draft });
@@ -249,12 +307,18 @@ export async function studioTests({
     published,
   );
   draft.title = "Rascunho novo";
+  draft.definition.welcome.media = media.video;
+  draft.definition.welcome.layout = "background";
   draft.definition.fields[0].label = "Pergunta ainda não publicada";
   saved = await editor.req("save", { id, revision, draft });
   revision = saved.body.revision;
   assert.equal(
     sql(`SELECT fields_json FROM badon_test.forms WHERE id=${id}`),
     published,
+  );
+  assert.deepEqual(
+    publicDefinition((await guest.req("/f/cliente-a-form")).body).welcome.media,
+    media.image,
   );
   assert.ok(
     (await guest.req("/f/cliente-a-form")).body.includes("Qual é seu nome?"),
@@ -344,6 +408,15 @@ export async function studioTests({
   );
   const dup = await editor.req("duplicate", { id });
   assert.equal(dup.status, 200);
+  assert.deepEqual(
+    publicDefinition((await guest.req("/f/cliente-a-form")).body).welcome.media,
+    media.video,
+  );
+  assert.deepEqual(
+    (await editor.req("form", undefined, { id: dup.body.id })).body.form.draft
+      .definition.welcome.media,
+    media.video,
+  );
   assert.equal(
     (await editor.req("form", undefined, { id: dup.body.id })).body.form.active,
     false,
