@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS bf_tasks (
     opportunity_id BIGINT UNSIGNED NULL,
     status VARCHAR(12) NOT NULL DEFAULT 'todo',
     priority VARCHAR(12) NOT NULL DEFAULT 'normal',
+    start_date DATE NULL,
     due_date DATE NULL,
     checklist_json MEDIUMTEXT NOT NULL,
     archived TINYINT(1) NOT NULL DEFAULT 0,

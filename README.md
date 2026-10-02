@@ -40,6 +40,32 @@ Recarregue **https://forms.produtorabadon.com/entrar** e marque **Permanecer con
 
 `npm test` cobre opt-in, ausência de migração, retomada após encerramento/coleta da sessão, cookies de produção, expiração, token falso, logout, troca de senha, permissões revogadas e proteção contra gravação na conta errada. Os testes usam somente banco e SMTP locais descartáveis.
 
+### Tarefas e Meu dia — listas, criação rápida e datas
+
+O layout em **Lista** agora usa linhas compactas inspiradas na referência enviada, mantendo o visual Bādon, as permissões e o MySQL da hospedagem. **Quadro** continua disponível em Tarefas.
+
+1. Faça um backup atualizado do banco.
+2. No cPanel, use **Update from Remote → Deploy HEAD Commit**.
+3. Execute novamente no Terminal:
+
+   ```sh
+   /usr/local/bin/php /home/produ7943464/badon-app/console.php tasks:migrate
+   ```
+
+4. Recarregue o painel e abra **Tarefas** ou **Meu dia**.
+
+Esta atualização acrescenta somente a coluna opcional `start_date` às tarefas existentes, se ainda não existir. Não remove, duplica ou reclassifica tarefas, não modifica credenciais e não envia e-mails. Antes da migração, a data inicial fica desabilitada; os demais recursos continuam disponíveis. Clientes antigos que omitem a data inicial não apagam o valor salvo.
+
+- **Inclusão rápida no topo:** título, status e vencimento; Enter ou Adicionar salva uma tarefa atribuída a você e compartilhada com a equipe do espaço. A criação tem chave de idempotência contra repetição de envio. Falhas preservam o texto. O aviso de sucesso oferece **Abrir detalhes**, mesmo se a tarefa ficar fora dos filtros atuais. Para criar como particular desde o começo ou preencher tudo antes de salvar, use **Nova tarefa**.
+- **Listas agrupadas:** escolha Status ou Vencimento. Tarefas abre por status; Meu dia abre por vencimento, com Em atraso, Hoje e Sem prazo conforme os resultados. Cada grupo pode ser recolhido. Contagens nos grupos representam apenas a página atual; as métricas superiores abrangem todos os resultados filtrados. O campo de criação rápida permanece no topo; o botão no rodapé de cada grupo abre o cadastro completo com o status daquele grupo.
+- **Colunas:** tarefa, cliente/oportunidade vinculada do CRM, status, responsável com foto, data inicial, vencimento, prioridade e acesso aos detalhes/comentários. O cliente é a empresa da oportunidade vinculada, com o contato como alternativa; não foi criado um cadastro novo de clientes nem vínculo automático. No celular, a tabela permite rolagem horizontal sem esconder campos.
+- **Edição na linha:** status, prioridade e conclusão. Uma gravação confirma no servidor antes de atualizar os resultados; conflitos de revisão não sobrescrevem alterações de outra pessoa. Leitores podem abrir detalhes, mas não editar. Tarefas arquivadas precisam ser restauradas antes de alterações.
+- **Status:** A fazer, Em andamento, Em aprovação e Concluída. Em aprovação é uma etapa de organização, não um fluxo automático de aprovação por cliente.
+- **Ao abrir:** descrição ampliada, responsável, visibilidade, data inicial e vencimento, vínculo com oportunidade, checklist, comentários e histórico já existentes. Datas não incluem horário, são opcionais e o início não pode ser posterior ao vencimento. Tarefas com início futuro ficam fora de Meu dia, inclusive quando não têm vencimento.
+- **Agenda futura:** datas persistem no banco, mas ainda não são eventos de calendário. Não há sincronização Google Agenda, lembretes ou anexos nesta entrega. Mantenha o Cron de e-mails pausado enquanto a hospedagem não liberar a conta.
+
+Testes automatizados cobrem a migração de uma tabela anterior com dados, repetição da migração, preservação por clientes antigos, validação de datas, etapa de aprovação, Meu dia, permissões, listas acessíveis, campos escapados e inclusão rápida com falha/reenvio. Nenhum teste usa e-mails externos ou dados de produção.
+
 ### Tarefas e Meu dia — primeira etapa da central de gestão
 
 Esta etapa acrescenta tarefas persistentes no MySQL existente; não instala outro serviço e não altera SMTP, Cron ou apontamentos DNS. Google Agenda e projetos completos ficam para etapas posteriores.

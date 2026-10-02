@@ -89,6 +89,50 @@ export async function tasksTests({
   assert.equal(detail.events.length, 1);
   assert.equal(detail.item.opportunity_name, "Cliente para tarefa");
   assert.equal(detail.item.checklist[0].done, false);
+  assert.equal((await list()).dates_ready, true);
+  // Simulate an existing installation before the additive start-date migration.
+  sql("ALTER TABLE badon_test.bf_tasks DROP COLUMN start_date");
+  assert.equal((await list()).dates_ready, false);
+  assert.equal((await get(created.id)).item.title, "Preparar proposta");
+  assert.equal(
+    (
+      await editor.req("task-update", {
+        ...detail.item,
+        workspace: wa,
+        start_date: "2027-01-02",
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (await editor.req("task-update", { ...detail.item, workspace: wa })).status,
+    200,
+  );
+  run(php, [cli, "tasks:migrate"]);
+  run(php, [cli, "tasks:migrate"]);
+  detail = await get(created.id);
+  assert.equal(detail.item.start_date, null);
+  assert.equal((await list()).dates_ready, true);
+  assert.equal(
+    (
+      await editor.req("task-update", {
+        ...detail.item,
+        workspace: wa,
+        start_date: "2027-01-02",
+      })
+    ).status,
+    200,
+  );
+  detail = await get(created.id);
+  assert.equal(detail.item.start_date, "2027-01-02");
+  // An older open client must not erase the new date when it omits the field.
+  const { start_date, ...legacyItem } = detail.item;
+  assert.equal(
+    (await editor.req("task-update", { ...legacyItem, workspace: wa })).status,
+    200,
+  );
+  detail = await get(created.id);
+  assert.equal(detail.item.start_date, "2027-01-02");
   assert.equal((await get(created.id, reader)).item.id, created.id);
   assert.equal(
     (
@@ -139,6 +183,9 @@ export async function tasksTests({
     { visibility: "public" },
     { title: "" },
     { due_date: "2027-02-30" },
+    { start_date: "2027-02-30" },
+    { start_date: "2027-01-06" },
+    { start_date: ["2027-01-01"] },
     { checklist: [{ id: randomUUID(), text: "x", done: "false" }] },
     {
       checklist: Array.from({ length: 51 }, () => ({
@@ -356,6 +403,40 @@ export async function tasksTests({
   const second = await list({ search: "Lote ", page: 2 });
   assert.equal(second.items.length, 2);
   assert.ok(!second.items.some((t) => first.items.some((f) => f.id === t.id)));
+  const later = await create({
+    start_date: "2027-01-06",
+    due_date: null,
+    title: "Inicia amanhã",
+  });
+  assert.ok(
+    !(await list({ mine: 1, day: 1 })).items.some((t) => t.id === later.id),
+  );
+  assert.ok(
+    (await list({ search: "Inicia amanhã" })).items.some(
+      (t) => t.id === later.id,
+    ),
+  );
+  detail = await get(created.id);
+  assert.equal(
+    (
+      await editor.req("task-update", {
+        ...detail.item,
+        workspace: wa,
+        status: "review",
+        start_date: null,
+      })
+    ).status,
+    200,
+  );
+  detail = await get(created.id);
+  assert.equal(detail.item.start_date, null);
+  assert.equal(detail.item.completed_at, null);
+  assert.match(detail.events[0].message, /Em aprovação/);
+  assert.ok(
+    (await list({ status: "review" })).items.some((t) => t.id === created.id),
+  );
+  run(php, [cli, "tasks:migrate"]);
+  assert.equal((await get(later.id)).item.start_date, "2027-01-06");
   assert.equal(messages.length, mails);
   console.log(
     "OK: tarefas persistentes, migração repetível, particular até contra agência, papéis, CSRF, vínculos isolados, checklist, revisão, comentários, arquivo, Meu dia e paginação sem e-mail.",

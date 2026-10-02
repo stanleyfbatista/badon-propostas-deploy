@@ -6,6 +6,17 @@ function tasks_ready(): bool
 {
     return (int)db()->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('bf_tasks','bf_task_events')")->fetchColumn() === 2;
 }
+function tasks_dates_ready(): bool
+{
+    static $ready;
+    if ($ready === null) $ready=(bool)db()->query("SELECT 1 FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='bf_tasks' AND column_name='start_date'")->fetchColumn();
+    return $ready;
+}
+function tasks_migrate(): void
+{
+    db()->exec(file_get_contents(__DIR__ . '/tasks-schema.sql'));
+    if (!tasks_dates_ready()) db()->exec('ALTER TABLE bf_tasks ADD COLUMN start_date DATE NULL AFTER priority');
+}
 function tasks_date($raw): ?string
 {
     if ($raw === null || $raw === '') return null;
@@ -28,7 +39,7 @@ function tasks_clean(array $in, array $u, int $workspace, ?array $old): array
 {
     $actor = crm_actor($u); $creator = $old['creator'] ?? $actor;
     $data = ['title'=>studio_text($in['title']??'',200,true),'description'=>studio_text($in['description']??'',10000)];
-    foreach (['status'=>['todo','doing','done'],'priority'=>['low','normal','high','urgent'],'visibility'=>['team','private']] as $key=>$allowed) {
+    foreach (['status'=>['todo','doing','review','done'],'priority'=>['low','normal','high','urgent'],'visibility'=>['team','private']] as $key=>$allowed) {
         $data[$key] = text_value($in[$key]??($key==='priority'?'normal':$allowed[0]));
         if (!in_array($data[$key],$allowed,true)) throw new InvalidArgumentException('Estado, prioridade ou visibilidade inválidos.');
     }
@@ -44,6 +55,12 @@ function tasks_clean(array $in, array $u, int $workspace, ?array $old): array
         $data['opportunity_id'] = $id;
     }
     $data['due_date'] = tasks_date($in['due_date']??null);
+    $start=tasks_date($in['start_date']??($old['start_date']??null));
+    // Older clients omit the new field; explicit null clears it.
+    if (array_key_exists('start_date',$in)) $start=tasks_date($in['start_date']);
+    if ($start && $data['due_date'] && $start>$data['due_date']) throw new InvalidArgumentException('A data inicial não pode ser posterior ao vencimento.');
+    if (tasks_dates_ready()) $data['start_date']=$start;
+    elseif ($start) throw new InvalidArgumentException('Execute tasks:migrate no cPanel para ativar a data inicial.');
     $checklist = $in['checklist']??[];
     if (!is_array($checklist) || !array_is_list($checklist) || count($checklist)>50) throw new InvalidArgumentException('Use até 50 itens no checklist.');
     $clean = []; $ids = [];
@@ -77,15 +94,18 @@ function tasks_handle(string $action, array $u, array $in): never
         if ($search!=='') { $where[]='(t.title LIKE ? OR t.description LIKE ?)'; $args[]='%'.$search.'%'; $args[]='%'.$search.'%'; }
         if (($_GET['mine']??'')==='1') { $where[]='t.assignee=?'; $args[]=$actor; }
         foreach (['status','priority','assignee'] as $key) if (!empty($_GET[$key])) { $where[]="t.$key=?"; $args[]=studio_text($_GET[$key],32); }
-        if (($_GET['day']??'')==='1') { $where[]="t.status<>'done' AND (t.due_date<=? OR t.due_date IS NULL)"; $args[]=$today; }
+        if (($_GET['day']??'')==='1') {
+            $where[]="t.status<>'done' AND (t.due_date<=? OR t.due_date IS NULL)"; $args[]=$today;
+            if (tasks_dates_ready()) { $where[]='(t.start_date IS NULL OR t.start_date<=?)'; $args[]=$today; }
+        }
         if (!empty($_GET['opportunity'])) { $where[]='t.opportunity_id=?'; $args[]=(int)$_GET['opportunity']; }
         $filter=implode(' AND ',$where);
         $q=db()->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(t.status='done'),0) AS done, COALESCE(SUM(t.status<>'done' AND t.due_date<?),0) AS overdue, COALESCE(SUM(t.status<>'done' AND t.due_date=?),0) AS today FROM bf_tasks t WHERE $filter");
         $q->execute(array_merge([$today,$today],$args)); $metrics=$q->fetch();
         $page=max(1,min(100000,(int)($_GET['page']??1)));
-        $q=db()->prepare("SELECT t.*,o.name AS opportunity_name FROM bf_tasks t LEFT JOIN bf_opportunities o ON o.id=t.opportunity_id WHERE $filter ORDER BY (t.status='done'), (t.due_date IS NULL), t.due_date, FIELD(t.priority,'urgent','high','normal','low'), t.id DESC LIMIT 100 OFFSET ".(($page-1)*100));
+        $q=db()->prepare("SELECT t.*,o.name AS opportunity_name,o.company AS opportunity_company FROM bf_tasks t LEFT JOIN bf_opportunities o ON o.id=t.opportunity_id AND o.workspace_id=t.workspace_id WHERE $filter ORDER BY (t.status='done'), (t.due_date IS NULL), t.due_date, FIELD(t.priority,'urgent','high','normal','low'), t.id DESC LIMIT 100 OFFSET ".(($page-1)*100));
         $q->execute($args);
-        studio_json(['items'=>array_map('tasks_row',$q->fetchAll()),'metrics'=>$metrics,'page'=>$page,'people'=>crm_people($workspace),'stages'=>crm_stages()]);
+        studio_json(['items'=>array_map('tasks_row',$q->fetchAll()),'metrics'=>$metrics,'page'=>$page,'people'=>crm_people($workspace),'stages'=>crm_stages(),'dates_ready'=>tasks_dates_ready()]);
     }
     if ($action === 'task-day') {
         $start=crm_date($_GET['start']??null); $end=crm_date($_GET['end']??null);
@@ -116,7 +136,7 @@ function tasks_handle(string $action, array $u, array $in): never
         $q=db()->prepare('SELECT e.*,p.name AS actor_name FROM bf_task_events e LEFT JOIN bf_profiles p ON p.actor=e.actor WHERE task_id=? ORDER BY e.id DESC LIMIT 100'); $q->execute([$id]); $events=$q->fetchAll();
         $q=db()->prepare('SELECT name FROM bf_opportunities WHERE id=? AND workspace_id=?'); $q->execute([$item['opportunity_id'],$workspace]);
         $item['opportunity_name']=$q->fetchColumn()?:null;
-        studio_json(['item'=>tasks_row($item),'events'=>$events]);
+        studio_json(['item'=>tasks_row($item),'events'=>$events,'dates_ready'=>tasks_dates_ready()]);
     }
     if ((int)($in['revision']??0)!==(int)$item['revision']) { db()->rollBack(); studio_error(409,'Esta tarefa mudou. Feche e reabra antes de salvar.'); }
     if ($action==='task-update') {
@@ -125,7 +145,7 @@ function tasks_handle(string $action, array $u, array $in): never
         $data['completed_at']=$data['status']==='done'?($item['completed_at']?:utc_now()):null;
         $q=db()->prepare('UPDATE bf_tasks SET '.implode(',',array_map(fn($key)=>"$key=?",array_keys($data))).',revision=revision+1,updated_at=? WHERE id=?');
         $q->execute(array_merge(array_values($data),[utc_now(),$id]));
-        $statuses=['todo'=>'A fazer','doing'=>'Em andamento','done'=>'Concluída'];
+        $statuses=['todo'=>'A fazer','doing'=>'Em andamento','review'=>'Em aprovação','done'=>'Concluída'];
         tasks_event($id,$actor,$data['status']!==$item['status']?'Etapa: '.$statuses[$item['status']].' → '.$statuses[$data['status']]:'Tarefa e checklist atualizados.');
     } elseif ($action==='task-comment') {
         if ($item['archived']) throw new InvalidArgumentException('Restaure a tarefa antes de comentar.');

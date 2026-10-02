@@ -20,84 +20,31 @@ import {
   OpportunityDialog,
   Person,
   isoDate,
-  utcInput,
 } from "./Crm";
 import "./tasks.css";
-
-export const taskStatuses: Record<string, string> = {
-  todo: "A fazer",
-  doing: "Em andamento",
-  done: "Concluída",
-};
-export const taskPriorities: Record<string, string> = {
-  low: "Baixa",
-  normal: "Normal",
-  high: "Alta",
-  urgent: "Urgente",
-};
-export type TaskItem = {
-  id: number;
-  revision: number;
-  creator: string;
-  title: string;
-  description: string;
-  visibility: "private" | "team";
-  assignee: string | null;
-  opportunity_id: number | null;
-  opportunity_name?: string | null;
-  status: string;
-  priority: string;
-  due_date: string | null;
-  checklist: { id: string; text: string; done: boolean }[];
-  archived: number;
-  create_key?: string;
-};
-export function todayLocal() {
-  const d = new Date();
-  return [
-    d.getFullYear(),
-    String(d.getMonth() + 1).padStart(2, "0"),
-    String(d.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-export function dayBounds(day: string) {
-  const next = new Date(day + "T00:00:00");
-  next.setDate(next.getDate() + 1);
-  const nextDay = [
-    next.getFullYear(),
-    String(next.getMonth() + 1).padStart(2, "0"),
-    String(next.getDate()).padStart(2, "0"),
-  ].join("-");
-  return {
-    start: utcInput(day + "T00:00:00")!,
-    end: utcInput(nextDay + "T00:00:00")!,
-  };
-}
-const dueLabel = (date: string | null) =>
-  date ? date.split("-").reverse().join("/") : "Sem prazo";
+import { TaskList, QuickTask } from "./TaskList";
+import {
+  taskStatuses,
+  taskPriorities,
+  TaskItem,
+  TaskGrouping,
+  todayLocal,
+  dayBounds,
+  blankTask,
+  dueLabel,
+} from "./task-model";
+export {
+  taskStatuses,
+  taskPriorities,
+  todayLocal,
+  dayBounds,
+  blankTask,
+} from "./task-model";
 const timeLabel = (date: string) =>
   new Date(isoDate(date)!).toLocaleString("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
   });
-export function blankTask(actor: string): TaskItem {
-  return {
-    id: 0,
-    revision: 1,
-    creator: actor,
-    title: "",
-    description: "",
-    visibility: "team",
-    assignee: actor,
-    opportunity_id: null,
-    status: "todo",
-    priority: "normal",
-    due_date: null,
-    checklist: [],
-    archived: 0,
-    create_key: crypto.randomUUID(),
-  };
-}
 export function TaskCard({
   item,
   people,
@@ -199,6 +146,10 @@ export function Tasks({
 }) {
   const [today, setToday] = useState(todayLocal);
   const [mode, setMode] = useState("list");
+  const [grouping, setGrouping] = useState<TaskGrouping>(
+    day ? "date" : "status",
+  );
+  const [created, setCreated] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
@@ -310,6 +261,17 @@ export function Tasks({
     fn();
     setPage(1);
   };
+  const addTask = (status = "todo", due: string | null = null) =>
+    setSelected({
+      item: { ...blankTask(actor), status, due_date: due },
+      events: [],
+      dates_ready: !!data?.dates_ready,
+    });
+  const updateTask = (item: TaskItem, changes: Partial<TaskItem>) =>
+    void run(async () => {
+      await api("task-update", { ...item, workspace, ...changes });
+      setRefresh((n) => n + 1);
+    });
   const card = (item: TaskItem) => (
     <TaskCard
       key={item.id}
@@ -321,14 +283,7 @@ export function Tasks({
       open={() => open(item.id)}
       openOpportunity={() => openCrm(Number(item.opportunity_id))}
       toggle={() =>
-        void run(async () => {
-          await api("task-update", {
-            ...item,
-            workspace,
-            status: item.status === "done" ? "todo" : "done",
-          });
-          setRefresh((n) => n + 1);
-        })
+        updateTask(item, { status: item.status === "done" ? "todo" : "done" })
       }
     />
   );
@@ -348,7 +303,7 @@ export function Tasks({
           <button
             className="btn primary"
             disabled={busy || loading || !data}
-            onClick={() => setSelected({ item: blankTask(actor), events: [] })}
+            onClick={() => addTask()}
           >
             <Plus size={16} /> Nova tarefa
           </button>
@@ -362,6 +317,42 @@ export function Tasks({
             month: "long",
           })}{" "}
           · horário e dia deste dispositivo
+        </p>
+      )}
+      {editable && !archived && (
+        <QuickTask
+          api={api}
+          workspace={workspace}
+          actor={actor}
+          day={day}
+          disabled={busy || loading || !data || !!error}
+          created={(id) => {
+            setCreated(id);
+            setPage(1);
+            setRefresh((n) => n + 1);
+          }}
+        />
+      )}
+      {created && (
+        <p className="task-created" role="status">
+          Tarefa adicionada.{" "}
+          <button
+            className="task-link"
+            disabled={busy || loading}
+            onClick={() => open(created)}
+          >
+            Abrir detalhes
+          </button>
+          <small>
+            Ela pode ficar fora dos filtros atuais. Tarefas futuras aparecem em
+            Tarefas.
+          </small>
+        </p>
+      )}
+      {data && !data.dates_ready && (
+        <p className="notice">
+          Para habilitar a data inicial, execute <code>tasks:migrate</code> no
+          Terminal do cPanel. As tarefas existentes continuam disponíveis.
         </p>
       )}
       <div className="task-metrics">
@@ -448,6 +439,18 @@ export function Tasks({
             ? "Carregando tarefas…"
             : `${data?.metrics.total || 0} tarefas · página ${page}`}
         </p>
+        {(mode === "list" || day) && (
+          <label className="task-grouping">
+            Agrupar por
+            <select
+              value={grouping}
+              onChange={(e) => setGrouping(e.target.value as TaskGrouping)}
+            >
+              <option value="status">Status</option>
+              <option value="date">Vencimento</option>
+            </select>
+          </label>
+        )}
         {!day && (
           <div
             className="crm-switch"
@@ -497,9 +500,20 @@ export function Tasks({
           ))}
         </div>
       ) : (
-        <div className="task-list" aria-busy={loading}>
-          {items.map(card)}
-        </div>
+        <TaskList
+          items={items}
+          people={people}
+          today={today}
+          grouping={grouping}
+          editable={editable}
+          busy={busy || loading || !!error}
+          archived={archived}
+          statusFilter={status}
+          open={(item) => open(item.id)}
+          update={updateTask}
+          openOpportunity={openCrm}
+          add={addTask}
+        />
       )}
       {!loading && !error && !items.length && (
         <div className="task-empty">
@@ -519,7 +533,7 @@ export function Tasks({
       <div className="crm-pagination">
         <small>
           {day
-            ? "Somente tarefas atribuídas a você, até hoje ou sem prazo. "
+            ? "Somente suas pendências até hoje ou sem prazo, sem início futuro. "
             : ""}
           Até 100 por página · métricas dos resultados filtrados.
         </small>
@@ -739,16 +753,17 @@ export function TaskDialog({
               onChange={(e) => change("title", e.target.value)}
             />
           </Control>
-          <Control label="Descrição">
+          <Control label="Descrição e informações da tarefa">
             <textarea
-              rows={3}
+              rows={6}
+              placeholder="Contexto, briefing, links de referência e o que precisa ser entregue…"
               maxLength={10000}
               value={item.description}
               onChange={(e) => change("description", e.target.value)}
             />
           </Control>
           <div className="task-fields-grid">
-            <Control label="Etapa">
+            <Control label="Status">
               <select
                 value={item.status}
                 onChange={(e) => change("status", e.target.value)}
@@ -772,10 +787,20 @@ export function TaskDialog({
                 ))}
               </select>
             </Control>
-            <Control label="Prazo (data, sem horário)">
+            <Control label="Data inicial">
               <input
                 type="date"
                 min="2000-01-01"
+                max={item.due_date || "2100-12-31"}
+                disabled={!initial.dates_ready}
+                value={item.start_date || ""}
+                onChange={(e) => change("start_date", e.target.value || null)}
+              />
+            </Control>
+            <Control label="Data de vencimento">
+              <input
+                type="date"
+                min={item.start_date || "2000-01-01"}
                 max="2100-12-31"
                 value={item.due_date || ""}
                 onChange={(e) => change("due_date", e.target.value || null)}

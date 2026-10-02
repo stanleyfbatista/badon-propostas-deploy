@@ -9,8 +9,8 @@ if ($command === 'auth:migrate') {
 } elseif ($command === 'tasks:migrate') {
     require __DIR__ . '/tasks.php';
     if (!studio_ready() || !crm_ready()) { fwrite(STDERR, "Execute studio:migrate e crm:migrate primeiro.\n"); exit(1); }
-    db()->exec(file_get_contents(__DIR__ . '/tasks-schema.sql'));
-    echo "Tarefas e Meu dia preparados. Dados existentes preservados. Nenhum e-mail enviado.\n";
+    tasks_migrate();
+    echo "Tarefas, listas e datas preparadas. Dados existentes preservados. Nenhum e-mail enviado.\n";
 } elseif ($command === 'crm:migrate') {
     require __DIR__ . '/crm.php';
     if (!studio_ready()) exit("Execute studio:migrate primeiro.\n");
