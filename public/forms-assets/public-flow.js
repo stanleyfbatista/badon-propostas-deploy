@@ -11,7 +11,7 @@
   const consent = form.elements.consent, submit = document.querySelector('#flow-submit');
   const bar = document.createElement('progress'); bar.className = 'flow-progress-bar'; bar.max = fields.length; bar.setAttribute('aria-label', 'Progresso do formulário'); progress.after(bar);
   const cover = definition.welcome || {};
-  const steps = definition.mode === 'steps'; let history = [0], reviewing = false, welcoming = steps && (cover.enabled ?? !!cover.title);
+  const steps = definition.mode === 'steps'; let history = [0], reviewing = false, welcoming = true;
   const answer = input => input.multiple ? [...input.selectedOptions].map(o => o.value).join(', ') : input.value.trim();
   const values = () => Object.fromEntries(fields.map((field, index) => [field.key, answer(inputs[index])]));
   const interpolate = text => text.replace(/@([a-z][a-z0-9_]{0,39})/g, (match, key) => values()[key] || match);
@@ -135,6 +135,7 @@
     consent.checked = false; render(true);
   });
   form.addEventListener('submit', event => {
+    if (welcoming) { event.preventDefault(); return; }
     if (steps && !reviewing) { event.preventDefault(); advance(); return; }
     const path = engine.path(fields, values());
     for (const index of path) {

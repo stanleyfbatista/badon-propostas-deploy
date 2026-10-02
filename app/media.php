@@ -22,7 +22,7 @@ function clean_welcome($raw): array
         if ((!is_int($n) && !is_float($n)) || !is_finite((float)$n) || $n < 0 || $n > 100) throw new InvalidArgumentException('O ponto focal deve ficar entre 0 e 100.');
         $focal[$axis] = (int)round($n);
     }
-    return ['enabled' => array_key_exists('enabled', $raw) ? (bool)$raw['enabled'] : $title !== '',
+    return ['enabled' => true,
         'title' => $title, 'message' => studio_text($raw['message'] ?? '', 2000),
         'button_text' => studio_text($raw['button_text'] ?? 'Começar', 60, true),
         'media' => $media, 'layout' => $layout, 'fit' => $fit, 'x' => $focal['x'], 'y' => $focal['y'],

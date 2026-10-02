@@ -81,8 +81,8 @@ try {
         db()->prepare('INSERT INTO bf_workspaces (name, slug) VALUES (?, ?)')->execute([$name, $slug]); studio_json(['id' => (int)db()->lastInsertId()]);
     }
     $workspace = (int)($in['workspace'] ?? $_GET['workspace'] ?? 0);
-    if (in_array($action, ['forms', 'folder-create', 'form-create', 'members', 'invite', 'member-remove'], true)) {
-        studio_access($u, $workspace, in_array($action, ['invite', 'member-remove'], true) ? 'admin' : (in_array($action, ['folder-create', 'form-create'], true) ? 'edit' : 'read'));
+    if (in_array($action, ['forms', 'folder-create', 'form-create', 'members', 'invite', 'invite-cancel', 'member-remove'], true)) {
+        studio_access($u, $workspace, in_array($action, ['invite', 'invite-cancel', 'member-remove'], true) ? 'admin' : (in_array($action, ['folder-create', 'form-create'], true) ? 'edit' : 'read'));
     }
     if ($action === 'forms') {
         $q = db()->prepare('SELECT f.id, f.title, f.slug, f.active, b.draft_json, b.folder_id, b.revision, b.published_revision, b.published_at, (SELECT COUNT(*) FROM leads l WHERE l.form_id = f.id) AS lead_count FROM forms f JOIN bf_forms b ON b.form_id = f.id WHERE b.workspace_id = ? ORDER BY f.id DESC'); $q->execute([$workspace]); $forms = $q->fetchAll();
@@ -96,16 +96,32 @@ try {
     if ($action === 'members') {
         studio_access($u, $workspace, 'admin');
         $q = db()->prepare('SELECT u.id, u.email, m.role FROM bf_members m JOIN bf_users u ON u.id = m.user_id WHERE m.workspace_id = ? ORDER BY u.email'); $q->execute([$workspace]);
-        studio_json(['members' => $q->fetchAll()]);
+        $members = $q->fetchAll();
+        $q = db()->prepare("SELECT email, role, expires_at FROM bf_tokens WHERE workspace_id = ? AND kind = 'invite' AND accepted_at IS NULL ORDER BY expires_at DESC LIMIT 100"); $q->execute([$workspace]);
+        $invites = $q->fetchAll();
+        foreach ($invites as &$invite) $invite['expired'] = $invite['expires_at'] <= utc_now();
+        unset($invite);
+        studio_json(['members' => $members, 'invites' => $invites]);
     }
     if ($action === 'invite') {
         $email = strtolower(studio_text($in['email'] ?? '', 190)); $role = text_value($in['role'] ?? '');
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($role, ['admin', 'editor', 'reader'], true)) studio_error(422, 'Confira o e-mail e o papel do membro.');
         if (!rate_allowed('invite', ($u['agency'] ? 'a' : 'u') . $u['id'], 20, 3600)) studio_error(429, 'Limite de convites atingido nesta hora.');
         $token = bin2hex(random_bytes(32));
+        $expires = gmdate('Y-m-d H:i:s', time() + 172800);
+        db()->beginTransaction();
         db()->prepare("DELETE FROM bf_tokens WHERE kind = 'invite' AND email = ? AND workspace_id = ?")->execute([$email, $workspace]);
-        db()->prepare("INSERT INTO bf_tokens (token_hash, kind, email, workspace_id, role, expires_at) VALUES (?, 'invite', ?, ?, ?, ?)")->execute([hash('sha256', $token), $email, $workspace, $role, gmdate('Y-m-d H:i:s', time() + 172800)]);
-        if (!studio_send_mail($email, 'Convite para o Bādon Forms', "Você recebeu um convite. Abra o link em até 48 horas para aceitar.\n\n" . $config['base_url'] . '/admin/studio/#token=' . $token)) { db()->prepare('DELETE FROM bf_tokens WHERE token_hash = ?')->execute([hash('sha256', $token)]); studio_error(502, 'O SMTP não entregou o convite. Confira a hospedagem e tente novamente.'); }
+        db()->prepare("INSERT INTO bf_tokens (token_hash, kind, email, workspace_id, role, expires_at) VALUES (?, 'invite', ?, ?, ?, ?)")->execute([hash('sha256', $token), $email, $workspace, $role, $expires]);
+        db()->commit();
+        $url = $config['base_url'] . '/admin/studio/#token=' . $token;
+        $sent = studio_send_mail($email, 'Convite para o Bādon Forms', "Você recebeu um convite para participar de um espaço no Bādon Forms. Abra o link em até 48 horas e defina sua senha para aceitar.\n\n" . $url . "\n\nSe não esperava este convite, ignore esta mensagem.");
+        // Token somente como hash no banco; o link é devolvido apenas ao
+        // administrador que acabou de criá-lo, por resposta privada sem cache.
+        studio_json(['ok' => true, 'delivery' => $sent ? 'accepted' : 'failed', 'invite_url' => $url, 'email' => $email, 'expires_at' => $expires], $sent ? 200 : 202);
+    }
+    if ($action === 'invite-cancel') {
+        $email = strtolower(studio_text($in['email'] ?? '', 190, true));
+        db()->prepare("DELETE FROM bf_tokens WHERE kind = 'invite' AND workspace_id = ? AND email = ? AND accepted_at IS NULL")->execute([$workspace, $email]);
         studio_json(['ok' => true]);
     }
     if ($action === 'member-remove') {

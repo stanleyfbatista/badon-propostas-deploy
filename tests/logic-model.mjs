@@ -11,6 +11,13 @@ const draft = { definition, layout: { "q:email": { x: 130, y: 240 } } };
 const graph = buildGraph(draft, "email");
 assert.equal(graph.nodes.length, definition.fields.length + 3);
 assert.equal(graph.warnings.length, 0);
+assert.equal(
+  buildGraph(
+    { definition: { ...definition, welcome: { enabled: false } } },
+    "welcome",
+  ).nodes.find((node) => node.id === "start").data.subtitle,
+  "BOAS-VINDAS",
+);
 assert.equal(graph.nodes.find((n) => n.id === "q:email").selected, true);
 assert.deepEqual(graph.nodes.find((n) => n.id === "q:email").position, {
   x: 130,

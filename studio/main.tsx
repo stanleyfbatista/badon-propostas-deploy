@@ -806,10 +806,25 @@ function Members({
   notice: (s: string) => void;
 }) {
   const [members, setMembers] = useState<any[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [invitation, setInvitation] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
+  async function refreshMembers() {
+    const result = await api("members", undefined, { workspace });
+    setMembers(result.members);
+    setInvites(result.invites || []);
+  }
+  async function sendInvite(email: string, role: string) {
+    setInvitation(null);
+    setCopied(false);
+    const result = await api("invite", { workspace, email, role });
+    setInvitation(result);
+    await refreshMembers();
+  }
   useEffect(() => {
-    task(async () =>
-      setMembers((await api("members", undefined, { workspace })).members),
-    );
+    setInvitation(null);
+    setCopied(false);
+    task(refreshMembers);
   }, [workspace]);
   return (
     <section>
@@ -824,14 +839,7 @@ function Members({
         onSubmit={(e) => {
           e.preventDefault();
           const d = new FormData(e.currentTarget);
-          task(async () => {
-            await api("invite", {
-              workspace,
-              email: d.get("email"),
-              role: d.get("role"),
-            });
-            notice("Convite enviado. Ele vale por 48 horas.");
-          });
+          task(() => sendInvite(String(d.get("email")), String(d.get("role"))));
         }}
       >
         <Input
@@ -848,11 +856,104 @@ function Members({
             <option value="admin">Administrador</option>
           </select>
         </label>
-        <Button kind="primary" disabled={busy}>
+        <Button type="submit" kind="primary" disabled={busy}>
           <Send size={16} />
-          Enviar convite
+          {busy ? "Aguarde…" : "Enviar convite"}
         </Button>
       </form>
+      {invitation && (
+        <section
+          className="box invite-result"
+          role={invitation.delivery === "failed" ? "alert" : "status"}
+        >
+          <h2>
+            {invitation.delivery === "accepted"
+              ? "Convite criado e aceito pelo servidor de e-mail"
+              : "Convite criado, mas o envio do e-mail falhou"}
+          </h2>
+          <p>
+            {invitation.delivery === "accepted"
+              ? `Destinatário: ${invitation.email}. Peça para conferir também o spam. A aceitação pelo servidor não garante chegada à caixa de entrada.`
+              : "Você pode tentar novamente ou compartilhar o link abaixo diretamente com a pessoa convidada."}
+          </p>
+          <Input
+            label="Link privado do convite — válido por 48 horas"
+            value={invitation.invite_url}
+            readOnly
+            onFocus={(e) => e.target.select()}
+          />
+          <Button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(invitation.invite_url);
+                setCopied(true);
+              } catch {
+                notice("Selecione o link acima e copie manualmente.");
+              }
+            }}
+          >
+            {copied ? "Link copiado" : "Copiar link do convite"}
+          </Button>
+          <p className="muted">
+            Compartilhe somente com {invitation.email}: este link concede acesso
+            à conta convidada. Ele funciona uma vez. Reenviar gera outro link e
+            invalida o anterior.
+          </p>
+        </section>
+      )}
+      <section className="box">
+        <h2>Convites aguardando aceite</h2>
+        <Button
+          type="button"
+          disabled={busy}
+          onClick={() => task(refreshMembers)}
+        >
+          Atualizar equipe
+        </Button>
+        {!invites.length && <p className="muted">Nenhum convite pendente.</p>}
+        {invites.map((i) => (
+          <div className="member" key={i.email}>
+            <strong>{i.email}</strong>
+            <span>
+              {
+                { admin: "Administrador", editor: "Editor", reader: "Leitor" }[
+                  i.role as "admin"
+                ]
+              }{" "}
+              · {i.expired ? "Expirado" : "Aguardando aceite"}
+            </span>
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                if (
+                  confirm(
+                    "Gerar e enviar um novo convite? O link anterior deixará de funcionar.",
+                  )
+                )
+                  task(() => sendInvite(i.email, i.role));
+              }}
+            >
+              Reenviar convite
+            </Button>
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                if (confirm("Cancelar este convite?"))
+                  task(async () => {
+                    await api("invite-cancel", { workspace, email: i.email });
+                    if (invitation?.email === i.email) setInvitation(null);
+                    await refreshMembers();
+                  });
+              }}
+            >
+              Cancelar convite
+            </Button>
+          </div>
+        ))}
+      </section>
       <div className="box">
         <p className="muted">
           A Bādon mantém acesso de agência a todos os espaços.
@@ -906,9 +1007,7 @@ function Editor({
   const [form, setForm] = useState(initial),
     [draft, setDraft] = useState<Draft>(initial.draft),
     [saved, setSaved] = useState(JSON.stringify(initial.draft)),
-    [selected, setSelected] = useState(
-      initial.draft.definition.fields[0]?.key || "welcome",
-    ),
+    [selected, setSelected] = useState("welcome"),
     [tab, setTab] = useState("content"),
     [mobile, setMobile] = useState(false),
     [adding, setAdding] = useState(false),
@@ -1213,7 +1312,7 @@ function Editor({
             >
               <span>↗</span>
               <div>
-                Boas-vindas<small>Tela inicial opcional</small>
+                Boas-vindas<small>Primeira tela do formulário</small>
               </div>
             </button>
             <div className="block-divider">PERGUNTAS</div>

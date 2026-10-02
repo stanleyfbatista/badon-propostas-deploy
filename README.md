@@ -31,7 +31,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Inserção de respostas anteriores no título via `@identificador`. O seletor de respostas anteriores insere a variável correta. No WhatsApp e no agradecimento a substituição é feita no servidor, após validação.
 - Mapa visual React Flow na aba **Lógica**: perguntas conectadas, saídas condicionais, finais personalizados, zoom, minimapa e organização por arrasto. Regras existentes preservadas, com comparação, saltos para perguntas posteriores e encerramento antecipado no final padrão ou em um final específico.
 - Tema com cores, três famílias de fontes locais, botões, progresso e imagem de fundo hospedada no próprio domínio. Nesta versão, a imagem é enviada pelo Gerenciador de Arquivos para `public_html/forms-media/`, não pelo editor.
-- Capa opcional em **Conteúdo → Boas-vindas**, com imagem/vídeo enviado pelo painel, quatro posições, enquadramento, ponto focal, descrição acessível e texto do botão. A imagem de fundo geral do tema continua separada da mídia da capa.
+- Capa sempre ativa em **Conteúdo → Boas-vindas**, com imagem/vídeo opcional enviado pelo painel, quatro posições selecionadas por ícones, enquadramento, ponto focal, descrição acessível e texto do botão. A imagem de fundo geral do tema continua separada da mídia da capa.
 - Rastreamento opcional de UTMs/gclid/fbclid e parâmetros personalizados; referrer sem query/fragmento. Dados são capturados ao abrir a página e não aceitos como campos ocultos arbitrários no POST.
 - Respostas paginadas por formulário, detalhes, consentimento e exportação CSV. O papel de leitor pode consultar/exportar, mas não editar/publicar ou gerenciar equipe.
 - Notificações para até dez destinatários por formulário via SMTP atual, em BCC. Se vazio, utiliza o destinatário padrão do config. A lista é copiada para o envio: retries não usam configurações posteriores.
@@ -44,6 +44,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Um formulário novo só aceita respostas após publicar. **Publicar ativa** o formulário. Pausar desabilita novos envios sem apagar respostas. Alterar o slug na publicação muda o link; avise quem compartilha o formulário.
 - Uma publicação que modifica o título/perguntas invalida tickets antigos com uma mensagem para recarregar. Salvar rascunhos não os invalida.
 - Convites, link mágico e notificações usam o SMTP privado existente. Entrega real, SPF/DKIM e spam precisam ser conferidos na hospedagem; os testes automatizados usam SMTP falso local. Não mude o MX do Google para testar o envio.
+- A equipe mostra convites pendentes/expirados, com reenvio e cancelamento. O envio do convite é imediato, separado do Cron dos leads. O resultado distingue aceitação pelo servidor SMTP de falha; aceitação não garante entrega à caixa de entrada. Mesmo em falha, o administrador recebe um link privado para compartilhar com a pessoa convidada. Esse link vale por 48 horas, funciona uma vez e concede acesso à conta indicada: não o publique. Reenviar invalida o link anterior. Listagens não revelam tokens e o banco guarda somente o hash.
 - Falhas de SMTP/webhook não descartam leads nem bloqueiam a confirmação. O envio público apenas salva e confirma: as notificações ficam na fila do MySQL. **Configure o Cron obrigatório de notificações descrito abaixo.** O consumidor de webhook deve deduplicar pelo cabeçalho `Idempotency-Key`.
 - O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
 - A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
@@ -51,9 +52,9 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 
 ### Capa com imagem ou vídeo
 
-1. Abra **Conteúdo → Boas-vindas** e ative **Exibir tela de boas-vindas**. Desativar a capa faz o formulário começar na primeira pergunta sem apagar sua configuração.
+1. Abra **Conteúdo → Boas-vindas**. A capa está sempre ativa: ao abrir o link público, o visitante vê a apresentação e clica em **Começar** para responder. Isso também se aplica a formulários antigos com capa desativada, sem regravar sua publicação nem invalidar tickets. Sem JavaScript, permanece a alternativa acessível com todas as perguntas.
 2. Edite título, descrição e texto do botão. Clique ou arraste um arquivo na área de envio: JPG, PNG ou WebP para imagem; MP4 ou WebM para vídeo. Vídeos mantêm controles, sem autoplay, e pausam ao começar as perguntas. Não há conversão de codecs no servidor: use um vídeo compatível com os navegadores dos visitantes, preferencialmente MP4/H.264.
-3. Escolha esquerda, direita, acima do texto ou fundo. Em telas estreitas, os layouts laterais se tornam verticais, com mídia acima. No fundo há contraste escuro atrás do texto; os controles do vídeo ficam livres na base.
+3. Escolha pelos quatro botões com ícones: esquerda, direita, acima do texto ou fundo. O botão azul indica o layout escolhido. Em telas estreitas, os layouts laterais se tornam verticais, com mídia acima. No fundo há contraste escuro atrás do texto; os controles do vídeo ficam livres na base.
 4. Use **Preencher** ou **Mostrar inteiro** e ajuste o ponto focal horizontal/vertical (0–100%). A prévia e a tela pública compartilham o CSS de posicionamento. O painel informa dimensões sugeridas, não obrigatórias.
 5. **Usar sem mídia** remove a associação no rascunho; não exclui o arquivo do disco nem altera uma publicação existente. Salve e publique para atualizar o link público.
 

@@ -209,11 +209,16 @@ try {
   const funnelData = { action: 'save-form', csrf, title: 'Funil condicional', slug: 'funil-condicional', active: '1', whatsapp_message: 'Vamos conversar', fields_payload: JSON.stringify(definition) };
   assert.equal((await admin.req('/admin/', funnelData)).status, 303);
   const funnelId = sql("SELECT id FROM badon_test.forms WHERE slug='funil-condicional'").trim();
+  // Simula uma publicação antiga com a capa desativada; a exibição não regrava o banco.
+  sql("UPDATE badon_test.forms SET fields_json = JSON_SET(fields_json, '$.welcome', JSON_OBJECT('enabled', false)) WHERE id = " + funnelId);
+  const storedFunnel = sql("SELECT fields_json FROM badon_test.forms WHERE id = " + funnelId);
   const builder = await admin.req('/admin/?view=form&id=' + funnelId);
   assert.ok(builder.body.includes('Bādon Forms') && builder.body.includes('data-definition=') && builder.body.includes('/forms-assets/admin.js?v=2'));
   const flowGuest = new Client();
   const publicFunnel = await flowGuest.req('/f/funil-condicional');
-  assert.ok(publicFunnel.body.includes('/forms-assets/public-flow.js?v=4') && !publicFunnel.body.includes('wa.me/'));
+  assert.ok(publicFunnel.body.includes('&quot;enabled&quot;:true'));
+  assert.equal(sql("SELECT fields_json FROM badon_test.forms WHERE id = " + funnelId), storedFunnel);
+  assert.ok(publicFunnel.body.includes('/forms-assets/public-flow.js?v=5') && !publicFunnel.body.includes('wa.me/'));
   const flowSend = { csrf: token(publicFunnel.body, 'csrf'), submission: token(publicFunnel.body, 'submission'), form_id: funnelId, website_url: '', consent: '1', 'fields[email]': 'funil@example.invalid', 'fields[investimento]': '500', 'fields[cidade]': 'FORGED-SKIPPED', outcome: 'completed', whatsapp: '1' };
   const countBefore = Number(sql('SELECT COUNT(*) FROM badon_test.leads').trim());
   assert.equal((await flowGuest.req('/api/enviar.php', { ...flowSend, consent: '' })).status, 422);
@@ -275,7 +280,7 @@ try {
   run(php, [cli, 'admin:password', 'admin@example.invalid'], { input: randomBytes(18).toString('hex') + '\n', stdio: ['pipe', 'pipe', 'ignore'] });
   assert.ok((await admin.req('/admin/')).body.includes('type="password"'));
   log('troca de senha invalida sessões anteriores');
-  await studioTests({base,sql,run,php,cli,messages,recipients,Client,token,worker});
+  await studioTests({base,sql,run,php,cli,messages,recipients,Client,token,worker,setRejectMail: value => { rejectMail=value; }});
   // Validar configuração de produção sem qualquer conexão SMTP externa.
   const productionConfig = config.replace("'environment'=>'development'", "'environment'=>'production'").replace("'base_url'=>'http:", "'base_url'=>'https:").replace("'encryption'=>'none','username'=>'','password'=>''", "'encryption'=>'tls','username'=>'test','password'=>'test'");
   fs.writeFileSync(path.join(account, 'badon-config/config.php'), productionConfig, { mode: 0o600 });

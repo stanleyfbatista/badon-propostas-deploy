@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Upload, Image as ImageIcon, Film, Trash2 } from "lucide-react";
+import {
+  Upload,
+  Image as ImageIcon,
+  Film,
+  Trash2,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
+  Layers,
+  Check,
+} from "lucide-react";
 import type { CoverMedia, Welcome } from "./types";
 import "../public/forms-assets/welcome.css";
 import "./welcome-editor.css";
 
 export const normalizeWelcome = (value?: Partial<Welcome>): Welcome => ({
-  enabled: value?.enabled ?? !!value?.title,
+  enabled: true,
   title: value?.title || "",
   message: value?.message || "",
   button_text: value?.button_text ?? "Começar",
@@ -27,11 +37,6 @@ export function WelcomeCover({
   const media = welcome.media;
   return (
     <div className={`cover-container ${mobile ? "cover-mobile" : ""}`}>
-      {!welcome.enabled && (
-        <p className="cover-disabled">
-          Capa desativada. O formulário começará na primeira pergunta.
-        </p>
-      )}
       <section
         className={`welcome-cover cover-${media ? welcome.layout : "plain"} ${media?.type === "video" ? "has-video" : ""}`}
       >
@@ -85,6 +90,54 @@ const layouts = {
   top: "Acima do texto",
   background: "Como fundo",
 } as const;
+const layoutIcons = {
+  left: PanelLeft,
+  right: PanelRight,
+  top: PanelTop,
+  background: Layers,
+};
+export function WelcomeLayoutPicker({
+  value,
+  onChange,
+}: {
+  value: Welcome["layout"];
+  onChange: (value: Welcome["layout"]) => void;
+}) {
+  return (
+    <div className="cover-layout-control">
+      <span id="cover-layout-label">Layout da mídia</span>
+      <div
+        className="cover-layout-options"
+        role="group"
+        aria-labelledby="cover-layout-label"
+      >
+        {(Object.keys(layouts) as Welcome["layout"][]).map((key) => {
+          const Icon = layoutIcons[key];
+          return (
+            <button
+              type="button"
+              key={key}
+              aria-pressed={value === key}
+              aria-label={layouts[key]}
+              title={layouts[key]}
+              onClick={() => onChange(key)}
+            >
+              <Icon size={24} aria-hidden="true" />
+              <span>{layouts[key]}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="cover-layout-caption" aria-live="polite">
+        {value === "left" || value === "right"
+          ? `Dividido — mídia ${value === "left" ? "à esquerda" : "à direita"}`
+          : value === "top"
+            ? "Mídia acima do texto"
+            : "Mídia ao fundo, texto sobreposto"}
+      </p>
+    </div>
+  );
+}
 export function WelcomeEditor({
   value,
   workspace,
@@ -156,25 +209,12 @@ export function WelcomeEditor({
     <>
       <p className="eyebrow">PRIMEIRA IMPRESSÃO</p>
       <h2>Capa do formulário</h2>
-      <label className="cover-toggle">
-        <input
-          type="checkbox"
-          checked={welcome.enabled}
-          onChange={(e) =>
-            patch({
-              enabled: e.target.checked,
-              title:
-                e.target.checked && !welcome.title
-                  ? "Bem-vindo!"
-                  : welcome.title,
-            })
-          }
-        />{" "}
-        Exibir tela de boas-vindas
-      </label>
+      <p className="cover-active">
+        <Check size={16} aria-hidden="true" /> Capa sempre ativa
+      </p>
       <p className="muted">
-        A capa aparece antes das perguntas. Desativá-la não apaga o conteúdo
-        configurado.
+        O link público abre nesta capa. As perguntas começam ao clicar no botão
+        abaixo da apresentação. A imagem ou o vídeo são opcionais.
       </p>
       <label className="control">
         <span>Título</span>
@@ -297,21 +337,10 @@ export function WelcomeEditor({
               onChange={(e) => patch({ alt: e.target.value })}
             />
           </label>
-          <label className="control">
-            <span>Onde a mídia aparece</span>
-            <select
-              value={welcome.layout}
-              onChange={(e) =>
-                patch({ layout: e.target.value as Welcome["layout"] })
-              }
-            >
-              {Object.entries(layouts).map(([key, text]) => (
-                <option key={key} value={key}>
-                  {text}
-                </option>
-              ))}
-            </select>
-          </label>
+          <WelcomeLayoutPicker
+            value={welcome.layout}
+            onChange={(layout) => patch({ layout })}
+          />
           <p className="cover-layout-help">
             {welcome.layout === "left" || welcome.layout === "right"
               ? "Formato sugerido: 1080 × 1600 px (vertical). No celular, a mídia fica acima do texto."

@@ -5,9 +5,9 @@ require dirname(__DIR__) . '/app/studio.php';
 function check_media(bool $ok): void { if (!$ok) throw new RuntimeException('Media assertion failed'); }
 function reject_media(callable $fn): void { try { $fn(); } catch (InvalidArgumentException $e) { return; } throw new RuntimeException('Unsafe media accepted'); }
 $src = '/forms-media/uploads/1/' . str_repeat('a', 32) . '.png';
-check_media(clean_welcome([])['enabled'] === false);
+check_media(clean_welcome([])['enabled'] === true);
 check_media(clean_welcome(['title' => 'Legado'])['enabled'] === true);
-check_media(clean_welcome(['title' => 'Legado', 'enabled' => false])['enabled'] === false);
+check_media(clean_welcome(['title' => 'Legado', 'enabled' => false])['enabled'] === true);
 foreach (['left', 'right', 'top', 'background'] as $layout) foreach (['cover', 'contain'] as $fit) {
     $w = clean_welcome(['enabled' => true, 'title' => 'Olá', 'media' => ['type' => 'image', 'src' => $src], 'layout' => $layout, 'fit' => $fit, 'x' => 10, 'y' => 90, 'button_text' => 'Quero começar']);
     check_media($w['layout'] === $layout && $w['fit'] === $fit && $w['x'] === 10 && $w['y'] === 90);

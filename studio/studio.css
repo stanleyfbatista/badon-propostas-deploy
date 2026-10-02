@@ -574,6 +574,15 @@ kbd {
   margin-right: auto;
   overflow-wrap: anywhere;
 }
+.invite-result h2 {
+  font-size: 20px;
+}
+.invite-result > .btn {
+  margin-top: 12px;
+}
+.invite-result p {
+  overflow-wrap: anywhere;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

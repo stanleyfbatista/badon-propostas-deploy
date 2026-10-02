@@ -23,6 +23,7 @@ export async function studioTests({
   Client,
   token,
   worker,
+  setRejectMail,
 }) {
   const before = sql("SELECT id,fields_json FROM badon_test.forms ORDER BY id");
   run(php, [cli, "studio:migrate"]);
@@ -99,7 +100,9 @@ export async function studioTests({
   const invite = async (email, role, workspace) => {
     const response = await agency.req("invite", { email, role, workspace });
     assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.delivery, "accepted");
     const raw = messages.at(-1).match(/#token=([a-f0-9]{64})/)[1];
+    assert.ok(response.body.invite_url.endsWith("#token=" + raw));
     const user = new Api();
     await user.req("boot");
     assert.equal(
@@ -119,6 +122,122 @@ export async function studioTests({
   const editor = await invite("editor@example.invalid", "editor", wa),
     reader = await invite("reader@example.invalid", "reader", wa),
     other = await invite("other@example.invalid", "admin", wb);
+  // SMTP recusado não destrói o convite; somente o administrador recebe o link.
+  const pendingEmail = "pending@example.invalid";
+  let failedInvite;
+  setRejectMail(true);
+  try {
+    failedInvite = await agency.req("invite", {
+      workspace: wa,
+      email: pendingEmail,
+      role: "admin",
+    });
+  } finally {
+    setRejectMail(false);
+  }
+  assert.equal(failedInvite.status, 202);
+  assert.equal(failedInvite.body.delivery, "failed");
+  const failedToken = failedInvite.body.invite_url.split("#token=")[1];
+  assert.match(failedToken, /^[a-f0-9]{64}$/);
+  const pending = (await agency.req("members", undefined, { workspace: wa }))
+    .body.invites;
+  assert.deepEqual(
+    pending.map((i) => [i.email, i.role, i.expired]),
+    [[pendingEmail, "admin", false]],
+  );
+  assert.ok(!JSON.stringify(pending).includes(failedToken));
+  assert.ok(
+    !sql("SELECT token_hash FROM badon_test.bf_tokens").includes(failedToken),
+  );
+  for (const client of [editor, reader, other]) {
+    assert.equal(
+      (await client.req("members", undefined, { workspace: wa })).status,
+      403,
+    );
+    assert.equal(
+      (
+        await client.req("invite-cancel", {
+          workspace: wa,
+          email: pendingEmail,
+        })
+      ).status,
+      403,
+    );
+  }
+  const resent = await agency.req("invite", {
+    workspace: wa,
+    email: pendingEmail,
+    role: "admin",
+  });
+  assert.equal(resent.status, 200);
+  assert.equal(resent.body.delivery, "accepted");
+  const newToken = resent.body.invite_url.split("#token=")[1];
+  assert.notEqual(newToken, failedToken);
+  assert.equal(
+    (await agency.req("members", undefined, { workspace: wa })).body.invites
+      .length,
+    1,
+  );
+  const invited = new Api();
+  await invited.req("boot");
+  assert.equal(
+    (await invited.req("accept", { token: failedToken, password })).status,
+    422,
+  );
+  assert.equal(
+    (await invited.req("accept", { token: newToken, password })).status,
+    200,
+  );
+  await invited.req("boot");
+  assert.equal(
+    (await invited.req("members", undefined, { workspace: wa })).status,
+    200,
+  );
+  assert.equal(
+    (await invited.req("members", undefined, { workspace: wb })).status,
+    403,
+  );
+  assert.equal(
+    (await agency.req("members", undefined, { workspace: wa })).body.invites
+      .length,
+    0,
+  );
+  const cancelEmail = "cancel@example.invalid";
+  const cancelInvite = await agency.req("invite", {
+    workspace: wa,
+    email: cancelEmail,
+    role: "reader",
+  });
+  sql(
+    "UPDATE badon_test.bf_tokens SET expires_at = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 HOUR) WHERE email = 'cancel@example.invalid'",
+  );
+  assert.equal(
+    (await agency.req("members", undefined, { workspace: wa })).body.invites[0]
+      .expired,
+    true,
+  );
+  assert.equal(
+    (await agency.req("invite-cancel", { workspace: wa, email: cancelEmail }))
+      .status,
+    200,
+  );
+  assert.equal(
+    (
+      await invited.req("accept", {
+        token: cancelInvite.body.invite_url.split("#token=")[1],
+        password,
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (await agency.req("members", undefined, { workspace: wa })).body.invites
+      .length,
+    0,
+  );
+  console.log(
+    "OK: convite com falha SMTP preservado, status explícito, reenvio, aceite, cancelamento e isolamento de permissões.",
+  );
   assert.equal(
     (await editor.req("forms", undefined, { workspace: wb })).status,
     403,
@@ -295,7 +414,7 @@ export async function studioTests({
   );
   assert.ok(
     ticket.body.includes("welcome.css?v=1") &&
-      ticket.body.includes("public-flow.js?v=4"),
+      ticket.body.includes("public-flow.js?v=5"),
   );
   // A layout-only publication must preserve the active public submission ticket.
   draft.layout["q:nome"].x = 240;

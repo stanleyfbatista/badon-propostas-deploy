@@ -20,12 +20,13 @@ new Function("require", "module", "exports", compiled.outputFiles[0].text)(
   module,
   module.exports,
 );
-const { WelcomeCover, normalizeWelcome } = module.exports;
-assert.equal(normalizeWelcome().enabled, false);
+const { WelcomeCover, WelcomeEditor, WelcomeLayoutPicker, normalizeWelcome } =
+  module.exports;
+assert.equal(normalizeWelcome().enabled, true);
 assert.equal(normalizeWelcome({ title: "Legado" }).enabled, true);
 assert.equal(
   normalizeWelcome({ title: "Legado", enabled: false }).enabled,
-  false,
+  true,
 );
 const media = {
   type: "image",
@@ -80,11 +81,36 @@ const empty = renderToStaticMarkup(
   }),
 );
 assert.ok(
-  empty.includes("Capa desativada") &&
+  !empty.includes("Capa desativada") &&
+    empty.includes("Bem-vindo!") &&
     empty.includes("cover-plain") &&
     !empty.includes("<img") &&
     !empty.includes("<video"),
 );
+for (const layout of ["left", "right", "top", "background"]) {
+  const picker = renderToStaticMarkup(
+    React.createElement(WelcomeLayoutPicker, { value: layout, onChange() {} }),
+  );
+  assert.equal((picker.match(/type="button"/g) || []).length, 4);
+  assert.equal((picker.match(/aria-pressed="true"/g) || []).length, 1);
+  assert.equal((picker.match(/<svg/g) || []).length, 4);
+}
+const editor = renderToStaticMarkup(
+  React.createElement(WelcomeEditor, {
+    value: { enabled: false, media },
+    workspace: 1,
+    onChange() {},
+    onUpload() {},
+    onUploading() {},
+  }),
+);
+assert.ok(
+  editor.includes("Capa sempre ativa") && !editor.includes('type="checkbox"'),
+);
+assert.ok(
+  editor.includes('aria-label="À esquerda"') &&
+    editor.includes('aria-label="Como fundo"'),
+);
 console.log(
-  "OK: componente de capa, quatro layouts, enquadramento, celular, imagem/vídeo, capa desativada e escape de texto.",
+  "OK: capa sempre ativa, quatro ícones de layout, enquadramento, celular, imagem/vídeo e escape de texto.",
 );

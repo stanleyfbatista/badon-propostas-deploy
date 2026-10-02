@@ -101,6 +101,8 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     $nonce = $nonce ?? submission_ticket($form);
     require_once __DIR__ . '/studio-public.php';
     studio_theme($definition['theme'] ?? []);
+    // Sempre iniciar pela capa, sem alterar o JSON publicado ou os tickets.
+    $definition['welcome'] = clean_welcome($definition['welcome'] ?? []);
     page_start($form['title']);
     echo '<section class="panel public-flow"><div class="flow-introduction"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Responda no seu ritmo. As perguntas com * são obrigatórias. Seus dados só serão enviados ao confirmar no final.</p></div>';
     if ($errors) alert_box('Confira os campos destacados e confirme seu consentimento para enviar.');
@@ -128,6 +130,6 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     // Nunca marcado automaticamente, nem ao reapresentar erros.
     echo '<section id="flow-review"><h2>Confirmar envio</h2><div id="flow-summary" hidden></div><label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
     if (isset($errors['consent'])) echo '<p class="error-text">' . h($errors['consent']) . '</p>';
-    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=3" defer></script><script src="/forms-assets/public-flow.js?v=4" defer></script></section>';
+    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=3" defer></script><script src="/forms-assets/public-flow.js?v=5" defer></script></section>';
     page_end();
 }
