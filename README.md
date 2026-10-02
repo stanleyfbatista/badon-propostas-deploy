@@ -48,7 +48,31 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Falhas de SMTP/webhook não descartam leads nem bloqueiam a confirmação. O envio público apenas salva e confirma: as notificações ficam na fila do MySQL. **Configure o Cron obrigatório de notificações descrito abaixo.** O consumidor de webhook deve deduplicar pelo cabeçalho `Idempotency-Key`.
 - O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
 - A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
-- Ainda fora desta etapa: CRM, insights, pixels/CAPI, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico, biblioteca de mídias e upload de arquivos pelos respondentes também não foram adicionados.
+- Ainda fora desta etapa: CRM, painel interno de abandono/insights, CAPI, Google/TikTok/GTM, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico, biblioteca de mídias e upload de arquivos pelos respondentes também não foram adicionados.
+
+### Pixel da Meta por formulário
+
+Em **Configurações → Pixel da Meta**, informe somente o ID numérico do Pixel/conjunto de dados, marque **Ativar Pixel neste formulário**, salve e publique. O recurso vem desativado, não aceita scripts arbitrários e não requer senha/token da Meta. Rascunhos não alteram a medição publicada. Para desativar, desmarque e publique novamente; abas já abertas ainda usam a configuração com que foram carregadas. Não há migração de banco, alteração no Cron ou CAPI.
+
+| Evento | Quando ocorre |
+| --- | --- |
+| PageView | Abertura do formulário, depois da autorização de medição |
+| BadonFormStart | Clique em Começar |
+| BadonFormStep | Pergunta exibida: parâmetros numéricos step_index e question_total |
+| BadonFormReview | Chegada à confirmação final |
+| Lead | Resposta realmente salva, inclusive encerramentos condicionais |
+
+Todos os eventos levam form_id, sem títulos, textos das perguntas, alternativas, respostas ou dados de contato nos parâmetros. Não há correspondência avançada; a configuração automática do SDK é desativada. A Meta ainda recebe dados técnicos, como IP, URL pública, navegador e identificadores/cookies de publicidade. O código remove query/fragmento arbitrários antes de carregar o SDK, preservando somente fbclid com formato restrito; a captura de UTMs no lead continua no servidor, separada do Pixel.
+
+Antes de carregar o SDK, o visitante escolhe aceitar ou recusar. A escolha é uma preferência da sessão da aba, separada por formulário/Pixel, alterável na própria página. Sem autorização, com sinal Global Privacy Control, sem JavaScript ou com bloqueio de publicidade, não há medição deste recurso; preencher continua possível. Etapas anteriores à autorização não são reconstruídas. O consentimento para tratamento da solicitação continua separado e obrigatório no envio.
+
+O envio com medição autorizada usa uma resposta JSON privada do servidor para confirmar o registro e só então disparar Lead, ainda na página pública. Nunca carregamos o Pixel na URL privada do recibo. Repetições do mesmo envio mantêm o mesmo eventID; o navegador evita reemitir o Lead na sessão. O envio não aguarda a Meta e um bloqueio do SDK não invalida o lead. Fechamento da aba, falha de rede e bloqueadores podem impedir a chegada do evento: é medição pelo navegador, não garantia de entrega nem contagem completa de visitas.
+
+Verifique os eventos em **Gerenciador de Eventos → Testar eventos**, aceitando a medição no formulário público. Recusar deve impedir disparos. Para analisar uma pergunta específica, use form_id e step_index; no modo legado com todas as perguntas juntas, etapas visíveis são registradas juntas. A chegada à confirmação não é conversão; Lead só ocorre depois de salvar. As etapas se referem à numeração das perguntas daquela versão publicada.
+
+O ID não concede acesso à conta de anúncios. O responsável precisa ter as permissões adequadas na Meta e configurar ali as conversões/colunas/campanhas que pretende usar. Não instale outro Pixel automático na mesma página. O projeto não muda campanhas, públicos nem permissões externas. Revise a política e as configurações da conta antes do uso com clientes, especialmente em formulários com contexto sensível.
+
+Referências de integração: [SDK oficial da Meta](https://connect.facebook.net/en_US/fbevents.js) e [documentação do Pixel](https://developers.facebook.com/docs/meta-pixel/). Testes locais usam uma simulação, sem chamadas à Meta; o recebimento no Pixel real depende de teste na conta do responsável.
 
 ### Capa com imagem ou vídeo
 

@@ -100,13 +100,15 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     $fields = $definition['fields'];
     $nonce = $nonce ?? submission_ticket($form);
     require_once __DIR__ . '/studio-public.php';
-    studio_theme($definition['theme'] ?? []);
+    $pixelId = active_meta_pixel($_SESSION['tickets'][$nonce]['settings'] ?? []);
+    studio_theme($definition['theme'] ?? [], $pixelId !== '');
     // Sempre iniciar pela capa, sem alterar o JSON publicado ou os tickets.
     $definition['welcome'] = clean_welcome($definition['welcome'] ?? []);
     page_start($form['title']);
+    if ($pixelId !== '') echo '<link rel="stylesheet" href="/forms-assets/meta-pixel.css?v=1">';
     echo '<section class="panel public-flow"><div class="flow-introduction"><p class="eyebrow">Vamos conversar</p><h1>' . h($form['title']) . '</h1><p class="muted">Responda no seu ritmo. As perguntas com * são obrigatórias. Seus dados só serão enviados ao confirmar no final.</p></div>';
     if ($errors) alert_box('Confira os campos destacados e confirme seu consentimento para enviar.');
-    echo '<form action="/api/enviar.php" method="post" id="public-flow" data-definition="' . h(json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) . '">' . csrf_input() . '<input type="hidden" name="form_id" value="' . (int)$form['id'] . '"><input type="hidden" name="submission" value="' . h($nonce) . '"><p id="flow-progress" class="eyebrow" aria-live="polite" hidden></p><noscript><p>Sem JavaScript, todas as perguntas aparecem juntas. Responda às que se aplicam; o servidor verificará o caminho e desconsiderará as perguntas puladas.</p></noscript>';
+    echo '<form action="/api/enviar.php" method="post" id="public-flow"' . ($pixelId !== '' ? ' data-meta-pixel="' . h($pixelId) . '" data-pixel-path="/f/' . h(rawurlencode($form['slug'])) . '"' : '') . ' data-definition="' . h(json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) . '">' . csrf_input() . '<input type="hidden" name="form_id" value="' . (int)$form['id'] . '"><input type="hidden" name="submission" value="' . h($nonce) . '"><p id="flow-progress" class="eyebrow" aria-live="polite" hidden></p><noscript><p>Sem JavaScript, todas as perguntas aparecem juntas. Responda às que se aplicam; o servidor verificará o caminho e desconsiderará as perguntas puladas.</p></noscript>';
     foreach ($fields as $field) {
         $key = $field['key']; $id = 'field-' . $key; $value = text_value($old[$key] ?? '');
         $attrs = ' id="' . h($id) . '" name="fields[' . h($key) . ']" data-answer="' . h($key) . '"' . (isset($errors[$key]) ? ' aria-invalid="true" aria-describedby="error-' . h($key) . '"' : '');
@@ -130,6 +132,8 @@ function render_form(array $form, array $old = [], array $errors = [], ?string $
     // Nunca marcado automaticamente, nem ao reapresentar erros.
     echo '<section id="flow-review"><h2>Confirmar envio</h2><div id="flow-summary" hidden></div><label class="check"><input type="checkbox" name="consent" value="1" required><span>' . h($_SESSION['tickets'][$nonce]['consent']) . ' <a href="' . h($_SESSION['tickets'][$nonce]['privacy_url']) . '" target="_blank" rel="noopener">Ler Política de Privacidade</a></span></label>';
     if (isset($errors['consent'])) echo '<p class="error-text">' . h($errors['consent']) . '</p>';
-    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form><script src="/forms-assets/flow-engine.js?v=4" defer></script><script src="/forms-assets/public-flow.js?v=6" defer></script></section>';
+    echo '<button class="button" type="submit" id="flow-submit">Confirmar e enviar</button></section><div class="actions flow-navigation" id="flow-navigation" hidden><button class="button secondary" type="button" id="flow-back">Voltar</button><button class="button" type="button" id="flow-next">Continuar →</button></div></form>';
+    if ($pixelId !== '') echo '<script src="/forms-assets/meta-pixel.js?v=1" defer></script>';
+    echo '<script src="/forms-assets/flow-engine.js?v=4" defer></script><script src="/forms-assets/public-flow.js?v=7" defer></script></section>';
     page_end();
 }

@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/media.php';
+require_once __DIR__ . '/pixel.php';
 
 function studio_ready(): bool
 {
@@ -105,6 +106,7 @@ function studio_clean($raw, bool $publish = false): array
     $definition['theme']['image'] = $background;
     $s = $raw['settings'] ?? [];
     if (!is_array($s)) throw new InvalidArgumentException('Configurações inválidas.');
+    $pixel = clean_meta_pixel($s['meta_pixel'] ?? []);
     $emails = $s['notify_emails'] ?? [];
     if (!is_array($emails) || count($emails) > 10) throw new InvalidArgumentException('Use até 10 e-mails de notificação.');
     foreach ($emails as &$email) { $email = strtolower(text_value($email)); if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) throw new InvalidArgumentException('Confira os e-mails de notificação.'); } unset($email);
@@ -133,7 +135,7 @@ function studio_clean($raw, bool $publish = false): array
         $positions[$id] = ['x' => round((float)$position['x'], 2), 'y' => round((float)$position['y'], 2)];
     }
     return ['title' => $title, 'slug' => $slug, 'description' => studio_text($raw['description'] ?? '', 2000), 'whatsapp_message' => studio_text($raw['whatsapp_message'] ?? '', 2000), 'definition' => $definition, 'layout' => (object)$positions,
-        'settings' => ['notify_emails' => array_values(array_unique($emails)), 'webhook_url' => $webhook, 'tracking' => !empty($s['tracking']), 'hidden_fields' => array_values(array_unique($hidden)), 'minimum_seconds' => max(3, min(60, (int)($s['minimum_seconds'] ?? 3)))]];
+        'settings' => ['meta_pixel' => $pixel, 'notify_emails' => array_values(array_unique($emails)), 'webhook_url' => $webhook, 'tracking' => !empty($s['tracking']), 'hidden_fields' => array_values(array_unique($hidden)), 'minimum_seconds' => max(3, min(60, (int)($s['minimum_seconds'] ?? 3)))]];
 }
 function studio_webhook_host(string $url): string
 {

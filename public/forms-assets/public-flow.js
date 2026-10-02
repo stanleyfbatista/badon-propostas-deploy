@@ -33,7 +33,7 @@
     const title = document.createElement('h2'), description = document.createElement('p'), start = document.createElement('button');
     title.textContent = cover.title || 'Bem-vindo!'; description.textContent = cover.message || '';
     start.type = 'button'; start.className = 'button cover-start'; start.textContent = (cover.button_text || 'Começar') + ' →';
-    start.addEventListener('click', () => { welcome.querySelector('video')?.pause(); welcoming = false; render(true); });
+    start.addEventListener('click', () => { welcome.querySelector('video')?.pause(); welcoming = false; globalThis.BadonPixel?.start(); render(true); });
     copy.append(title); if (cover.message) copy.append(description); copy.append(start);
     content.append(copy); welcome.append(content); form.prepend(welcome);
   }
@@ -100,6 +100,11 @@
       summary.append(list);
     }
     if (focus) (reviewing ? consent : inputs[current]).focus();
+    if (!welcoming) {
+      if (reviewing) globalThis.BadonPixel?.review();
+      else if (steps) globalThis.BadonPixel?.step(current + 1, fields.length);
+      else path.forEach(index => globalThis.BadonPixel?.step(index + 1, fields.length));
+    }
   }
   function advance() {
     const current = history[history.length - 1];
@@ -144,6 +149,10 @@
     }
     if (!consent.checked) { event.preventDefault(); consent.reportValidity(); return; }
     submit.disabled = true; submit.textContent = 'Enviando…';
+    if (globalThis.BadonPixel?.canTrack()) {
+      event.preventDefault();
+      globalThis.BadonPixel.submit(submit);
+    }
   });
   // O servidor sempre repete a validação. O cliente só organiza a experiência.
   render();

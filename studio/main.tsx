@@ -44,6 +44,7 @@ import {
 import "./studio.css";
 import { LogicCanvas } from "./LogicCanvas";
 import { AddConditionButton, comparisonOptions } from "./ConditionControls";
+import { MetaPixelSettings } from "./MetaPixelSettings";
 import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
 
 let csrf = "";
@@ -1188,6 +1189,14 @@ function Editor({
         <Responses id={form.id} task={task} editable={editable} />
       ) : tab === "settings" ? (
         <section className="settings-grid">
+          <fieldset disabled={!editable || busy} className="box">
+            <MetaPixelSettings
+              value={draft.settings.meta_pixel}
+              onChange={(meta_pixel) =>
+                change({ settings: { ...draft.settings, meta_pixel } })
+              }
+            />
+          </fieldset>
           <fieldset disabled={!editable || busy} className="box">
             <h2>Detalhes do formulário</h2>
             <Input

@@ -50,6 +50,7 @@ export type Draft = {
     theme?: Theme;
   };
   settings: {
+    meta_pixel?: { enabled: boolean; id: string };
     notify_emails: string[];
     webhook_url?: string;
     tracking: boolean;

@@ -20,11 +20,14 @@ function studio_tracking(array $settings): array
     }
     return $values;
 }
-function studio_theme(array $theme): void
+function studio_theme(array $theme, bool $metaPixel = false): void
 {
-    if (!$theme) return;
+    if (!$theme && !$metaPixel) return;
     $nonce = bin2hex(random_bytes(16));
-    header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'nonce-$nonce'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'");
+    $metaScript = $metaPixel ? ' https://connect.facebook.net' : '';
+    $metaNetwork = $metaPixel ? ' https://www.facebook.com https://connect.facebook.net' : '';
+    header("Content-Security-Policy: default-src 'self'; script-src 'self'$metaScript; style-src 'self' 'nonce-$nonce'; img-src 'self'$metaNetwork; font-src 'self'; connect-src 'self'$metaNetwork; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'");
+    if (!$theme) return;
     $colors = [];
     foreach (['primary', 'text', 'background'] as $key) $colors[$key] = preg_match('/^#[a-f0-9]{6}$/iD', $theme[$key] ?? '') ? $theme[$key] : '#12243d';
     $font = ['sans' => 'Arial, sans-serif', 'serif' => 'Georgia, serif', 'mono' => 'monospace'][$theme['font'] ?? 'sans'] ?? 'Arial, sans-serif';

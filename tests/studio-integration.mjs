@@ -371,6 +371,7 @@ export async function studioTests({
   draft.layout = { "q:nome": { x: 150, y: 280 }, end: { x: 150, y: 1200 } };
   draft.definition.completion.title = "Obrigado, @nome";
   draft.settings = {
+    meta_pixel: { enabled: true, id: "123456789012345" },
     notify_emails: ["client-notify@example.invalid"],
     tracking: true,
     hidden_fields: ["vendedor"],
@@ -378,6 +379,24 @@ export async function studioTests({
   };
   let saved = await editor.req("save", { id, revision: f.revision, draft });
   assert.equal(saved.status, 200, JSON.stringify(saved.body));
+  for (const badPixel of [
+    { enabled: true, id: "<script>" },
+    { enabled: true, id: "" },
+  ]) {
+    assert.equal(
+      (
+        await editor.req("save", {
+          id,
+          revision: saved.body.revision,
+          draft: {
+            ...draft,
+            settings: { ...draft.settings, meta_pixel: badPixel },
+          },
+        })
+      ).status,
+      422,
+    );
+  }
   assert.deepEqual(
     (await editor.req("form", undefined, { id })).body.form.draft.definition
       .welcome,
@@ -418,6 +437,19 @@ export async function studioTests({
     "/f/cliente-a-form?utm_source=google&vendedor=stanley&senha=nao-salvar",
   );
   assert.equal(ticket.status, 200);
+  assert.ok(
+    ticket.body.includes('data-meta-pixel="123456789012345"') &&
+      ticket.body.includes("/forms-assets/meta-pixel.js?v=1"),
+  );
+  assert.ok(
+    ticket.headers
+      .get("content-security-policy")
+      .includes("https://connect.facebook.net"),
+  );
+  assert.ok(
+    !ticket.body.includes("fbevents.js"),
+    "SDK is not loaded by the HTML before consent",
+  );
   assert.ok(!ticket.body.includes("client-notify@example.invalid"));
   assert.ok(!ticket.body.includes("wa.me/"));
   assert.deepEqual(
@@ -430,7 +462,7 @@ export async function studioTests({
   );
   assert.ok(
     ticket.body.includes("welcome.css?v=1") &&
-      ticket.body.includes("public-flow.js?v=6"),
+      ticket.body.includes("public-flow.js?v=7"),
   );
   // A layout-only publication must preserve the active public submission ticket.
   draft.layout["q:nome"].x = 240;
@@ -502,8 +534,18 @@ export async function studioTests({
   await worker();
   assert.ok(recipients.at(-1).includes("client-notify@example.invalid"));
   const confirm = await guest.req(sent.headers.get("location"));
+  assert.ok(
+    !confirm.body.includes("meta-pixel.js") &&
+      !confirm.headers.get("content-security-policy").includes("facebook"),
+    "Never run Pixel on private receipt URL",
+  );
   assert.ok(confirm.body.includes("Obrigado, Stanley"));
   assert.ok(confirm.body.includes("Oi%2C+sou+Stanley"));
+  const normalPixelResult = await sendPixelJSON(guest, payload);
+  assert.equal(normalPixelResult.status, 200);
+  assert.equal(normalPixelResult.body.pixel.id, "123456789012345");
+  assert.equal(normalPixelResult.body.pixel.form_id, Number(id));
+  assert.match(normalPixelResult.body.pixel.event_id, /^[a-f0-9]{64}$/);
   const rows = (await reader.req("leads", undefined, { id })).body.leads;
   assert.equal(rows.length, 1);
   const leadId = rows[0].id;
@@ -602,14 +644,40 @@ export async function studioTests({
     ).status,
     422,
   );
-  const multiSent = await multiGuest.req("/api/enviar.php", multiPayload);
-  assert.equal(multiSent.status, 303);
+  async function sendPixelJSON(client, data) {
+    const response = await fetch(base + "/api/enviar.php", {
+      method: "POST",
+      redirect: "manual",
+      headers: { Cookie: client.cookie, Accept: "application/json" },
+      body: new URLSearchParams(data),
+    });
+    return { status: response.status, body: await response.json() };
+  }
+  const invalidPixelSend = await sendPixelJSON(
+    multiGuest,
+    multiPayload.filter(([key]) => key !== "consent"),
+  );
+  assert.equal(invalidPixelSend.status, 422);
+  assert.equal(invalidPixelSend.body.pixel, undefined);
+  const multiSent = await sendPixelJSON(multiGuest, multiPayload);
+  assert.equal(multiSent.status, 200);
+  assert.equal(multiSent.body.pixel.id, "123456789012345");
+  assert.equal(multiSent.body.pixel.form_id, Number(id));
+  assert.match(multiSent.body.pixel.event_id, /^[a-f0-9]{64}$/);
+  assert.deepEqual(Object.keys(multiSent.body.pixel).sort(), [
+    "event_id",
+    "form_id",
+    "id",
+  ]);
+  assert.ok(
+    !JSON.stringify(multiSent.body).includes("multiple@example.invalid"),
+  );
   const multiLead = (await reader.req("leads", undefined, { id })).body
     .leads[0];
   assert.ok(multiLead.values_json.includes("Encerramento condicional"));
   assert.ok(multiLead.values_json.includes("Menos de R$ 1.000,00"));
   assert.ok(!multiLead.values_json.includes("FORGED-SKIPPED"));
-  const multiConfirm = await multiGuest.req(multiSent.headers.get("location"));
+  const multiConfirm = await multiGuest.req(multiSent.body.redirect);
   assert.ok(
     multiConfirm.body.includes("Obrigado pelo interesse") &&
       !multiConfirm.body.includes("wa.me/"),
@@ -617,6 +685,32 @@ export async function studioTests({
   assert.equal(
     (await multiGuest.req("/api/enviar.php", multiPayload)).status,
     303,
+  );
+  assert.deepEqual(
+    (await sendPixelJSON(multiGuest, multiPayload)).body,
+    multiSent.body,
+    "Same Lead event ID on retry",
+  );
+  draft.settings.meta_pixel.enabled = false;
+  saved = await editor.req("save", { id, revision, draft });
+  revision = saved.body.revision;
+  assert.equal(saved.status, 200);
+  assert.ok(
+    (await guest.req("/f/cliente-a-form")).body.includes(
+      'data-meta-pixel="123456789012345"',
+    ),
+    "Draft does not change public Pixel",
+  );
+  assert.equal((await editor.req("publish", { id, revision })).status, 200);
+  const disabledPixel = await guest.req("/f/cliente-a-form");
+  assert.ok(
+    !disabledPixel.body.includes("meta-pixel.js") &&
+      !disabledPixel.headers
+        .get("content-security-policy")
+        .includes("facebook"),
+  );
+  console.log(
+    "OK: Pixel por formulário, publicação separada, ID validado, Lead em encerramento condicional, JSON idempotente e nenhum rastreamento no recibo.",
   );
   console.log(
     "OK: condição múltipla salva/publicada, seleção com moeda, consentimento, encerramento sem campos pulados e envio idempotente.",
