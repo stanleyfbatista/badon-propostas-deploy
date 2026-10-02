@@ -7,6 +7,7 @@ import { randomBytes } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { studioTests } from './studio-integration.mjs';
+import { requestHost } from './host-request.mjs';
 
 const repo = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const php = process.env.PHP_BIN || '/opt/homebrew/opt/php@8.4/bin/php';
@@ -29,6 +30,7 @@ async function ready(fn) { for (let i = 0; i < 80; i++) { try { if (await fn()) 
 function kill(proc) { if (proc && proc.exitCode === null) proc.kill('SIGTERM'); }
 
 try {
+  run(php, ['tests/routes.php']);
   fs.mkdirSync(path.join(tmp, 'mysql'));
   run(path.join(mysqlBin, 'mariadb-install-db'), ['--no-defaults', '--datadir=' + path.join(tmp, 'mysql'), '--auth-root-authentication-method=normal', '--skip-test-db'], { stdio: 'ignore' });
   dbProc = spawn(path.join(mysqlBin, 'mariadbd'), ['--no-defaults', '--datadir=' + path.join(tmp, 'mysql'), '--socket=' + socket, '--pid-file=' + path.join(tmp, 'mysql.pid'), '--log-error=' + path.join(tmp, 'mysql.log'), '--bind-address=127.0.0.1', '--port=' + dbPort], { stdio: 'ignore' });
@@ -105,6 +107,14 @@ try {
   const token = (body, name) => { const match = body.match(new RegExp('name="' + name + '" value="([^"]+)"')); assert.ok(match, 'missing ' + name); return match[1]; };
   const admin = new Client(), guest = new Client();
   const login = await admin.req('/admin/');
+  for (const path of ['/entrar', '/painel', '/entrar/', '/painel/']) {
+    const page = await guest.req(path);
+    assert.equal(page.status, 200);
+    assert.ok(page.body.includes('Carregando Bādon Forms'));
+  }
+  const legacyStudio = await guest.req('/admin/studio/');
+  assert.equal(legacyStudio.status, 302);
+  assert.equal(legacyStudio.headers.get('location'), '/entrar');
   assert.ok(/HttpOnly/i.test(login.headers.get('set-cookie')) && /SameSite=Lax/i.test(login.headers.get('set-cookie')));
   const beforeCookie = admin.cookie;
   assert.equal((await admin.req('/admin/', { action: 'login', email: 'admin@example.invalid', password, csrf: 'bad' })).status, 403);
@@ -297,6 +307,33 @@ try {
   assert.match(secureLogin.headers.get('set-cookie'), /HttpOnly/i);
   assert.ok(secureLogin.headers.get('content-security-policy').includes("frame-ancestors 'none'"));
   log('produção exige HTTPS, cookie Secure/HttpOnly e política de segurança');
+  // Simulate the final private-config switch without DNS changes or external calls.
+  const formsConfig = productionConfig.replace('https://127.0.0.1:' + httpPort, 'https://forms.produtorabadon.com');
+  fs.writeFileSync(path.join(account, 'badon-config/config.php'), formsConfig, { mode: 0o600 });
+  const hostRequest = (host, path, method = 'GET') => requestHost(base + path, host, method);
+  for (const [path, target] of [
+    ['/f/trafego-local?utm_source=meta', '/f/trafego-local?utm_source=meta'],
+    ['/admin/studio/', '/entrar'], ['/entrar', '/entrar'], ['/painel', '/painel'],
+  ]) {
+    const result = await hostRequest('produtorabadon.com', path);
+    assert.equal(result.status, 302);
+    assert.equal(result.headers.get('location'), 'https://forms.produtorabadon.com' + target);
+  }
+  for (const path of ['/', '/entrar', '/painel']) {
+    const result = await hostRequest('forms.produtorabadon.com', path);
+    assert.equal(result.status, 200, path);
+    assert.equal(result.headers.get('location'), null);
+  }
+  const missingForm = await hostRequest('forms.produtorabadon.com', '/f/nao-existe');
+  assert.equal(missingForm.status, 404);
+  assert.equal(missingForm.headers.get('location'), null);
+  assert.equal((await hostRequest('produtorabadon.com', '/')).status, 200);
+  assert.equal((await hostRequest('produtorabadon.com', '/api/studio.php?action=boot')).status, 200);
+  assert.equal((await hostRequest('produtorabadon.com', '/f/confirmacao.php?r=invalid')).status, 404);
+  const oldPost = await hostRequest('produtorabadon.com', '/api/enviar.php', 'POST');
+  assert.equal(oldPost.status, 403); // Missing CSRF, not redirected to another session/host.
+  assert.equal(oldPost.headers.get('location'), null);
+  log('subdomínio ativado: navegações antigas redirecionadas, novo host sem loop, APIs/POST/recibos preservados');
   console.log('Integração concluída. Nenhum e-mail externo foi enviado.');
 } finally {
   kill(phpProc); kill(dbProc);

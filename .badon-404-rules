@@ -3,6 +3,10 @@ DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 <IfModule mod_rewrite.c>
 RewriteEngine On
+# Same public document root; only the Forms subdomain gets the Studio homepage.
+RewriteCond %{HTTP_HOST} ^forms\.produtorabadon\.com(?::[0-9]+)?$ [NC]
+RewriteRule ^$ admin/studio/index.php [END]
+RewriteRule ^(?:entrar|painel)/?$ admin/studio/index.php [END]
 RewriteRule ^f/[a-z0-9]+(?:-[a-z0-9]+)*/?$ f/index.php [END]
 RewriteCond %{REQUEST_URI} !^/(wp-admin|wp-login\.php|wp-content|wp-includes|wp-json)(/|$) [NC]
 RewriteCond %{REQUEST_FILENAME} !-f

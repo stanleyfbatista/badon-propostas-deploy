@@ -40,7 +40,7 @@ try {
         if ($q->fetchColumn()) {
             $token = bin2hex(random_bytes(32));
             db()->prepare("INSERT INTO bf_tokens (token_hash, kind, email, expires_at) VALUES (?, 'magic', ?, ?)")->execute([hash('sha256', $token), $email, gmdate('Y-m-d H:i:s', time() + 900)]);
-            if (!studio_send_mail($email, 'Seu acesso ao Bādon Forms', "Acesse em até 15 minutos. O link funciona uma vez.\n\n" . $config['base_url'] . '/admin/studio/#token=' . $token)) db()->prepare('DELETE FROM bf_tokens WHERE token_hash = ?')->execute([hash('sha256', $token)]);
+            if (!studio_send_mail($email, 'Seu acesso ao Bādon Forms', "Acesse em até 15 minutos. O link funciona uma vez.\n\n" . $config['base_url'] . '/entrar#token=' . $token)) db()->prepare('DELETE FROM bf_tokens WHERE token_hash = ?')->execute([hash('sha256', $token)]);
         }
         studio_json(['ok' => true, 'message' => 'Se este e-mail tiver acesso, enviaremos um link válido por 15 minutos.']);
     }
@@ -113,7 +113,7 @@ try {
         db()->prepare("DELETE FROM bf_tokens WHERE kind = 'invite' AND email = ? AND workspace_id = ?")->execute([$email, $workspace]);
         db()->prepare("INSERT INTO bf_tokens (token_hash, kind, email, workspace_id, role, expires_at) VALUES (?, 'invite', ?, ?, ?, ?)")->execute([hash('sha256', $token), $email, $workspace, $role, $expires]);
         db()->commit();
-        $url = $config['base_url'] . '/admin/studio/#token=' . $token;
+        $url = $config['base_url'] . '/entrar#token=' . $token;
         $sent = studio_send_mail($email, 'Convite para o Bādon Forms', "Você recebeu um convite para participar de um espaço no Bādon Forms. Abra o link em até 48 horas e defina sua senha para aceitar.\n\n" . $url . "\n\nSe não esperava este convite, ignore esta mensagem.");
         // Token somente como hash no banco; o link é devolvido apenas ao
         // administrador que acabou de criá-lo, por resposta privada sem cache.

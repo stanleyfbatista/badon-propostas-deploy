@@ -212,6 +212,13 @@ function App() {
     load().catch((e) => setError(e.message));
     if (token) history.replaceState(null, "", location.pathname);
   }, []);
+  useEffect(() => {
+    if (!boot) return;
+    // Tokens have already been captured in state; keep them out of the URL.
+    const path = boot.user && !token ? "/painel" : "/entrar";
+    if (location.pathname !== path || location.hash)
+      history.replaceState(null, "", path);
+  }, [boot?.user, token]);
   async function task(fn: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -1418,7 +1425,7 @@ function Editor({
                   <i />
                   <i />
                   <i />
-                  <span>produtorabadon.com/f/{draft.slug}</span>
+                  <span>{location.host}/f/{draft.slug}</span>
                 </div>
                 <Preview
                   field={field}

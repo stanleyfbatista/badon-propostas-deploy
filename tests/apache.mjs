@@ -6,6 +6,7 @@ import net from 'node:net';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { requestHost } from './host-request.mjs';
 const repo = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const tmp = fs.mkdtempSync('/tmp/badon-apache-test-');
 const root = path.join(tmp, 'public'); fs.mkdirSync(root);
@@ -24,6 +25,7 @@ const conf = `ServerRoot "${tmp}"
 PidFile "${tmp}/httpd.pid"
 Listen 127.0.0.1:${port}
 ServerName localhost
+KeepAlive Off
 LoadModule mpm_prefork_module /usr/libexec/apache2/mod_mpm_prefork.so
 LoadModule unixd_module /usr/libexec/apache2/mod_unixd.so
 LoadModule authz_core_module /usr/libexec/apache2/mod_authz_core.so
@@ -53,6 +55,22 @@ try {
     assert.equal(result.status, status, url); assert.equal(await result.text(), body, url);
   }
   const videoUrl = `http://127.0.0.1:${port}/forms-media/uploads/1/${'a'.repeat(32)}.mp4`;
+  for (const [host, url, body] of [
+    ['produtorabadon.com', '/', 'HOME'],
+    ['forms.produtorabadon.com', '/', 'STUDIO'],
+    ['forms.produtorabadon.com', '/entrar', 'STUDIO'],
+    ['forms.produtorabadon.com', '/painel', 'STUDIO'],
+    ['forms.produtorabadon.com', '/painel/', 'STUDIO'],
+    ['forms.produtorabadon.com', '/f/teste', 'FORM'],
+    ['forms.produtorabadon.com', '/api/enviar.php', 'SUBMISSION'],
+    ['forms.produtorabadon.com', '/f/confirmacao.php?r=abc', 'CONFIRMATION'],
+    ['produtorabadon.com', '/entrar', 'STUDIO'],
+    ['forms.produtorabadon.com.evil.invalid', '/', 'HOME'],
+  ]) {
+    const result = await requestHost(`http://127.0.0.1:${port}${url}`, host);
+    assert.equal(result.status, 200, host + url);
+    assert.equal(await result.text(), body, host + url);
+  }
   const video = await fetch(videoUrl, { headers: { Range: 'bytes=0-99' } });
   assert.equal(video.status, 206);
   assert.equal(video.headers.get('content-type'), 'video/mp4');

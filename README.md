@@ -312,6 +312,43 @@ Backups das regras antigas ficam em `public_html/.htaccess.badon-backup-*`.
 
 ## Desenvolvimento e verificação
 
+### Subdomínio Bādon Forms (ativação em duas etapas)
+
+A atualização prepara `/entrar` e `/painel`, sem mudar automaticamente a configuração privada.
+O painel usa `/entrar` sem autenticação e `/painel` após o login; as permissões continuam verificadas pela API.
+Convites e links de acesso usam `base_url` + `/entrar#token=…`. Links antigos `/admin/studio/`
+redirecionam para `/entrar`; o fragmento do convite é preservado pelo navegador e consumido pelo editor.
+
+1. Faça o deploy normal no cPanel (**Update from Remote → Deploy HEAD Commit**).
+2. Em **Domínios → Criar novo domínio**, cadastre `forms.produtorabadon.com` usando a
+   **mesma raiz de documentos** `/home/produ7943464/public_html` do site atual.
+   Não aponte para `admin/studio`, `badon-app` nem `badon-config`; não copie o banco ou credenciais.
+   Este projeto depende dessa raiz compartilhada: a regra de host abre o Studio na raiz de `forms.`,
+   enquanto `produtorabadon.com/` mantém a página original. Outras páginas públicas continuam acessíveis
+   pela raiz compartilhada; isto não constitui isolamento entre aplicações.
+3. Confira o DNS de `forms` no provedor autoritativo e o certificado **SSL/TLS Status / AutoSSL**.
+   Se o DNS estiver fora do cPanel, crie o registro para o servidor correto fornecido pela hospedagem.
+   Não altere os registros MX, SPF ou DKIM do Google Workspace nem o DNS do domínio principal.
+4. Antes de ativar redirecionamentos, teste **diretamente em HTTPS**
+   `https://forms.produtorabadon.com/entrar`, login, `/painel`, um formulário público, mídia e envio.
+5. Somente após validar DNS e HTTPS, faça um backup privado de `badon-config/config.php` e altere
+   **apenas** `base_url` para `https://forms.produtorabadon.com` (sem barra final).
+   Não altere `app_key`, banco, SMTP, senhas ou Cron. O deploy nunca sobrescreve esse arquivo.
+
+Com `base_url` novo em produção, navegações GET/HEAD dos hosts antigos para `/f/{slug}`,
+`/entrar`, `/painel` e `/admin/studio/` recebem redirecionamento temporário 302 para o subdomínio,
+preservando os parâmetros de campanha. POSTs, APIs e recibos de confirmação não mudam de host:
+isso preserva envios já iniciados e suas sessões. A página inicial do site, propostas e painel PHP legado
+não são redirecionados. Será necessário entrar novamente no subdomínio: cookies de sessão não são
+compartilhados com o domínio principal. O consentimento do Pixel também precisa ser dado no novo domínio.
+
+Valide convites, recuperação por link, uploads, notificações e Pixel (**Testar eventos** e eventuais
+permissões de tráfego do novo host na Meta). Sem migração de banco. Para reverter a ativação,
+restaure o `base_url` anterior; redirecionamentos 302 não ficam fixados como os permanentes.
+Não remova o subdomínio enquanto houver sessões, envios ou convites em uso nele.
+
+Referência: [cPanel — domínio com raiz compartilhada](https://support.cpanel.net/hc/en-us/articles/360055638573-How-can-I-create-a-domain-that-uses-the-same-content-as-an-existing-domain).
+
 O painel PHP anterior não precisa de build; o painel React usa `npm run build` localmente e os arquivos gerados entram no Git. Não faça deploy de `tests/`, `config.example.php` ou desta documentação no diretório público.
 
 ```sh

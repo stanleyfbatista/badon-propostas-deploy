@@ -6,6 +6,7 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 require_once __DIR__ . '/domain.php';
 require_once __DIR__ . '/web.php';
+require_once __DIR__ . '/routes.php';
 
 function log_incident(Throwable $error, string $stage = 'request', int $leadId = 0): string
 {
@@ -71,6 +72,11 @@ if (PHP_SAPI !== 'cli') {
     header('Referrer-Policy: no-referrer');
     header('X-Robots-Tag: noindex, nofollow');
     header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'");
+    $navigation = forms_navigation_redirect($config, $_SERVER);
+    if ($navigation !== null) {
+        header('Location: ' . $navigation, true, 302);
+        exit;
+    }
     $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     if ($config['environment'] === 'production' && !$secure) {
         // Não confiar em Host ou X-Forwarded-Proto enviados pelo visitante.

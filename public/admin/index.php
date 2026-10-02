@@ -70,7 +70,7 @@ if (!authenticated()) {
 
 $view = $action === 'save-form' && $error ? 'form' : text_value($_GET['view'] ?? 'forms');
 page_start('Painel de formulários', true);
-echo '<p><a class="button" href="/admin/studio/">Abrir o novo Bādon Forms →</a></p>';
+echo '<p><a class="button" href="/painel">Abrir o novo Bādon Forms →</a></p>';
 if (!empty($_SESSION['flash'])) { alert_box($_SESSION['flash'], 'success'); unset($_SESSION['flash']); }
 if ($error) alert_box($error);
 if ($view === 'form') {

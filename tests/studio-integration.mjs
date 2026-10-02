@@ -103,6 +103,7 @@ export async function studioTests({
     assert.equal(response.body.delivery, "accepted");
     const raw = messages.at(-1).match(/#token=([a-f0-9]{64})/)[1];
     assert.ok(response.body.invite_url.endsWith("#token=" + raw));
+    assert.ok(response.body.invite_url.startsWith(base + "/entrar#token="));
     const user = new Api();
     await user.req("boot");
     assert.equal(

@@ -3,6 +3,8 @@
 return [
     'environment' => 'production',
     'base_url' => 'https://produtorabadon.com',
+    // Depois de criar e testar DNS + HTTPS do subdomínio, alterar APENAS base_url
+    // para https://forms.produtorabadon.com (sem barra final). Não alterar SMTP.
     'timezone' => 'America/Sao_Paulo',
     // Gere com: php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
     'app_key' => 'SUBSTITUA_POR_64_CARACTERES_HEXADECIMAIS',
