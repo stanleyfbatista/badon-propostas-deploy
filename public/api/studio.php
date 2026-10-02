@@ -10,7 +10,7 @@ if (!in_array($method, ['GET', 'POST'], true)) studio_error(405, 'Método não p
 $in = [];
 if ($method === 'POST') {
     if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 200000) studio_error(413, 'O formulário excede 200 KB. Reduza descrições ou quantidade de opções.');
-    if (!hash_equals($_SESSION['csrf'], $_SERVER['HTTP_X_CSRF_TOKEN'] ?? text_value($_POST['csrf'] ?? ''))) studio_error(403, 'Sessão expirada. Atualize a página.');
+    if (!hash_equals($_SESSION['csrf'], $_SERVER['HTTP_X_CSRF_TOKEN'] ?? text_value($_POST['csrf'] ?? ''))) studio_error(403, 'Sua sessão expirou. Entre novamente para continuar.', 'csrf_expired');
     if (str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'application/json')) {
         try { $in = json_decode(file_get_contents('php://input'), true, 32, JSON_THROW_ON_ERROR); }
         catch (JsonException $e) { studio_error(400, 'Dados inválidos.'); }
@@ -72,8 +72,8 @@ try {
         }
         studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf']]);
     }
-    if (!$u) studio_error(401, 'Entre na sua conta para continuar.');
     if ($action === 'logout') { $_SESSION = []; session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32)); studio_json(['ok' => true]); }
+    if (!$u) studio_error(401, 'Entre na sua conta para continuar.', 'session_expired');
     if ($action === 'workspace-create') {
         if (!$u['agency']) studio_error(403, 'Somente a agência pode criar espaços de clientes.');
         $name = studio_text($in['name'] ?? '', 150, true); $slug = text_value($in['slug'] ?? '');

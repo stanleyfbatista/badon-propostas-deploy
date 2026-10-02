@@ -40,6 +40,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 
 ### Operação e limites
 
+- Sessão expirada: respostas 401 em operações autenticadas ou 403 com `code=csrf_expired` abrem um aviso com **Voltar ao login**; erros de senha/permissão não são confundidos com expiração. O editor não descarta alterações automaticamente. A logo do cabeçalho e **Sair** voltam a `/entrar`, confirmando o descarte se o editor estiver aberto. A saída renova o CSRF por `boot` e faz POST protegido, inclusive para sessões já expiradas; falha de rede não é apresentada como saída concluída. Nenhuma gravação/upload é repetida automaticamente. Depois do deploy, recarregue abas antigas para carregar essa correção.
 - O painel anterior permanece como acesso **da agência** a leads e reenvio SMTP. Formulários associados ao novo editor não podem ser sobrescritos pelo editor antigo. Formulários novos devem ser criados no novo painel.
 - Um formulário novo só aceita respostas após publicar. **Publicar ativa** o formulário. Pausar desabilita novos envios sem apagar respostas. Alterar o slug na publicação muda o link; avise quem compartilha o formulário.
 - Uma publicação que modifica o título/perguntas invalida tickets antigos com uma mensagem para recarregar. Salvar rascunhos não os invalida.

@@ -118,6 +118,7 @@ kbd {
   font: inherit;
 }
 .brand {
+  text-decoration: none;
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -1.8px;
@@ -125,6 +126,22 @@ kbd {
   align-items: baseline;
   white-space: nowrap;
   color: var(--ink);
+}
+.session-card::backdrop {
+  background: rgb(18 38 65 / 55%);
+}
+.session-card {
+  border: 0;
+  color: var(--ink);
+  margin: auto;
+  background: white;
+  border-radius: 18px;
+  padding: 32px;
+  width: min(calc(100% - 40px), 520px);
+  box-shadow: 0 20px 80px rgb(18 38 65 / 20%);
+}
+.session-card .btn {
+  margin: 8px 8px 0 0;
 }
 .brand > span {
   color: var(--blue);

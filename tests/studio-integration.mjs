@@ -86,6 +86,34 @@ export async function studioTests({
   const boot = await agency.req("boot");
   assert.equal(boot.body.user.agency, true);
   const badon = Number(boot.body.workspaces[0].id);
+  const logoutClient = new Api();
+  await logoutClient.req("boot");
+  assert.equal(
+    (
+      await logoutClient.req("login", {
+        email: "admin@example.invalid",
+        password,
+      })
+    ).status,
+    200,
+  );
+  const staleLogout = await logoutClient.req("logout", {});
+  assert.equal(staleLogout.status, 403);
+  assert.equal(staleLogout.body.code, "csrf_expired");
+  await logoutClient.req("boot");
+  assert.equal((await logoutClient.req("logout", {})).status, 200);
+  assert.equal((await logoutClient.req("boot")).body.user, null);
+  // Logout remains POST + CSRF protected but succeeds for an expired session too.
+  assert.equal((await logoutClient.req("logout")).status, 405);
+  logoutClient.cookie = "";
+  assert.equal((await logoutClient.req("logout", {})).status, 403);
+  await logoutClient.req("boot");
+  assert.equal((await logoutClient.req("logout", {})).status, 200);
+  const unauthorized = await logoutClient.req("forms", undefined, {
+    workspace: badon,
+  });
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.body.code, "session_expired");
   const a = await agency.req("workspace-create", {
       name: "Cliente A",
       slug: "cliente-a",

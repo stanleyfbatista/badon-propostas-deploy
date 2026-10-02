@@ -17,7 +17,7 @@ function studio_json($data, int $code = 200): never
     http_response_code($code); header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR); exit;
 }
-function studio_error(int $code, string $message): never { studio_json(['error' => $message], $code); }
+function studio_error(int $code, string $message, ?string $reason = null): never { studio_json(['error' => $message] + ($reason === null ? [] : ['code' => $reason]), $code); }
 function studio_user(): ?array
 {
     if (authenticated()) {

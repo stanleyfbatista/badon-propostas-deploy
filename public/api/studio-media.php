@@ -13,7 +13,7 @@ studio_access($user, $workspace, $method === 'POST' ? 'edit' : 'read');
 if (!class_exists('finfo') || !filter_var(ini_get('file_uploads'), FILTER_VALIDATE_BOOLEAN)) studio_error(503, 'Ative file_uploads e a extensão Fileinfo do PHP na hospedagem para enviar arquivos.');
 $limits = media_limits();
 if ($method === 'GET') studio_json(['limits' => $limits]);
-if (!is_string($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null) || !hash_equals($_SESSION['csrf'], $_SERVER['HTTP_X_CSRF_TOKEN'])) studio_error(403, 'Sessão expirada. Atualize a página.');
+if (!is_string($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null) || !hash_equals($_SESSION['csrf'], $_SERVER['HTTP_X_CSRF_TOKEN'])) studio_error(403, 'Sua sessão expirou. Entre novamente para continuar.', 'csrf_expired');
 if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > $limits['video'] + 65536) studio_error(413, 'O arquivo excede o limite da hospedagem. Reduza-o ou ajuste upload_max_filesize e post_max_size no cPanel.');
 if (!rate_allowed('media-upload', ($user['agency'] ? 'a' : 'u') . $user['id'], 30, 3600)) studio_error(429, 'Limite de uploads atingido nesta hora. Aguarde para tentar novamente.');
 try {

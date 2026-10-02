@@ -1,5 +1,5 @@
 import "vite/modulepreload-polyfill";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowLeft,
@@ -46,51 +46,23 @@ import { LogicCanvas } from "./LogicCanvas";
 import { AddConditionButton, comparisonOptions } from "./ConditionControls";
 import { MetaPixelSettings } from "./MetaPixelSettings";
 import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
+import { createSessionClient } from "./session-client";
 
-let csrf = "";
+const session = createSessionClient(window.fetch.bind(window), () => {
+  window.dispatchEvent(new Event("badon-session-expired"));
+});
+const api = session.api;
 async function uploadCover(file: File, workspace: number): Promise<CoverMedia> {
   const body = new FormData();
   body.append("file", file);
-  const response = await fetch(`/api/studio-media.php?workspace=${workspace}`, {
-    method: "POST",
-    headers: { "X-CSRF-Token": csrf },
-    body,
-  });
-  const result = await response.json().catch(() => ({
-    error:
-      "O servidor interrompeu o upload. Confira o tamanho do arquivo e os limites do PHP no cPanel.",
-  }));
-  if (!response.ok)
-    throw new Error(result.error || "Não foi possível enviar a mídia.");
-  return result.media;
-}
-async function api(
-  action: string,
-  data?: unknown,
-  query: Record<string, string | number> = {},
-) {
-  const response = await fetch(
-    "/api/studio.php?" +
-      new URLSearchParams({
-        action,
-        ...Object.fromEntries(
-          Object.entries(query).map(([k, v]) => [k, String(v)]),
-        ),
-      }),
+  const result = await session.request(
+    `/api/studio-media.php?workspace=${workspace}`,
     {
-      method: data === undefined ? "GET" : "POST",
-      headers:
-        data === undefined
-          ? {}
-          : { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-      body: data === undefined ? undefined : JSON.stringify(data),
+      method: "POST",
+      body,
     },
   );
-  const result = await response.json().catch(() => ({
-    error: "Não foi possível concluir. Confira sua conexão e tente novamente.",
-  }));
-  if (!response.ok) throw new Error(result.error || "Falha na solicitação.");
-  return result;
+  return result.media;
 }
 const Button = ({
   children,
@@ -180,12 +152,40 @@ const Toggle = ({
     <span>{label}</span>
   </label>
 );
-const Brand = () => (
-  <div className="brand">
+const Brand = ({
+  onClick,
+}: {
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+}) => (
+  <a
+    className="brand"
+    href="/entrar"
+    aria-label="Bādon Forms — voltar ao início"
+    onClick={onClick}
+  >
     Bādon<span>.</span>
     <small>Forms</small>
-  </div>
+  </a>
 );
+function SessionDialog({ children }: { children: React.ReactNode }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current!;
+    element.showModal();
+    return () => element.close();
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="session-card"
+      aria-labelledby="session-title"
+      aria-describedby="session-description"
+      onCancel={(event) => event.preventDefault()}
+    >
+      {children}
+    </dialog>
+  );
+}
 function App() {
   const [boot, setBoot] = useState<Boot | null>(null),
     [error, setError] = useState(""),
@@ -195,12 +195,14 @@ function App() {
     [form, setForm] = useState<FormRecord | null>(null),
     [view, setView] = useState("forms"),
     [refresh, setRefresh] = useState(0);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
   const [token, setToken] = useState(
     () => new URLSearchParams(location.hash.slice(1)).get("token") || "",
   );
   async function load() {
     const b = await api("boot");
-    csrf = b.csrf;
     setBoot(b);
     setWorkspace((w) =>
       b.workspaces.some((x: Workspace) => Number(x.id) === w)
@@ -209,9 +211,32 @@ function App() {
     );
   }
   useEffect(() => {
+    const expired = () => setSessionExpired(true);
+    window.addEventListener("badon-session-expired", expired);
     load().catch((e) => setError(e.message));
     if (token) history.replaceState(null, "", location.pathname);
+    return () => window.removeEventListener("badon-session-expired", expired);
   }, []);
+  async function signOut() {
+    if (signingOut) return;
+    if (
+      form &&
+      !confirm("Voltar ao login? Alterações não salvas serão descartadas.")
+    )
+      return;
+    setSigningOut(true);
+    setLogoutError("");
+    try {
+      await session.logout();
+      location.replace("/entrar");
+    } catch {
+      setLogoutError(
+        "Não foi possível confirmar a saída. Confira sua conexão e tente novamente.",
+      );
+    } finally {
+      setSigningOut(false);
+    }
+  }
   useEffect(() => {
     if (!boot) return;
     // Tokens have already been captured in state; keep them out of the URL.
@@ -265,6 +290,12 @@ function App() {
             ? "Confirme o acesso. Se for seu primeiro convite, defina uma senha."
             : "Entre para transformar perguntas em conversas que importam."}
         </p>
+        {sessionExpired && (
+          <p role="alert" className="notice error">
+            Sua sessão expirou. <a href="/entrar">Voltar ao login</a> para
+            tentar novamente.
+          </p>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -333,7 +364,12 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <Brand />
+        <Brand
+          onClick={(event) => {
+            event.preventDefault();
+            void signOut();
+          }}
+        />
         <div className="workspace">
           <span>ESPAÇO DE TRABALHO</span>
           <select
@@ -366,28 +402,45 @@ function App() {
             </small>
           </span>
           <Button
-            title="Sair"
-            aria-label="Sair"
-            disabled={busy}
-            onClick={() =>
-              task(async () => {
-                if (
-                  form &&
-                  !confirm(
-                    "Sair do editor? Alterações não salvas serão descartadas.",
-                  )
-                )
-                  return;
-                await api("logout", {});
-                setForm(null);
-                await load();
-              })
-            }
+            title="Sair e voltar ao login"
+            aria-label="Sair e voltar ao login"
+            disabled={signingOut}
+            onClick={() => void signOut()}
           >
             <LogOut size={18} />
           </Button>
         </div>
       </header>
+      {sessionExpired && (
+        <SessionDialog>
+          <h2 id="session-title">Sua sessão expirou</h2>
+          <p id="session-description">
+            Entre novamente para continuar.{" "}
+            {form
+              ? "Alterações não salvas ainda estão nesta tela e serão descartadas ao voltar ao login."
+              : "Seus formulários e respostas salvos continuam preservados."}
+          </p>
+          <Button
+            kind="primary"
+            autoFocus
+            disabled={signingOut}
+            onClick={() => void signOut()}
+          >
+            {signingOut ? "Saindo…" : "Voltar ao login"}
+          </Button>
+          {form && (
+            <Button onClick={() => setSessionExpired(false)}>
+              Voltar para conferir alterações
+            </Button>
+          )}
+          {logoutError && <p role="alert">{logoutError}</p>}
+        </SessionDialog>
+      )}
+      {!sessionExpired && logoutError && (
+        <div className="notice error banner" role="alert">
+          {logoutError} <a href="/entrar">Reabrir a página de acesso</a>
+        </div>
+      )}
       {error && (
         <div className="notice error banner" role="alert">
           {error}
@@ -1425,7 +1478,9 @@ function Editor({
                   <i />
                   <i />
                   <i />
-                  <span>{location.host}/f/{draft.slug}</span>
+                  <span>
+                    {location.host}/f/{draft.slug}
+                  </span>
                 </div>
                 <Preview
                   field={field}
@@ -2110,7 +2165,7 @@ function Responses({
           <h2>{data.total} contatos recebidos</h2>
         </div>
         <form action={"/api/studio.php?action=export"} method="post">
-          <input type="hidden" name="csrf" value={csrf} />
+          <input type="hidden" name="csrf" value={session.getCsrf()} />
           <input type="hidden" name="id" value={id} />
           <Button>
             <Download size={16} />
