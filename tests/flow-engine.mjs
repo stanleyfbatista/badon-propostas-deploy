@@ -22,4 +22,15 @@ assert.equal(engine.validNumber('1e3'), false);
 assert.equal(engine.validNumber('1000000000001'), false);
 assert.equal(engine.validNumber('1000000000000'), true);
 assert.throws(() => engine.next([{ key: 'x', type: 'text', otherwise: { target: 'x' } }], 0, {}));
-console.log('OK: regras do navegador, saltos, prioridades e limites equivalentes ao servidor.');
+const multiple = JSON.parse(execFileSync(php, ['tests/flow.php', '--multiple-fixture'], {encoding: 'utf8'}));
+const multiFields = multiple.fields, multiKeys = values => engine.path(multiFields, values).map(i => multiFields[i].key);
+assert.deepEqual(multiKeys({investimento: ['Menos de R$ 1.000,00', 'R$ 1.000,00 ou mais']}), ['investimento']);
+assert.deepEqual(multiKeys({investimento: ['R$ 1.000,00 ou mais']}), ['investimento', 'nome']);
+assert.deepEqual(multiKeys({investimento: ['Não sei']}), ['investimento', 'detalhes', 'nome']);
+assert.deepEqual(multiKeys({investimento: []}), ['investimento', 'detalhes', 'nome']);
+for (const answer of [[], '', 'Menos de R$ 1.000,00', ['Forjada'], [['Não sei']]]) {
+  for (const rule of multiFields[0].rules) assert.equal(engine.matches(rule, multiFields[0], answer), false);
+}
+assert.equal(engine.matches({operator: 'contains', value: 'Menos de R$ 1.000'}, multiFields[0], ['Menos de R$ 1.000,00']), false);
+assert.equal(engine.route(multiFields[0], ['Menos de R$ 1.000,00']).ending.whatsapp, false);
+console.log('OK: regras do navegador/PHP, escolhas múltiplas exatas, prioridades, vazio, saltos e encerramentos.');

@@ -338,8 +338,20 @@ export async function studioTests({
       label: "O que interessa?",
       type: "multiple",
       required: true,
-      options: ["Site", "Tráfego"],
-      rules: [],
+      options: ["Site", "Tráfego", "Menos de R$ 1.000,00"],
+      rules: [
+        {
+          operator: "contains",
+          value: "Menos de R$ 1.000,00",
+          target: "finish",
+          ending: {
+            title: "Obrigado pelo interesse",
+            message:
+              "Neste momento não temos um projeto para esse investimento.",
+            whatsapp: false,
+          },
+        },
+      ],
       otherwise: { target: "next" },
     },
     {
@@ -412,9 +424,13 @@ export async function studioTests({
     publicDefinition(ticket.body).welcome,
     draft.definition.welcome,
   );
+  assert.deepEqual(
+    publicDefinition(ticket.body).fields[2].rules,
+    draft.definition.fields[2].rules,
+  );
   assert.ok(
     ticket.body.includes("welcome.css?v=1") &&
-      ticket.body.includes("public-flow.js?v=5"),
+      ticket.body.includes("public-flow.js?v=6"),
   );
   // A layout-only publication must preserve the active public submission ticket.
   draft.layout["q:nome"].x = 240;
@@ -562,6 +578,48 @@ export async function studioTests({
     (await early.req(earlySent.headers.get("location"))).body.includes(
       "Obrigado, Encerrar no mapa",
     ),
+  );
+  const multiGuest = new Client();
+  const multiPage = await multiGuest.req("/f/cliente-a-form");
+  await new Promise((r) => setTimeout(r, 3100));
+  const multiPayload = [
+    ["csrf", token(multiPage.body, "csrf")],
+    ["submission", token(multiPage.body, "submission")],
+    ["form_id", String(id)],
+    ["consent", "1"],
+    ["fields[nome]", "Teste múltipla"],
+    ["fields[email]", "multiple@example.invalid"],
+    ["fields[interesses][]", "Tráfego"],
+    ["fields[interesses][]", "Menos de R$ 1.000,00"],
+    ["fields[data]", "FORGED-SKIPPED"],
+  ];
+  assert.equal(
+    (
+      await multiGuest.req(
+        "/api/enviar.php",
+        multiPayload.filter(([key]) => key !== "consent"),
+      )
+    ).status,
+    422,
+  );
+  const multiSent = await multiGuest.req("/api/enviar.php", multiPayload);
+  assert.equal(multiSent.status, 303);
+  const multiLead = (await reader.req("leads", undefined, { id })).body
+    .leads[0];
+  assert.ok(multiLead.values_json.includes("Encerramento condicional"));
+  assert.ok(multiLead.values_json.includes("Menos de R$ 1.000,00"));
+  assert.ok(!multiLead.values_json.includes("FORGED-SKIPPED"));
+  const multiConfirm = await multiGuest.req(multiSent.headers.get("location"));
+  assert.ok(
+    multiConfirm.body.includes("Obrigado pelo interesse") &&
+      !multiConfirm.body.includes("wa.me/"),
+  );
+  assert.equal(
+    (await multiGuest.req("/api/enviar.php", multiPayload)).status,
+    303,
+  );
+  console.log(
+    "OK: condição múltipla salva/publicada, seleção com moeda, consentimento, encerramento sem campos pulados e envio idempotente.",
   );
   const dup = await editor.req("duplicate", { id });
   assert.equal(dup.status, 200);

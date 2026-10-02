@@ -67,5 +67,36 @@ $legacy = form_definition(json_encode(clean_fields(array_slice($rows, 0, 1))));
 verify($legacy['mode'] === 'all' && $legacy['completion']['whatsapp'], 'Compatibilidade de JSON antigo');
 verify(form_definition(json_encode($definition)) === $definition, 'JSON v2 round-trip preserva regras e finais');
 verify(lead_outcome(json_encode([outcome_value($outcome)])) !== '', 'Resultado legível em lead/CSV/e-mail');
-if (in_array('--fixture', $argv, true)) echo json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+$multiple = clean_definition([
+    ['key' => 'investimento', 'label' => 'Quanto investe?', 'type' => 'multiple', 'required' => true,
+        'options' => ['Menos de R$ 1.000,00', 'R$ 1.000,00 ou mais', 'Não sei'],
+        'rules' => [
+            ['operator' => 'contains', 'value' => 'Menos de R$ 1.000,00', 'target' => 'finish', 'ending' => $ending],
+            ['operator' => 'not_contains', 'value' => 'Não sei', 'target' => 'nome'],
+        ]],
+    ['key' => 'detalhes', 'label' => 'Detalhes', 'type' => 'text', 'required' => true],
+    ['key' => 'nome', 'label' => 'Nome', 'type' => 'name', 'required' => true],
+], 'steps', default_ending());
+[$multiValues, $multiErrors, , $multiOutcome, $multiPath] = validate_flow($multiple, ['investimento' => ['Menos de R$ 1.000,00', 'R$ 1.000,00 ou mais'], 'nome' => 'FORGED-SKIPPED']);
+verify(!$multiErrors && $multiPath === ['investimento'] && count($multiValues) === 1 && $multiOutcome['kind'] === 'conditional', 'Múltipla encerra pela primeira condição e ignora campos pulados');
+[, $multiErrors, , $multiOutcome, $multiPath] = validate_flow($multiple, ['investimento' => ['R$ 1.000,00 ou mais'], 'nome' => 'Nome']);
+verify(!$multiErrors && $multiPath === ['investimento', 'nome'] && $multiOutcome['kind'] === 'completed', 'Não contém pula para pergunta posterior');
+[, $multiErrors] = validate_flow($multiple, ['investimento' => ['Não sei']]);
+verify(isset($multiErrors['detalhes']), 'Caminho padrão exige a próxima pergunta');
+foreach (['Menos de R$ 1.000,00', ['Forjada'], [['Menos de R$ 1.000,00']], []] as $invalidAnswer) {
+    [, $multiErrors] = validate_flow($multiple, ['investimento' => $invalidAnswer]);
+    verify(isset($multiErrors['investimento']), 'Rejeita seleção inválida ou vazia obrigatória');
+}
+$optional = $multiple; $optional['fields'][0]['required'] = false;
+[, $multiErrors, , , $multiPath] = validate_flow($optional, ['investimento' => [], 'detalhes' => 'D', 'nome' => 'N']);
+verify(!$multiErrors && $multiPath === ['investimento', 'detalhes', 'nome'], 'Vazio opcional não aciona não contém');
+foreach (['eq', 'lt'] as $operator) {
+    $bad = $multiple['fields']; $bad[0]['rules'][0]['operator'] = $operator;
+    invalid(fn() => clean_definition($bad, 'steps', default_ending()), 'operador inválido para múltipla');
+}
+$bad = $multiple['fields']; $bad[0]['rules'][0]['value'] = 'Opção removida';
+invalid(fn() => clean_definition($bad, 'steps', default_ending()), 'alternativa removida em múltipla');
+verify(form_definition(json_encode($multiple)) === $multiple, 'Regras múltiplas persistem no JSON');
+if (in_array('--multiple-fixture', $argv, true)) echo json_encode($multiple, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+elseif (in_array('--fixture', $argv, true)) echo json_encode($definition, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 else echo "OK: funil, condições, limites, campos pulados, encerramentos, números e compatibilidade.\n";

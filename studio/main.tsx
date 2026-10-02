@@ -43,6 +43,7 @@ import {
 } from "./types";
 import "./studio.css";
 import { LogicCanvas } from "./LogicCanvas";
+import { AddConditionButton, comparisonOptions } from "./ConditionControls";
 import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
 
 let csrf = "";
@@ -1548,22 +1549,13 @@ function Editor({
                         })
                       }
                     >
-                      {Object.entries(
-                        field.type === "number"
-                          ? {
-                              eq: "Igual a",
-                              ne: "Diferente de",
-                              lt: "Menor que",
-                              lte: "Menor ou igual",
-                              gt: "Maior que",
-                              gte: "Maior ou igual",
-                            }
-                          : { eq: "Igual a", ne: "Diferente de" },
-                      ).map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
+                      {Object.entries(comparisonOptions(field.type)).map(
+                        ([v, l]) => (
+                          <option key={v} value={v}>
+                            {l}
+                          </option>
+                        ),
+                      )}
                     </select>
                     {field.options.length > 0 ? (
                       <label className="control">
@@ -1622,31 +1614,19 @@ function Editor({
                     </Button>
                   </div>
                 ))}
-                <Button
-                  disabled={
-                    field.type === "multiple" || field.rules.length >= 20
+                <AddConditionButton
+                  field={field}
+                  onAdd={(rule) =>
+                    changeField({ rules: [...field.rules, rule] })
                   }
-                  onClick={() =>
-                    changeField({
-                      rules: [
-                        ...field.rules,
-                        {
-                          operator: "eq",
-                          value: field.options[0] || "",
-                          target: "next",
-                        },
-                      ],
-                    })
-                  }
-                >
-                  <Plus size={15} />
-                  Adicionar condição
-                </Button>
+                />
                 {field.type === "multiple" && (
                   <p className="muted">
-                    Múltipla escolha segue um único próximo passo. Para
-                    ramificar por resposta, use Escolha única, Lista suspensa ou
-                    Sim / Não.
+                    A pessoa pode marcar várias opções. Use “Contém esta opção”
+                    para direcionar quem a selecionou. Se várias condições forem
+                    atendidas, vale a primeira da lista. Uma resposta vazia não
+                    aciona condições. Para faixas de investimento, prefira
+                    “Escolha única” na aba Conteúdo.
                   </p>
                 )}
                 <h3>Se nenhuma condição for atendida</h3>

@@ -7,6 +7,8 @@ export const comparisons: Record<string, string> = {
   lte: "menor ou igual a",
   gt: "maior que",
   gte: "maior ou igual a",
+  contains: "contém a opção",
+  not_contains: "não contém a opção",
 };
 export type FlowPort = { id: string; label: string; conditional: boolean };
 export type FlowCard = {

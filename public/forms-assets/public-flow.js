@@ -12,9 +12,10 @@
   const bar = document.createElement('progress'); bar.className = 'flow-progress-bar'; bar.max = fields.length; bar.setAttribute('aria-label', 'Progresso do formulário'); progress.after(bar);
   const cover = definition.welcome || {};
   const steps = definition.mode === 'steps'; let history = [0], reviewing = false, welcoming = true;
-  const answer = input => input.multiple ? [...input.selectedOptions].map(o => o.value).join(', ') : input.value.trim();
+  const answer = input => input.multiple ? [...input.selectedOptions].map(o => o.value) : input.value.trim();
+  const displayAnswer = value => Array.isArray(value) ? value.join(', ') : value;
   const values = () => Object.fromEntries(fields.map((field, index) => [field.key, answer(inputs[index])]));
-  const interpolate = text => text.replace(/@([a-z][a-z0-9_]{0,39})/g, (match, key) => values()[key] || match);
+  const interpolate = text => text.replace(/@([a-z][a-z0-9_]{0,39})/g, (match, key) => displayAnswer(values()[key]) || match);
   const welcome = document.createElement('section'); welcome.className = 'flow-welcome cover-container';
   if (welcoming) {
     const content = document.createElement('section'), copy = document.createElement('div');
@@ -58,7 +59,7 @@
   function check(index) {
     const input = inputs[index], field = fields[index], value = answer(input);
     let error = '';
-    if (field.required && !value) error = 'Preencha esta pergunta.';
+    if (field.required && !value.length) error = 'Preencha esta pergunta.';
     else if (value && field.type === 'number' && !engine.validNumber(value)) error = 'Use um número de 0 a 1 trilhão, sem R$ ou separador de milhar.';
     else if (value && field.type === 'tel' && (!/^[+0-9().\s-]+$/.test(value) || value.replace(/\D/g, '').length < 8 || value.replace(/\D/g, '').length > 15)) error = 'Informe um telefone com DDD.';
     input.setCustomValidity(error);
@@ -93,7 +94,7 @@
       const list = document.createElement('dl');
       for (const index of history) {
         const title = document.createElement('dt'), answer = document.createElement('dd');
-        title.textContent = interpolate(fields[index].label); answer.textContent = values()[fields[index].key] || 'Não informado';
+        title.textContent = interpolate(fields[index].label); answer.textContent = displayAnswer(values()[fields[index].key]) || 'Não informado';
         list.append(title, answer);
       }
       summary.append(list);

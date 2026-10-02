@@ -3,6 +3,13 @@
 (function (root) {
   const validNumber = value => /^\d{1,13}(?:[.,]\d{1,2})?$/.test(value) && Number(value.replace(',', '.')) <= 1e12;
   function matches(rule, field, answer) {
+    if (field.type === 'multiple') {
+      if (!Array.isArray(answer) || !answer.length || answer.some(value => !field.options.includes(value))) return false;
+      if (rule.operator === 'contains') return answer.includes(rule.value);
+      if (rule.operator === 'not_contains') return !answer.includes(rule.value);
+      return false;
+    }
+    if (typeof answer !== 'string') return false;
     if (answer === '') return false;
     let value = rule.value;
     if (field.type === 'number') {
@@ -20,7 +27,8 @@
     }
   }
   function route(field, value) {
-    return (field.rules || []).find(rule => matches(rule, field, value.trim())) || field.otherwise || { target: 'next' };
+    const answer = typeof value === 'string' ? value.trim() : value;
+    return (field.rules || []).find(rule => matches(rule, field, answer)) || field.otherwise || { target: 'next' };
   }
   function next(fields, index, values) {
     const destination = route(fields[index], values[fields[index].key] || '');

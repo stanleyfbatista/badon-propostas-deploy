@@ -45,16 +45,15 @@ function clean_definition(array $rows, string $mode, array $completion): array
         $routes = $rows[$index]['rules'] ?? [];
         if (!is_array($routes) || count($routes) > 20) throw new InvalidArgumentException('Use no máximo 20 condições por pergunta.');
         $field['rules'] = [];
-        if ($field['type'] === 'multiple' && $routes) throw new InvalidArgumentException('Condições de múltipla escolha ainda não estão disponíveis. Use escolha única para ramificar.');
         foreach ($routes as $raw) {
             if (!is_array($raw)) throw new InvalidArgumentException('Condição inválida.');
             $operator = text_value($raw['operator'] ?? '');
             $value = text_value($raw['value'] ?? '');
-            $allowed = $field['type'] === 'number' ? ['eq', 'ne', 'lt', 'lte', 'gt', 'gte'] : ['eq', 'ne'];
+            $allowed = $field['type'] === 'multiple' ? ['contains', 'not_contains'] : ($field['type'] === 'number' ? ['eq', 'ne', 'lt', 'lte', 'gt', 'gte'] : ['eq', 'ne']);
             if (!in_array($operator, $allowed, true) || $value === '' || mb_strlen($value) > 250 || !mb_check_encoding($value, 'UTF-8')) {
                 throw new InvalidArgumentException('Condição de “' . $field['label'] . '”: escolha uma comparação e preencha a resposta.');
             }
-            if (in_array($field['type'], ['select', 'single', 'yesno'], true) && !in_array($value, $field['options'], true)) {
+            if (in_array($field['type'], ['select', 'single', 'yesno', 'multiple'], true) && !in_array($value, $field['options'], true)) {
                 throw new InvalidArgumentException('A resposta da condição precisa existir nas opções de “' . $field['label'] . '”.');
             }
             if ($field['type'] === 'number' && !valid_flow_number($value)) throw new InvalidArgumentException('O valor da comparação numérica é inválido.');
@@ -79,8 +78,15 @@ function clean_route($raw, array $positions, int $index): array
     return ['target' => $target];
 }
 
-function flow_matches(array $rule, array $field, string $answer): bool
+function flow_matches(array $rule, array $field, string|array $answer): bool
 {
+    if ($field['type'] === 'multiple') {
+        // Nunca dividir a resposta exibida por vírgulas: as opções podem conter moedas/vírgulas.
+        if (!is_array($answer) || !$answer || count(array_filter($answer, 'is_string')) !== count($answer) || array_diff($answer, $field['options'])) return false;
+        $contains = in_array($rule['value'], $answer, true);
+        return match ($rule['operator']) { 'contains' => $contains, 'not_contains' => !$contains, default => false };
+    }
+    if (!is_string($answer)) return false;
     if ($answer === '') return false; // Ausência de resposta nunca desqualifica por "diferente".
     $expected = $rule['value'];
     if ($field['type'] === 'number') {
@@ -99,7 +105,7 @@ function flow_matches(array $rule, array $field, string $answer): bool
     }
 }
 
-function flow_route(array $field, string $answer): array
+function flow_route(array $field, string|array $answer): array
 {
     foreach (($field['rules'] ?? []) as $rule) if (flow_matches($rule, $field, $answer)) return $rule;
     return $field['otherwise'] ?? ['target' => 'next'];
@@ -118,7 +124,8 @@ function validate_flow(array $definition, array $input): array
         $values = array_merge($values, $answers);
         if ($email === null) $email = $reply;
         if ($invalid) { $errors = $invalid; break; }
-        $route = flow_route($field, $answers[0]['value']);
+        // Só usar a lista original depois de validate_answers aceitar todas as opções.
+        $route = flow_route($field, $field['type'] === 'multiple' ? ($input[$field['key']] ?? []) : $answers[0]['value']);
         if ($route['target'] === 'end:default') break;
         if ($route['target'] === 'finish') {
             $outcome = ['kind' => 'conditional', 'question' => $field['label'], 'ending' => $route['ending']];
