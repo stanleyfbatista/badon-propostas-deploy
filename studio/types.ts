@@ -78,6 +78,16 @@ export type Boot = {
   csrf: string;
   user: null | { id: number; email: string; agency: boolean };
   workspaces: Workspace[];
+  crm_ready?: boolean;
+  profile?: Profile | null;
+};
+export type Profile = {
+  actor: string;
+  name: string;
+  email: string;
+  phone: string;
+  appearance: "light" | "dark";
+  avatar_url: string | null;
 };
 export const types: Record<string, string> = {
   name: "Nome",

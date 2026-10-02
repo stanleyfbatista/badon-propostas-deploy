@@ -3,6 +3,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/_bootstrap.php';
 require BADON_APP . '/studio.php';
 require_once BADON_APP . '/mail.php';
+require_once BADON_APP . '/crm.php';
 header('Content-Type: application/json; charset=utf-8');
 if (!studio_ready()) studio_error(503, 'A nova versão precisa da migração studio:migrate no cPanel. O site e os formulários atuais continuam disponíveis.');
 $method = $_SERVER['REQUEST_METHOD'];
@@ -18,7 +19,7 @@ if ($method === 'POST') {
     } else $in = $_POST;
 }
 $action = text_value($_GET['action'] ?? 'boot');
-if ($method !== 'POST' && !in_array($action, ['boot', 'forms', 'form', 'leads', 'members'], true)) studio_error(405, 'Esta ação exige POST.');
+if ($method !== 'POST' && !in_array($action, ['boot', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item'], true)) studio_error(405, 'Esta ação exige POST.');
 $u = studio_user();
 try {
     if ($action === 'login') {
@@ -70,10 +71,12 @@ try {
             if ($u['agency']) $workspaces = db()->query("SELECT *, 'agency' AS role FROM bf_workspaces ORDER BY name")->fetchAll();
             else { $q = db()->prepare('SELECT w.*, m.role FROM bf_workspaces w JOIN bf_members m ON m.workspace_id = w.id WHERE m.user_id = ? ORDER BY w.name'); $q->execute([$u['id']]); $workspaces = $q->fetchAll(); }
         }
-        studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf']]);
+        $crm = crm_ready();
+        studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf'], 'crm_ready' => $crm, 'profile' => $u && $crm ? crm_profile($u) : null]);
     }
     if ($action === 'logout') { $_SESSION = []; session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32)); studio_json(['ok' => true]); }
     if (!$u) studio_error(401, 'Entre na sua conta para continuar.', 'session_expired');
+    if (str_starts_with($action, 'crm-') || str_starts_with($action, 'profile')) crm_handle($action, $u, $in);
     if ($action === 'workspace-create') {
         if (!$u['agency']) studio_error(403, 'Somente a agência pode criar espaços de clientes.');
         $name = studio_text($in['name'] ?? '', 150, true); $slug = text_value($in['slug'] ?? '');

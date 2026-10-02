@@ -3,7 +3,12 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/bootstrap.php';
 $command = $argv[1] ?? 'help';
-if ($command === 'studio:migrate') {
+if ($command === 'crm:migrate') {
+    require __DIR__ . '/crm.php';
+    if (!studio_ready()) exit("Execute studio:migrate primeiro.\n");
+    crm_migrate();
+    echo "CRM e perfis preparados. Respostas existentes incluídas sem duplicar oportunidades. Nenhum e-mail enviado.\n";
+} elseif ($command === 'studio:migrate') {
     require __DIR__ . '/studio.php';
     studio_migrate();
     echo "Bādon Forms: espaços e rascunhos preparados. Formulários públicos e leads preservados.\n";
@@ -43,5 +48,5 @@ if ($command === 'studio:migrate') {
     db()->prepare('DELETE FROM rate_limits WHERE window_start < ?')->execute([time() - 172800]);
     echo "Contadores de proteção com mais de 48 horas removidos. Leads preservados.\n";
 } else {
-    echo "Comandos: migrate | studio:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
+    echo "Comandos: migrate | studio:migrate | crm:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
 }

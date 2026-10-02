@@ -26,6 +26,9 @@ import {
   Download,
   Pause,
   Play,
+  BriefcaseBusiness,
+  CalendarDays,
+  UserRound,
 } from "lucide-react";
 import {
   Boot,
@@ -47,6 +50,7 @@ import { AddConditionButton, comparisonOptions } from "./ConditionControls";
 import { MetaPixelSettings } from "./MetaPixelSettings";
 import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
 import { createSessionClient } from "./session-client";
+import { Crm, ProfilePanel, Avatar } from "./Crm";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -244,6 +248,12 @@ function App() {
     if (location.pathname !== path || location.hash)
       history.replaceState(null, "", path);
   }, [boot?.user, token]);
+  useEffect(() => {
+    document.documentElement.dataset.appearance =
+      boot?.user && !form && ["crm", "agenda", "profile"].includes(view)
+        ? boot.profile?.appearance || "light"
+        : "light";
+  }, [boot?.user, boot?.profile?.appearance, form, view]);
   async function task(fn: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -389,18 +399,36 @@ function App() {
           </select>
         </div>
         <div className="identity">
-          <span>
-            {boot.user.email}
-            <small>
-              {boot.user.agency
-                ? "Agência Bādon"
-                : {
-                    admin: "Administrador",
-                    editor: "Editor",
-                    reader: "Leitor",
-                  }[ws?.role as "admin"] || "Membro"}
-            </small>
-          </span>
+          <button
+            className="identity-profile"
+            title="Meu perfil"
+            aria-label="Meu perfil"
+            onClick={() => {
+              if (
+                form &&
+                !confirm(
+                  "Abrir seu perfil? Alterações não salvas serão descartadas.",
+                )
+              )
+                return;
+              setForm(null);
+              setView("profile");
+            }}
+          >
+            <Avatar person={boot.profile || boot.user} />
+            <span>
+              {boot.profile?.name || boot.user.email}
+              <small>
+                {boot.user.agency
+                  ? "Agência Bādon"
+                  : {
+                      admin: "Administrador",
+                      editor: "Editor",
+                      reader: "Leitor",
+                    }[ws?.role as "admin"] || "Membro"}
+              </small>
+            </span>
+          </button>
           <Button
             title="Sair e voltar ao login"
             aria-label="Sair e voltar ao login"
@@ -476,11 +504,23 @@ function App() {
           <aside className="sidebar">
             <p className="eyebrow">SEU ESPAÇO</p>
             <button
+              className={view === "crm" ? "selected" : ""}
+              onClick={() => setView("crm")}
+            >
+              <BriefcaseBusiness size={18} /> CRM
+            </button>
+            <button
               className={view === "forms" ? "selected" : ""}
               onClick={() => setView("forms")}
             >
               <FileText size={18} />
               Formulários
+            </button>
+            <button
+              className={view === "agenda" ? "selected" : ""}
+              onClick={() => setView("agenda")}
+            >
+              <CalendarDays size={18} /> Agendamentos
             </button>
             {(boot.user.agency || ws?.role === "admin") && (
               <button
@@ -500,12 +540,54 @@ function App() {
                 Clientes
               </button>
             )}
+            <button
+              className={view === "profile" ? "selected" : ""}
+              onClick={() => setView("profile")}
+            >
+              <UserRound size={18} /> Meu perfil
+            </button>
             <div className="sidebar-note">
               <span className="dot" /> Tudo no seu domínio
               <small>Formulários, respostas e conexões em um só lugar.</small>
             </div>
           </aside>
-          <main className="content">
+          <main
+            className={
+              "content" +
+              (["crm", "agenda", "profile"].includes(view)
+                ? " crm-content"
+                : "")
+            }
+          >
+            {["crm", "agenda", "profile"].includes(view) && !boot.crm_ready && (
+              <section className="box">
+                <h1>Uma nova área para suas conexões.</h1>
+                <p>
+                  CRM e perfis estão prontos para ativar. Execute a atualização{" "}
+                  <code>crm:migrate</code> no cPanel. Os formulários e respostas
+                  atuais continuam preservados.
+                </p>
+              </section>
+            )}
+            {boot.crm_ready &&
+              ["crm", "agenda"].includes(view) &&
+              workspace > 0 && (
+                <Crm
+                  key={workspace + ":" + view}
+                  api={api}
+                  workspace={workspace}
+                  editable={editable}
+                  agenda={view === "agenda"}
+                />
+              )}
+            {boot.crm_ready && view === "profile" && boot.profile && (
+              <ProfilePanel
+                api={api}
+                request={session.request}
+                profile={boot.profile}
+                onSaved={(profile) => setBoot({ ...boot, profile })}
+              />
+            )}
             {view === "forms" && workspace > 0 && (
               <FormList
                 key={workspace + ":" + refresh}

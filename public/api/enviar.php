@@ -42,12 +42,15 @@ $values[] = outcome_value($outcome);
 $values = array_merge($values, $ticket['tracking'] ?? []);
 if (isset($ticket['settings'])) $values[] = ['key' => '_duration_seconds', 'label' => 'Tempo de preenchimento (segundos)', 'value' => (string)(time() - $ticket['time'])];
 $submissionHash = hash('sha256', $nonce);
+require_once BADON_APP . '/crm.php';
+$crmReady = crm_ready();
 try {
     db()->beginTransaction();
     $stmt = db()->prepare('INSERT INTO leads (form_id, form_title, values_json, reply_email, consent_text, consent_accepted, privacy_url, created_at, submission_hash) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)');
     $stmt->execute([$id, $form['title'], json_encode($values, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), $email, $ticket['consent'], $ticket['privacy_url'], utc_now(), $submissionHash]);
     $leadId = (int)db()->lastInsertId();
     if (isset($ticket['settings'])) db()->prepare('INSERT INTO bf_deliveries (lead_id, settings_json) VALUES (?, ?)')->execute([$leadId, json_encode($ticket['settings'], JSON_THROW_ON_ERROR)]);
+    if ($crmReady) crm_capture($leadId);
     db()->commit();
 } catch (PDOException $e) {
     if (db()->inTransaction()) db()->rollBack();

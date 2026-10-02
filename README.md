@@ -20,6 +20,30 @@ O painel React fica em **`/admin/studio/`**. O login existente da Bādon continu
 
 O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam mudar**. A versão nova requer PHP **8.2+**, já confirmado nesta conta, e `curl` caso use webhooks. Não há Supabase, assinatura nova, CDN, servidor Node em produção ou chamada a serviço de formulário externo.
 
+### CRM, agendamentos e perfil — outubro/2026
+
+Após fazer backup do banco e usar **Update from Remote → Deploy HEAD Commit** no cPanel, execute no Terminal:
+
+```sh
+/usr/local/bin/php /home/produ7943464/badon-app/console.php crm:migrate
+```
+
+Requer a migração anterior `studio:migrate`. Cria três tabelas adicionais e inclui as respostas existentes dos formulários associados aos espaços. É repetível: não duplica oportunidades nem reinicia etapas já alteradas. Não modifica as respostas originais, não envia e-mails e não precisa de Cron. Recarregue **https://forms.produtorabadon.com/painel** depois da migração. Antes dela, o painel informa como ativar as áreas novas e os formulários continuam recebendo respostas.
+
+- **CRM:** Kanban com nove etapas fixas — Novo lead, Qualificado, Agendado, No show, Aperto de mão, Follow-up, Fechado, Desqualificado e Lead falso. Movimente por arrasto ou pelo seletor acessível em cada cartão; também há visualização em lista.
+- Cada envio confirmado cria uma oportunidade no espaço do formulário, inclusive encerramentos condicionais. Repetir a mesma requisição não duplica; respostas distintas da mesma pessoa são oportunidades distintas. Todas entram em Novo lead, sem qualificação automática pelas respostas nesta versão.
+- O nome e telefone usam os campos dos tipos Nome e Telefone; e-mail usa o contato registrado na resposta. Perguntas genéricas de texto não são adivinhadas. Respostas antigas sem esses campos recebem um nome provisório e continuam disponíveis integralmente no detalhe.
+- **Nova oportunidade:** cadastro manual de contato, empresa, documento opcional, valor, origem, etapa, responsável e observações. O detalhe mostra respostas originais e histórico de notas, contatos e mudanças. Edições simultâneas são detectadas para evitar sobrescrever o trabalho de outra pessoa.
+- **Agendamentos:** uma próxima atividade por oportunidade, com data/hora no fuso do dispositivo e armazenamento em UTC. A agenda é uma lista cronológica, permite registrar conclusão no histórico e não envia lembretes. Não há integração com Google Agenda, WhatsApp ou agenda externa.
+- Busca e filtros por etapa, responsável e período de criação. Até 100 oportunidades por página; as métricas e contagens consideram todos os resultados filtrados. A exportação CSV informa que exporta somente a página atual.
+- Agência acessa todos os espaços; administradores/editores alteram o CRM do seu espaço; leitores consultam e exportam. Responsáveis precisam ter acesso ao espaço. Nenhuma conta ganha permissões novas por editar seu perfil.
+- **Meu perfil:** nome, WhatsApp de contato, foto JPG/PNG/WebP de até 2 MB e 4096 pixels por lado, preferência claro/escuro nas áreas CRM/agenda/perfil e troca de senha com a senha atual. O editor de formulários mantém sua aparência atual e a prévia pública não muda. E-mail de login permanece somente leitura. Fotos ficam no banco, protegidas por autenticação e vínculo com o espaço; inclua o banco nos backups.
+- Cada sócio deve usar sua própria conta. Nome/foto são pessoais e aparecem no cabeçalho e nos responsáveis das oportunidades. Trocar a senha mantém a sessão atual e invalida as outras sessões. O WhatsApp do perfil não ativa envio automático.
+
+**E-mails continuam pausados operacionalmente:** não recrie o Cron de notificações enquanto a TurboCloud não confirmar a liberação da conta e a validação dos apontamentos. Convites e links mágicos são envios imediatos, independentes do Cron: evite acioná-los durante a suspensão. O CRM funciona sem qualquer envio de e-mail.
+
+Verificação: `npm test` inclui banco/servidor HTTP locais, migração repetida, captura automática, permissões, conflitos de edição, agenda, perfil, foto privada e troca de senha. Os testes usam SMTP simulado e não enviam mensagens externas.
+
 ### Entregue nesta etapa
 
 - React/Vite/TypeScript com três colunas: blocos, prévia e propriedades; layout adaptável a telas menores.
@@ -49,7 +73,7 @@ O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam
 - Falhas de SMTP/webhook não descartam leads nem bloqueiam a confirmação. O envio público apenas salva e confirma: as notificações ficam na fila do MySQL. **Configure o Cron obrigatório de notificações descrito abaixo.** O consumidor de webhook deve deduplicar pelo cabeçalho `Idempotency-Key`.
 - O webhook compartilha dados pessoais com o destino escolhido pelo editor: configure somente destinos autorizados. A validação é uma proteção de rede, não uma verificação de confiança do destinatário.
 - A retenção de 180 dias informada no config **não exclui respostas automaticamente**; continua sendo necessária uma rotina operacional de descarte. Revise a política com os responsáveis pelos espaços antes do uso real com clientes.
-- Ainda fora desta etapa: CRM, painel interno de abandono/insights, CAPI, Google/TikTok/GTM, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico, biblioteca de mídias e upload de arquivos pelos respondentes também não foram adicionados.
+- Ainda fora desta etapa: painel interno de abandono/insights, CAPI, Google/TikTok/GTM, embed/QR, automações e API de WhatsApp (Fases 2/3); editor rico, biblioteca de mídias e upload de arquivos pelos respondentes também não foram adicionados.
 
 ### Pixel da Meta por formulário
 

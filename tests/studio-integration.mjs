@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { mediaTests } from "./media-integration.mjs";
+import { crmTests } from "./crm-integration.mjs";
 const publicDefinition = (html) =>
   JSON.parse(
     html
@@ -86,6 +87,11 @@ export async function studioTests({
   const boot = await agency.req("boot");
   assert.equal(boot.body.user.agency, true);
   const badon = Number(boot.body.workspaces[0].id);
+  assert.equal(boot.body.crm_ready, false);
+  assert.equal((await agency.req("profile")).status, 503);
+  run(php, [cli, "crm:migrate"]);
+  run(php, [cli, "crm:migrate"]);
+  assert.equal((await agency.req("boot")).body.crm_ready, true);
   const logoutClient = new Api();
   await logoutClient.req("boot");
   assert.equal(
@@ -133,12 +139,13 @@ export async function studioTests({
     assert.ok(response.body.invite_url.endsWith("#token=" + raw));
     assert.ok(response.body.invite_url.startsWith(base + "/entrar#token="));
     const user = new Api();
+    user.testPassword = randomBytes(18).toString("hex");
     await user.req("boot");
     assert.equal(
       (
         await user.req("accept", {
           token: raw,
-          password: randomBytes(18).toString("hex"),
+          password: user.testPassword,
         })
       ).status,
       200,
@@ -778,6 +785,22 @@ export async function studioTests({
   delete draft.settings.webhook_url;
   assert.equal((await editor.req("status", { id, active: false })).status, 200);
   assert.equal((await guest.req("/f/cliente-a-form")).status, 404);
+  await crmTests({
+    base,
+    agency,
+    editor,
+    reader,
+    other,
+    wa,
+    wb,
+    id,
+    sql,
+    run,
+    php,
+    cli,
+    Api,
+    messages,
+  });
   const member = (
     await agency.req("members", undefined, { workspace: wa })
   ).body.members.find((m) => m.email === "reader@example.invalid");
