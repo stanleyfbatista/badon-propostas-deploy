@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { mediaTests } from "./media-integration.mjs";
 import { crmTests } from "./crm-integration.mjs";
+import { tasksTests } from "./tasks-integration.mjs";
 const publicDefinition = (html) =>
   JSON.parse(
     html
@@ -801,11 +802,34 @@ export async function studioTests({
     Api,
     messages,
   });
+  await tasksTests({
+    agency,
+    editor,
+    reader,
+    other,
+    wa,
+    wb,
+    run,
+    php,
+    cli,
+    sql,
+    messages,
+    Api,
+  });
   const member = (
     await agency.req("members", undefined, { workspace: wa })
   ).body.members.find((m) => m.email === "reader@example.invalid");
   await agency.req("member-remove", { workspace: wa, id: member.id });
   assert.equal((await reader.req("leads", undefined, { id })).status, 403);
+  assert.equal(
+    (
+      await reader.req("task-list", undefined, {
+        workspace: wa,
+        today: "2027-01-05",
+      })
+    ).status,
+    403,
+  );
   const magic = new Api();
   await magic.req("boot");
   assert.equal(

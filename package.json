@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
-    "test": "node tests/session-client.mjs && node tests/crm-ui.mjs && node tests/smtp-tls.mjs && node tests/welcome-preview.mjs && node tests/public-cover.mjs && node tests/condition-controls.mjs && node tests/meta-pixel.mjs && node tests/logic-model.mjs && node tests/flow-engine.mjs && node tests/integration.mjs && node tests/apache.mjs"
+    "test": "node tests/session-client.mjs && node tests/crm-ui.mjs && node tests/tasks-ui.mjs && node tests/smtp-tls.mjs && node tests/welcome-preview.mjs && node tests/public-cover.mjs && node tests/condition-controls.mjs && node tests/meta-pixel.mjs && node tests/logic-model.mjs && node tests/flow-engine.mjs && node tests/integration.mjs && node tests/apache.mjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.12.0",

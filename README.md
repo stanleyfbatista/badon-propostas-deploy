@@ -20,6 +20,34 @@ O painel React fica em **`/admin/studio/`**. O login existente da Bādon continu
 
 O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam mudar**. A versão nova requer PHP **8.2+**, já confirmado nesta conta, e `curl` caso use webhooks. Não há Supabase, assinatura nova, CDN, servidor Node em produção ou chamada a serviço de formulário externo.
 
+### Tarefas e Meu dia — primeira etapa da central de gestão
+
+Esta etapa acrescenta tarefas persistentes no MySQL existente; não instala outro serviço e não altera SMTP, Cron ou apontamentos DNS. Google Agenda e projetos completos ficam para etapas posteriores.
+
+1. Faça um backup atualizado do banco.
+2. No cPanel, use **Update from Remote → Deploy HEAD Commit**.
+3. No **Terminal** (não no Cron), execute:
+
+   ```sh
+   /usr/local/bin/php /home/produ7943464/badon-app/console.php tasks:migrate
+   ```
+
+4. Recarregue **https://forms.produtorabadon.com/painel** e abra **Tarefas** ou **Meu dia**.
+
+A migração exige o CRM já preparado, cria somente `bf_tasks` e `bf_task_events`, pode ser repetida e não apaga nem importa dados. Antes de executá-la, os menus novos exibem a orientação de ativação; as outras áreas continuam disponíveis.
+
+- **Tarefas:** título, descrição, prazo por data, prioridade, responsável, etapas A fazer/Em andamento/Concluída, até 50 itens de checklist e comentários. Há lista, quadro por etapa, busca, filtros e opção Minhas tarefas. Abrir o cartão permite editar a etapa; marcar o botão de conclusão conclui/reabre sem apagar o checklist.
+- Cada tarefa pertence a um espaço de trabalho. O vínculo opcional com uma oportunidade conecta a tarefa ao contato/empresa do CRM daquele mesmo espaço; o cartão abre os detalhes do CRM. Nesta etapa não há cadastro separado de projetos nem automatização de tarefas ao fechar uma venda.
+- **Particular** significa visível no aplicativo apenas para quem criou a tarefa, inclusive diante de administradores da agência. Não é criptografia contra o administrador do banco/servidor. A tarefa particular é atribuída ao criador. **Equipe** permite consulta aos membros do espaço, inclusive leitores; agência, administradores e editores podem alterar. Só o criador pode mudar a visibilidade. O vínculo com uma oportunidade não publica os comentários particulares no CRM.
+- Leitores não criam/alteram/comentam/arquivam tarefas. Todo acesso exige autenticação e participação no espaço; ser responsável não concede acesso novo. Revogação de acesso também bloqueia as tarefas particulares desse espaço.
+- **Meu dia** considera somente tarefas atribuídas à conta atual, não arquivadas e não concluídas, vencidas, de hoje ou sem prazo. Tarefas futuras continuam em Tarefas. O dia de referência é o do dispositivo; prazos são datas sem horário, evitando deslocamento de dia por fuso.
+- No mesmo espaço, Meu dia mostra até 20 agendamentos do CRM de hoje ou atrasados atribuídos à pessoa e até 20 oportunidades abertas sem contato registrado há mais de sete dias. Oportunidades fechadas/desqualificadas/falsas ficam fora desses resumos. Horários do CRM continuam armazenados em UTC e exibidos no fuso do dispositivo, inclusive em mudanças de horário de verão.
+- **Arquivar** é reversível pelo filtro Arquivadas; não exclui a tarefa nem o histórico. Restaure antes de editar/comentar. Conclusão e reabertura mantêm o histórico. Edições simultâneas são recusadas com aviso; é necessário reabrir o registro atualizado.
+- As listas têm 100 tarefas por página; métricas usam todos os resultados filtrados, enquanto contagens de colunas referem-se à página. A busca de oportunidades retorna até 30 resultados; refine pelo nome para localizar outras. O detalhe mostra os 100 eventos mais recentes, sem excluir eventos anteriores do banco.
+- Preferência de aparência do perfil também se aplica a Tarefas e Meu dia. Não há sincronização Google, lembretes por e-mail, notificações push, recorrência ou anexos nesta entrega. Mantenha o Cron de e-mails pausado até a liberação da TurboCloud.
+
+Verificação: `npm test` cobre migração repetida, autorização inclusive contra acesso da agência a tarefas particulares, CSRF, vínculos entre espaços, checklist, conflitos, arquivo/restauração, comentários, paginação, componentes e limites do dia em quatro fusos. Nenhuma mensagem externa é enviada pelos testes.
+
 ### CRM, agendamentos e perfil — outubro/2026
 
 Após fazer backup do banco e usar **Update from Remote → Deploy HEAD Commit** no cPanel, execute no Terminal:

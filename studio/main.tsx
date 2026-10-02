@@ -29,6 +29,8 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   UserRound,
+  ListChecks,
+  Sun,
 } from "lucide-react";
 import {
   Boot,
@@ -51,6 +53,7 @@ import { MetaPixelSettings } from "./MetaPixelSettings";
 import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
 import { createSessionClient } from "./session-client";
 import { Crm, ProfilePanel, Avatar } from "./Crm";
+import { Tasks } from "./Tasks";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -250,7 +253,9 @@ function App() {
   }, [boot?.user, token]);
   useEffect(() => {
     document.documentElement.dataset.appearance =
-      boot?.user && !form && ["crm", "agenda", "profile"].includes(view)
+      boot?.user &&
+      !form &&
+      ["crm", "agenda", "profile", "tasks", "day"].includes(view)
         ? boot.profile?.appearance || "light"
         : "light";
   }, [boot?.user, boot?.profile?.appearance, form, view]);
@@ -504,6 +509,18 @@ function App() {
           <aside className="sidebar">
             <p className="eyebrow">SEU ESPAÇO</p>
             <button
+              className={view === "day" ? "selected" : ""}
+              onClick={() => setView("day")}
+            >
+              <Sun size={18} /> Meu dia
+            </button>
+            <button
+              className={view === "tasks" ? "selected" : ""}
+              onClick={() => setView("tasks")}
+            >
+              <ListChecks size={18} /> Tarefas
+            </button>
+            <button
               className={view === "crm" ? "selected" : ""}
               onClick={() => setView("crm")}
             >
@@ -554,11 +571,34 @@ function App() {
           <main
             className={
               "content" +
-              (["crm", "agenda", "profile"].includes(view)
+              (["crm", "agenda", "profile", "tasks", "day"].includes(view)
                 ? " crm-content"
                 : "")
             }
           >
+            {["tasks", "day"].includes(view) && !boot.tasks_ready && (
+              <section className="box">
+                <h1>Sua rotina em um só lugar.</h1>
+                <p>
+                  Para ativar Tarefas e Meu dia, execute{" "}
+                  <code>tasks:migrate</code> no Terminal do cPanel e recarregue
+                  a página. O CRM e os formulários continuam funcionando.
+                </p>
+              </section>
+            )}
+            {boot.tasks_ready &&
+              boot.profile &&
+              ["tasks", "day"].includes(view) &&
+              workspace > 0 && (
+                <Tasks
+                  key={workspace + ":" + view}
+                  api={api}
+                  workspace={workspace}
+                  actor={boot.profile.actor}
+                  editable={editable}
+                  day={view === "day"}
+                />
+              )}
             {["crm", "agenda", "profile"].includes(view) && !boot.crm_ready && (
               <section className="box">
                 <h1>Uma nova área para suas conexões.</h1>

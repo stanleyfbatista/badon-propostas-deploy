@@ -22,7 +22,7 @@ export type Api = (
   query?: Record<string, string | number>,
 ) => Promise<any>;
 export type Request = (url: string, init?: RequestInit) => Promise<any>;
-type Person = {
+export type Person = {
   actor: string;
   name: string;
   email: string;
@@ -99,7 +99,7 @@ export function Avatar({
     </span>
   );
 }
-function Modal({
+export function Modal({
   title,
   children,
   close,
@@ -142,7 +142,7 @@ function Modal({
     </dialog>
   );
 }
-function Control({
+export function Control({
   label,
   children,
 }: {
@@ -1075,7 +1075,7 @@ export function ProfilePanel({
                 onChange={(e) => setPhone(e.target.value)}
               />
             </Control>
-            <h3>Aparência do CRM e perfil</h3>
+            <h3>Aparência das áreas de gestão e perfil</h3>
             <div className="profile-theme">
               {(["light", "dark"] as const).map((t) => (
                 <label key={t}>

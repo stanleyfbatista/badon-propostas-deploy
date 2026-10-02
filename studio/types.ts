@@ -79,6 +79,7 @@ export type Boot = {
   user: null | { id: number; email: string; agency: boolean };
   workspaces: Workspace[];
   crm_ready?: boolean;
+  tasks_ready?: boolean;
   profile?: Profile | null;
 };
 export type Profile = {
