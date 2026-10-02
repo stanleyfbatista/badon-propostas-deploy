@@ -87,3 +87,37 @@ assert.equal(
 console.log(
   "OK: sessão expirada, CSRF renovado na saída, uploads, permissões, senha incorreta e falha de rede.",
 );
+const user = { id: 1, agency: true };
+const resumed = setup([
+  { body: { user, remembered: true, csrf: "old" } },
+  { body: { user, remembered: true, csrf: "new" } },
+  { body: { ok: true } },
+]);
+await resumed.client.api("boot");
+await resumed.client.api("save", { draft: "preserved" });
+assert.equal(resumed.calls.length, 3);
+assert.equal(resumed.calls[1].method, undefined);
+assert.equal(resumed.calls[2].headers["X-CSRF-Token"], "new");
+assert.equal(resumed.calls.filter((c) => c.method === "POST").length, 1);
+for (const nextUser of [null, { id: 2, agency: true }]) {
+  const changed = setup([
+    { body: { user, remembered: true, csrf: "old" } },
+    { body: { user: nextUser, remembered: !!nextUser, csrf: "new" } },
+  ]);
+  await changed.client.api("boot");
+  await assert.rejects(changed.client.api("save", {}), SessionExpiredError);
+  assert.ok(
+    !changed.calls.some((c) => c.method === "POST"),
+    "never save as a different/expired user",
+  );
+}
+const resumeOffline = setup([
+  { body: { user, remembered: true, csrf: "old" } },
+  new TypeError("offline"),
+]);
+await resumeOffline.client.api("boot");
+await assert.rejects(resumeOffline.client.api("save", {}), /offline/);
+assert.ok(!resumeOffline.calls.some((c) => c.method === "POST"));
+console.log(
+  "OK: retomada antes de gravar, sem repetir mutações, sem salvar em outra conta ou durante falha de rede.",
+);

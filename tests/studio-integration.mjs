@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { mediaTests } from "./media-integration.mjs";
 import { crmTests } from "./crm-integration.mjs";
 import { tasksTests } from "./tasks-integration.mjs";
+import { rememberTests } from "./remember-integration.mjs";
 const publicDefinition = (html) =>
   JSON.parse(
     html
@@ -846,4 +847,16 @@ export async function studioTests({
   console.log(
     "OK: React/PHP, migração aditiva, workspaces isolados, papéis, convites/link mágico, rascunho/publicação, SMTP, rastreamento, antifraude, CSV e revogação.",
   );
+  sql("DELETE FROM badon_test.rate_limits");
+  await rememberTests({
+    base,
+    sql,
+    run,
+    php,
+    cli,
+    password,
+    memberPassword: "new-long-password",
+    wa,
+    messages,
+  });
 }

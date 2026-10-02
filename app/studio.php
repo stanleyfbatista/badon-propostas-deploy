@@ -32,12 +32,14 @@ function studio_user(): ?array
     $_SESSION['studio_active'] = time();
     return ['id' => (int)$u['id'], 'email' => $u['email'], 'agency' => false];
 }
-function studio_login(array $u, bool $agency): void
+function studio_login(array $u, bool $agency, bool $remember = false): void
 {
+    remember_forget();
     session_regenerate_id(true);
     $_SESSION = ['csrf' => bin2hex(random_bytes(32))];
     if ($agency) $_SESSION += ['admin_id' => (int)$u['id'], 'auth_hash' => hash('sha256', $u['password_hash']), 'last_active' => time(), 'login_at' => time()];
     else $_SESSION += ['studio_user' => (int)$u['id'], 'studio_hash' => hash('sha256', $u['password_hash']), 'studio_active' => time(), 'studio_login' => time()];
+    if ($remember) remember_issue($u,$agency);
 }
 function studio_access(array $u, int $workspace, string $level = 'read'): string
 {

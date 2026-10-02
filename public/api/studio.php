@@ -33,7 +33,9 @@ try {
         $password = is_string($in['password'] ?? null) ? $in['password'] : '';
         $valid = password_verify($password, $user['password_hash'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
         if (!$user || !$valid) studio_error(401, 'E-mail ou senha incorretos.');
-        studio_login($user, $agency); studio_json(['ok' => true]);
+        $remember=($in['remember']??false)===true;
+        if ($remember && !remember_ready()) studio_error(503,'Execute auth:migrate no cPanel para ativar Permanecer conectado. Você ainda pode entrar sem marcar a opção.');
+        studio_login($user, $agency, $remember); studio_json(['ok' => true]);
     }
     if ($action === 'magic') {
         $email = strtolower(studio_text($in['email'] ?? '', 190));
@@ -73,9 +75,9 @@ try {
             else { $q = db()->prepare('SELECT w.*, m.role FROM bf_workspaces w JOIN bf_members m ON m.workspace_id = w.id WHERE m.user_id = ? ORDER BY w.name'); $q->execute([$u['id']]); $workspaces = $q->fetchAll(); }
         }
         $crm = crm_ready();
-        studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf'], 'crm_ready' => $crm, 'tasks_ready' => $crm && tasks_ready(), 'profile' => $u && $crm ? crm_profile($u) : null]);
+        studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf'], 'remember_available' => remember_ready(), 'remembered' => $u && isset($_SESSION['remember_hash']), 'crm_ready' => $crm, 'tasks_ready' => $crm && tasks_ready(), 'profile' => $u && $crm ? crm_profile($u) : null]);
     }
-    if ($action === 'logout') { $_SESSION = []; session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32)); studio_json(['ok' => true]); }
+    if ($action === 'logout') { remember_forget(); $_SESSION = []; session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32)); studio_json(['ok' => true]); }
     if (!$u) studio_error(401, 'Entre na sua conta para continuar.', 'session_expired');
     if (str_starts_with($action, 'task-')) tasks_handle($action, $u, $in);
     if (str_starts_with($action, 'crm-') || str_starts_with($action, 'profile')) crm_handle($action, $u, $in);

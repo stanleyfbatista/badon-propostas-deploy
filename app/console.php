@@ -3,7 +3,10 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/bootstrap.php';
 $command = $argv[1] ?? 'help';
-if ($command === 'tasks:migrate') {
+if ($command === 'auth:migrate') {
+    db()->exec(file_get_contents(__DIR__ . '/remember-schema.sql'));
+    echo "Permanecer conectado preparado. Contas e senhas preservadas. Nenhum e-mail enviado.\n";
+} elseif ($command === 'tasks:migrate') {
     require __DIR__ . '/tasks.php';
     if (!studio_ready() || !crm_ready()) { fwrite(STDERR, "Execute studio:migrate e crm:migrate primeiro.\n"); exit(1); }
     db()->exec(file_get_contents(__DIR__ . '/tasks-schema.sql'));
@@ -53,5 +56,5 @@ if ($command === 'tasks:migrate') {
     db()->prepare('DELETE FROM rate_limits WHERE window_start < ?')->execute([time() - 172800]);
     echo "Contadores de proteção com mais de 48 horas removidos. Leads preservados.\n";
 } else {
-    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
+    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | auth:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
 }

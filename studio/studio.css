@@ -14,6 +14,27 @@
 body {
   margin: 0;
 }
+.remember-choice {
+  margin: 0 0 8px;
+}
+.remember-choice label {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+.remember-choice input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+}
+.remember-choice small {
+  display: block;
+  margin: 7px 0 0 27px;
+  font-size: 12px;
+}
 button,
 input,
 textarea,

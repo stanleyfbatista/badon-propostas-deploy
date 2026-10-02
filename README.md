@@ -20,6 +20,26 @@ O painel React fica em **`/admin/studio/`**. O login existente da Bādon continu
 
 O `config.php` privado e o roteamento de e-mail Google Workspace **não precisam mudar**. A versão nova requer PHP **8.2+**, já confirmado nesta conta, e `curl` caso use webhooks. Não há Supabase, assinatura nova, CDN, servidor Node em produção ou chamada a serviço de formulário externo.
 
+### Permanecer conectado — login por até 30 dias
+
+Faça um backup atualizado do banco, use **Update from Remote → Deploy HEAD Commit** no cPanel e execute no **Terminal**, não no Cron:
+
+```sh
+/usr/local/bin/php /home/produ7943464/badon-app/console.php auth:migrate
+```
+
+A migração cria somente `bf_remember_tokens`, pode ser repetida e preserva contas, senhas e respostas. Não envia e-mails nem altera SMTP, DNS, configuração privada ou Cron. Antes dela, o login normal continua disponível e a opção nova aparece desabilitada.
+
+Recarregue **https://forms.produtorabadon.com/entrar** e marque **Permanecer conectado** ao entrar com e-mail e senha. A opção vem desmarcada e vale por até **30 dias neste navegador**, contados a partir daquele login, sem renovação indefinida. Use somente em dispositivos pessoais. Sem marcar, permanecem os limites normais de 30 minutos de inatividade e oito horas por sessão.
+
+- Fechar o navegador ou a hospedagem coletar a sessão PHP não elimina o acesso lembrado. Limpar cookies, usar navegação privada ou outro navegador/dispositivo exige novo login. Aplicativos que abrem o site precisam preservar seus cookies para manter esse acesso.
+- **Sair** revoga o token deste navegador no servidor. Trocar a senha invalida os acessos persistentes anteriores de todos os dispositivos; a sessão que efetuou a troca continua normal, sem persistência. Para lembrar novamente, faça um novo login com a opção marcada.
+- O cookie persistente de produção usa prefixo `__Host-`, HTTPS, HttpOnly, SameSite=Lax e não é compartilhado com outros subdomínios. Não armazena a senha. O banco guarda somente o hash de um token aleatório e sua validade; o token não fica disponível ao JavaScript nem no localStorage.
+- As permissões de acesso ao espaço são verificadas normalmente. Antes de uma alteração autenticada com acesso lembrado, o cliente atualiza a sessão/CSRF e confirma a identidade; não repete automaticamente a gravação. Se o prazo terminar ou a identidade mudar, exige novo login.
+- Tokens expirados são limpos ao emitir um novo acesso persistente. Não exige tarefa Cron. Mantenha o Cron de e-mails pausado até a liberação da TurboCloud.
+
+`npm test` cobre opt-in, ausência de migração, retomada após encerramento/coleta da sessão, cookies de produção, expiração, token falso, logout, troca de senha, permissões revogadas e proteção contra gravação na conta errada. Os testes usam somente banco e SMTP locais descartáveis.
+
 ### Tarefas e Meu dia — primeira etapa da central de gestão
 
 Esta etapa acrescenta tarefas persistentes no MySQL existente; não instala outro serviço e não altera SMTP, Cron ou apontamentos DNS. Google Agenda e projetos completos ficam para etapas posteriores.

@@ -7,6 +7,7 @@ ini_set('log_errors', '1');
 require_once __DIR__ . '/domain.php';
 require_once __DIR__ . '/web.php';
 require_once __DIR__ . '/routes.php';
+require_once __DIR__ . '/remember.php';
 
 function log_incident(Throwable $error, string $stage = 'request', int $leadId = 0): string
 {
@@ -93,4 +94,5 @@ if (PHP_SAPI !== 'cli') {
     if (!isset($_SESSION['csrf'])) {
         $_SESSION['csrf'] = bin2hex(random_bytes(32));
     }
+    remember_restore();
 }

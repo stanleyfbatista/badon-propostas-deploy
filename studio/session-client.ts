@@ -10,7 +10,26 @@ export function createSessionClient(
   expired: () => void,
 ) {
   let csrf = "";
+  let remembered = false;
+  let identity = "";
   async function request(url: string, init: RequestInit = {}, login = false) {
+    if (
+      remembered &&
+      init.method === "POST" &&
+      !login &&
+      !url.includes("action=logout") &&
+      !url.includes("action=accept")
+    ) {
+      const previousIdentity = identity;
+      // Recover a collected PHP session BEFORE a mutation. Never retry the mutation.
+      const boot = await request("/api/studio.php?action=boot", {
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!boot.user || (previousIdentity && previousIdentity !== identity)) {
+        expired();
+        throw new SessionExpiredError();
+      }
+    }
     const response = await fetcher(url, {
       ...init,
       credentials: "same-origin",
@@ -30,6 +49,11 @@ export function createSessionClient(
     }
     if (!response.ok) throw new Error(result.error || "Falha na solicitação.");
     if (typeof result.csrf === "string") csrf = result.csrf;
+    if (typeof result.remembered === "boolean") remembered = result.remembered;
+    if (Object.prototype.hasOwnProperty.call(result, "user"))
+      identity = result.user
+        ? (result.user.agency ? "a:" : "u:") + result.user.id
+        : "";
     return result;
   }
   async function api(

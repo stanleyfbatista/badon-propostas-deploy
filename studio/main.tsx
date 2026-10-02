@@ -54,6 +54,7 @@ import { WelcomeEditor, WelcomeCover, normalizeWelcome } from "./WelcomeCover";
 import { createSessionClient } from "./session-client";
 import { Crm, ProfilePanel, Avatar } from "./Crm";
 import { Tasks } from "./Tasks";
+import { RememberChoice } from "./RememberChoice";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -320,7 +321,11 @@ function App() {
                 token ? "accept" : "login",
                 token
                   ? { token, password: d.get("password") }
-                  : { email: d.get("email"), password: d.get("password") },
+                  : {
+                      email: d.get("email"),
+                      password: d.get("password"),
+                      remember: d.get("remember") === "on",
+                    },
               );
               setToken("");
               await load();
@@ -343,6 +348,7 @@ function App() {
             required={!token}
             autoComplete={token ? "new-password" : "current-password"}
           />
+          {!token && <RememberChoice available={!!boot.remember_available} />}
           <Button kind="primary" disabled={busy}>
             {token ? "Confirmar acesso" : "Entrar"}
             <ArrowRight size={17} />

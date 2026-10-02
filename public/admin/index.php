@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dummy = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
         $valid = password_verify($password, $admin['password_hash'] ?? $dummy);
         if ($admin && $valid) {
+            remember_forget();
             session_regenerate_id(true);
             if (password_needs_rehash($admin['password_hash'], PASSWORD_DEFAULT)) {
                 $admin['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
@@ -28,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         require_admin();
         if ($action === 'logout') {
+            remember_forget();
             $_SESSION = []; session_destroy();
             setcookie(session_name(), '', ['expires' => time() - 3600, 'path' => '/', 'secure' => $config['environment'] === 'production', 'httponly' => true, 'samesite' => 'Lax']);
             redirect('/admin/');
