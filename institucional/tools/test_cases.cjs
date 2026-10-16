@@ -11,6 +11,10 @@ const expected = ['birra-sob-controle', 'clp-facil', 'clinica-jardim', 'translif
 const source = js.slice(js.indexOf('const detailContent = {') + 'const detailContent = '.length, js.indexOf('\n\n  function openDialog'));
 const details = vm.runInNewContext('(' + source.trim().replace(/;$/, '') + ')', {}, {timeout: 1000});
 assert.equal(cards.length, 6);
+assert.match(cards[0], /juliana-macbook-v1\.webp/);
+assert.match(cards[1], /clp-facil-macbook-v1\.webp/);
+assert.match(details['birra-sob-controle'].body, /birra-sob-controle\.png/);
+assert.match(details['clp-facil'].body, /clp-facil\.png/);
 assert.deepEqual(cards.map(card => card.match(/data-detail="([^"]+)"/)[1]), expected);
 assert.doesNotMatch(section, /fictício|demonstração|demo-tag|Ver projeto de exemplo/i);
 for (const [index, id] of expected.entries()) {
