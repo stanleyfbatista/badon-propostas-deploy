@@ -13,6 +13,22 @@ fi
 umask 022
 mkdir -p "$public_dir"
 mkdir -p -m 700 "$app_dir"
+# Keep the previous institutional entry point outside the public document root.
+# Other applications and their data are not included in this site-only backup.
+if [[ -f "$public_dir/index.html" ]]; then
+  site_backup_root="$account_dir/badon-site-backups"
+  if [[ -L "$site_backup_root" ]]; then
+    echo 'Diretório de backup com link simbólico: confira manualmente.' >&2; exit 1
+  fi
+  mkdir -p -m 700 "$site_backup_root"
+  site_backup_dir="$(mktemp -d "$site_backup_root/release-XXXXXX")"
+  for site_item in index.html robots.txt sitemap.xml .htaccess assets blog servicos; do
+    if [[ -e "$public_dir/$site_item" ]]; then
+      cp -RP "$public_dir/$site_item" "$site_backup_dir/"
+    fi
+  done
+  echo "Backup do site anterior: $site_backup_dir"
+fi
 # Copiar somente o conteúdo público. Não apagar arquivos de outras páginas.
 cp -R "$repo_dir/public/." "$public_dir/"
 cp -R "$repo_dir/app/." "$app_dir/"

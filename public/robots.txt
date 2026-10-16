@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /f/
+Disallow: /painel
+Disallow: /entrar
+Disallow: /propostas/
+Disallow: /relatorios/
+Sitemap: https://produtorabadon.com/sitemap.xml
