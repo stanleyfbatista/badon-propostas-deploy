@@ -15,6 +15,12 @@ assert.match(cards[0], /juliana-macbook-v1\.webp/);
 assert.match(cards[1], /clp-facil-macbook-v1\.webp/);
 assert.match(details['birra-sob-controle'].body, /birra-sob-controle\.png/);
 assert.match(details['clp-facil'].body, /clp-facil\.png/);
+for (const [offset, id, cover] of [[3, 'translife', 'capa-ecobag-v1.webp'], [4, 'nova-molina', 'capa-construcao-marca-v1.webp'], [5, 'casa-supremo', 'capa-painel-v1.webp']]) {
+  assert.ok(cards[offset].includes(cover));
+  assert.ok(details[id].body.includes(cover));
+  assert.ok(details[id].body.includes('assets/img/cases/' + id + '/aplicacoes.jpg'));
+  assert.match(details[id].body, /Galeria do projeto/);
+}
 assert.deepEqual(cards.map(card => card.match(/data-detail="([^"]+)"/)[1]), expected);
 assert.doesNotMatch(section, /fictício|demonstração|demo-tag|Ver projeto de exemplo/i);
 for (const [index, id] of expected.entries()) {
