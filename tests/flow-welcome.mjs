@@ -65,6 +65,8 @@ for (const props of [{ initialOpen: true }, { sessionExpired: true }]) {
 for (const [, src] of landing.matchAll(/src="([^"]+)"/g))
   assert.ok(existsSync("public" + src), "Asset local disponível: " + src);
 const app = readFileSync("studio/main.tsx", "utf8");
+const loginOrder = [app.indexOf('className="auth-google"'), app.indexOf('label="E-mail"'), app.indexOf('name="password"', app.indexOf('label="E-mail"')), app.indexOf('<Button kind="primary" disabled={busy}>', app.indexOf('label="E-mail"')), app.indexOf('className="auth-passwordless"')];
+assert.ok(loginOrder.every((position, index) => position >= 0 && (index === 0 || position > loginOrder[index - 1])), "Login order: Google, email, password, sign in, email link");
 assert.match(app, /initialOpen=\{!!token \|\| location.pathname !== "\/"\}/);
 assert.match(app, /token \? "accept" : "login"/);
 assert.match(app, /remember: d.get\("remember"\) === "on"/);

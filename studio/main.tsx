@@ -422,6 +422,21 @@ function App() {
                 });
               }}
             >
+              {!token && boot.google_available && (
+                <>
+                  <div className="auth-google">
+                    <Button type="button" disabled={busy} onClick={(e) => {
+                      const d = new FormData(e.currentTarget.form!);
+                      task(async () => {
+                        const r = await api("google-login", { remember: d.get("remember") === "on" });
+                        window.location.assign(r.url);
+                      });
+                    }}>Entrar com Google</Button>
+                    <small>Para contas já vinculadas. No primeiro acesso, use seu convite ou o link por e-mail.</small>
+                  </div>
+                  <div className="auth-divider"><span>ou entre com seu e-mail</span></div>
+                </>
+              )}
               {!token && (
                 <>
                   <Input
@@ -518,18 +533,6 @@ function App() {
                     Preencha o e-mail acima. Não é necessário informar a senha.
                     O link é de uso único e vale por 15 minutos.
                   </small>
-                </div>
-              )}
-              {!token && boot.google_available && (
-                <div className="auth-passwordless">
-                  <Button type="button" disabled={busy} onClick={(e) => {
-                    const d = new FormData(e.currentTarget.form!);
-                    task(async () => {
-                      const r = await api("google-login", { remember: d.get("remember") === "on" });
-                      window.location.assign(r.url);
-                    });
-                  }}>Entrar com Google</Button>
-                  <small>Para contas já vinculadas em Configurações. No primeiro acesso, use seu convite ou o link por e-mail.</small>
                 </div>
               )}
             </form>
