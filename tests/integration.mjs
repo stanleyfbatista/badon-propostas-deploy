@@ -351,6 +351,39 @@ try {
   assert.equal(oldPost.status, 403); // Missing CSRF, not redirected to another session/host.
   assert.equal(oldPost.headers.get('location'), null);
   log('subdomínio ativado: navegações antigas redirecionadas, novo host sem loop, APIs/POST/recibos preservados');
+  const activated = JSON.parse(run(php, [cli, 'domain:switch', 'https://forms.produtorabadon.com', 'https://app.produtorabadon.com']));
+  assert.equal(activated.changed, true);
+  assert.equal(fs.statSync(activated.backup).mode & 0o777, 0o600);
+  assert.equal(fs.readFileSync(activated.backup, 'utf8'), formsConfig);
+  assert.equal(fs.readFileSync(path.join(account, 'badon-config/config.php'), 'utf8'),
+    formsConfig.replace('https://forms.produtorabadon.com', 'https://app.produtorabadon.com'));
+  assert.equal(JSON.parse(run(php, [cli, 'domain:switch', 'https://forms.produtorabadon.com', 'https://app.produtorabadon.com'])).changed, false);
+  for (const host of ['produtorabadon.com', 'forms.produtorabadon.com']) {
+    for (const route of ['/entrar', '/painel?workspace=1', '/admin/studio/']) {
+      const r = await hostRequest(host, route);
+      assert.equal(r.status, 302);
+      assert.equal(r.headers.get('location'), 'https://app.produtorabadon.com' + (route === '/admin/studio/' ? '/entrar' : route));
+    }
+    const post = await hostRequest(host, '/api/enviar.php', 'POST');
+    assert.equal(post.status, 403);
+    assert.equal(post.headers.get('location'), null);
+    assert.equal((await hostRequest(host, '/api/studio.php?action=boot')).status, 200);
+    assert.equal((await hostRequest(host, '/f/confirmacao.php?r=invalid')).status, 404);
+  }
+  for (const route of ['/', '/entrar', '/painel']) {
+    const r = await hostRequest('app.produtorabadon.com', route);
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get('location'), null);
+    assert.match(await r.text(), /Bādon Flow/);
+  }
+  assert.equal((await hostRequest('forms.produtorabadon.com', '/')).headers.get('location'), 'https://app.produtorabadon.com/');
+  assert.equal((await hostRequest('forms.produtorabadon.com', '/f/nao-existe')).status, 404);
+  assert.equal((await hostRequest('produtorabadon.com', '/')).status, 200);
+  assert.equal((await hostRequest('produtorabadon.com', '/f/trafego-local')).headers.get('location'), 'https://forms.produtorabadon.com/f/trafego-local');
+  const reverted = JSON.parse(run(php, [cli, 'domain:switch', 'https://app.produtorabadon.com', 'https://forms.produtorabadon.com']));
+  assert.equal(reverted.changed, true);
+  assert.equal(fs.readFileSync(path.join(account, 'badon-config/config.php'), 'utf8'), formsConfig);
+  log('app: ativação e reversão com backup privado, configuração preservada, painel redirecionado e formulários antigos mantidos');
   console.log('Integração concluída. Nenhum e-mail externo foi enviado.');
 } finally {
   kill(phpProc); kill(dbProc);

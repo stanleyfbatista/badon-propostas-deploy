@@ -444,6 +444,33 @@ compartilhados com o domínio principal. O consentimento do Pixel também precis
 Valide convites, recuperação por link, uploads, notificações e Pixel (**Testar eventos** e eventuais
 permissões de tráfego do novo host na Meta). Sem migração de banco. Para reverter a ativação,
 restaure o `base_url` anterior; redirecionamentos 302 não ficam fixados como os permanentes.
+
+### Bādon Flow em app.produtorabadon.com
+
+O host `app.produtorabadon.com` compartilha `/home/produ7943464/public_html`.
+Antes da ativação, confirme DNS e HTTPS válido em `https://app.produtorabadon.com/entrar`.
+Após publicar as regras desta versão, execute pelo Terminal do cPanel:
+
+```sh
+php /home/produ7943464/badon-app/console.php domain:switch https://forms.produtorabadon.com https://app.produtorabadon.com
+```
+
+O comando altera somente o valor literal de `base_url`, valida a configuração e cria
+backup privado com permissão 0600 em `badon-config/backups`. Não altera banco, contas,
+senhas, SMTP, chaves nem dados. É idempotente. Confira que o resultado indica o novo endereço.
+
+- A raiz de `app`, `/entrar` e `/painel` abrem o Flow.
+- A raiz de `forms` e navegações antigas de login/painel redirecionam com 302 para `app`.
+- Formulários já publicados em `forms/f/...` continuam no mesmo host; links antigos do
+  domínio institucional para `/f/...` continuam levando a `forms`.
+- Novos links gerados pela aplicação usam `app`. POSTs, APIs, anexos autenticados e
+  recibos não são redirecionados entre hosts.
+- O site institucional, propostas e e-mail não mudam. Cookies são locais a cada host:
+  é necessário entrar novamente em `app`, com as mesmas credenciais.
+
+Para reverter apenas o endereço principal, use o mesmo comando invertendo os dois
+endereços. Não é necessária migração de banco. Não execute os processadores de
+notificações como teste da mudança, pois enviam mensagens reais.
 Não remova o subdomínio enquanto houver sessões, envios ou convites em uso nele.
 
 Referência: [cPanel — domínio com raiz compartilhada](https://support.cpanel.net/hc/en-us/articles/360055638573-How-can-I-create-a-domain-that-uses-the-same-content-as-an-existing-domain).

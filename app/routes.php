@@ -16,6 +16,18 @@ function forms_navigation_redirect(array $config, array $server): ?string
 
     // Activation is an explicit private-config change AFTER DNS + TLS validation.
     // Restrict the source hosts; never derive a redirect destination from Host.
+    $host = strtolower($server['HTTP_HOST'] ?? '');
+    if (($config['environment'] ?? '') === 'production'
+        && ($config['base_url'] ?? '') === 'https://app.produtorabadon.com') {
+        if (in_array($host, ['produtorabadon.com', 'www.produtorabadon.com', 'forms.produtorabadon.com'], true)
+            && ($studio || ($host === 'forms.produtorabadon.com' && $path === '/'))) {
+            return $config['base_url'] . $target . $query;
+        }
+        // Existing public form URLs stay on forms; never move POSTs, APIs or receipts.
+        if (in_array($host, ['produtorabadon.com', 'www.produtorabadon.com'], true) && $form) {
+            return 'https://forms.produtorabadon.com' . $path . $query;
+        }
+    }
     if (($config['environment'] ?? '') === 'production'
         && ($config['base_url'] ?? '') === 'https://forms.produtorabadon.com'
         && in_array(strtolower($server['HTTP_HOST'] ?? ''), ['produtorabadon.com', 'www.produtorabadon.com'], true)

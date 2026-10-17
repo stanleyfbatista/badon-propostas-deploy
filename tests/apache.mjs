@@ -57,6 +57,12 @@ try {
   const videoUrl = `http://127.0.0.1:${port}/forms-media/uploads/1/${'a'.repeat(32)}.mp4`;
   for (const [host, url, body] of [
     ['produtorabadon.com', '/', 'HOME'],
+    ['app.produtorabadon.com', '/', 'STUDIO'],
+    ['app.produtorabadon.com', '/entrar', 'STUDIO'],
+    ['app.produtorabadon.com', '/painel', 'STUDIO'],
+    ['app.produtorabadon.com', '/f/teste', 'FORM'],
+    ['app.produtorabadon.com', '/api/studio.php', 'STUDIO_API'],
+    ['app.produtorabadon.com.evil.invalid', '/', 'HOME'],
     ['forms.produtorabadon.com', '/', 'STUDIO'],
     ['forms.produtorabadon.com', '/entrar', 'STUDIO'],
     ['forms.produtorabadon.com', '/painel', 'STUDIO'],

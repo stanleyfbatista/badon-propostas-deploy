@@ -4,7 +4,7 @@ if (getenv('BADON_TEST_HTTPS') === '1') $_SERVER['HTTPS'] = 'on';
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $root = $_SERVER['DOCUMENT_ROOT'];
 if (in_array($path, ['/entrar', '/entrar/', '/painel', '/painel/', '/admin/studio', '/admin/studio/'], true)
-    || ($path === '/' && ($_SERVER['HTTP_HOST'] ?? '') === 'forms.produtorabadon.com')) {
+    || ($path === '/' && in_array($_SERVER['HTTP_HOST'] ?? '', ['forms.produtorabadon.com', 'app.produtorabadon.com'], true))) {
     require $root . '/admin/studio/index.php'; return true;
 }
 if (is_file($root . $path)) return false;

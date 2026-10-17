@@ -31,4 +31,29 @@ check_route($active, 'GET', 'produtorabadon.com.evil.invalid', '/f/teste', null)
 check_route($active, 'GET', 'produtorabadon.com', "//evil.invalid/f/teste", null);
 check_route($active, 'GET', 'produtorabadon.com', "/f/teste?x=\r\nInjected: yes", null);
 check_route($active, 'GET', 'produtorabadon.com', '/f/teste?x=\\evil', null);
+$app = ['environment' => 'production', 'base_url' => 'https://app.produtorabadon.com'];
+foreach (['GET', 'HEAD'] as $method) {
+    foreach (['produtorabadon.com', 'www.produtorabadon.com', 'forms.produtorabadon.com'] as $host) {
+        check_route($app, $method, $host, '/painel?workspace=4', $app['base_url'] . '/painel?workspace=4');
+        check_route($app, $method, $host, '/entrar', $app['base_url'] . '/entrar');
+        check_route($app, $method, $host, '/admin/studio/', $app['base_url'] . '/entrar');
+        foreach (['/api/studio.php', '/api/enviar.php', '/f/confirmacao.php?r=private', '/privacidade/'] as $path)
+            check_route($app, $method, $host, $path, null);
+    }
+    check_route($app, $method, 'forms.produtorabadon.com', '/', $app['base_url'] . '/');
+    check_route($app, $method, 'produtorabadon.com', '/', null);
+    check_route($app, $method, 'www.produtorabadon.com', '/', null);
+    check_route($app, $method, 'produtorabadon.com', '/f/teste?utm_source=meta', 'https://forms.produtorabadon.com/f/teste?utm_source=meta');
+    foreach (['forms.produtorabadon.com', 'app.produtorabadon.com'] as $host)
+        check_route($app, $method, $host, '/f/teste?utm_source=meta', null);
+    check_route($app, $method, 'app.produtorabadon.com', '/painel', null);
+    check_route($app, $method, 'app.produtorabadon.com', '/', null);
+    check_route($app, $method, 'forms.produtorabadon.com.evil.invalid', '/painel', null);
+}
+foreach (['POST', 'PUT', 'DELETE'] as $method)
+    foreach (['produtorabadon.com', 'forms.produtorabadon.com', 'app.produtorabadon.com'] as $host)
+        foreach (['/entrar', '/painel', '/', '/api/enviar.php', '/f/teste', '/f/confirmacao.php?r=x'] as $path)
+            check_route($app, $method, $host, $path, null);
+check_route($app, 'GET', 'forms.produtorabadon.com', "//evil.invalid/painel", null);
+check_route($app, 'GET', 'forms.produtorabadon.com', "/painel?x=\r\nInjected: yes", null);
 echo "OK: $checks verificações de rotas, ativação explícita e preservação de envios/recibos.\n";

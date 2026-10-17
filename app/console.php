@@ -3,7 +3,10 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/bootstrap.php';
 $command = $argv[1] ?? 'help';
-if ($command === 'backup:database') {
+if ($command === 'domain:switch') {
+    require __DIR__ . '/config-domain.php';
+    echo json_encode(switch_flow_domain($configPath, $argv[2] ?? '', $argv[3] ?? ''), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+} elseif ($command === 'backup:database') {
     require __DIR__.'/backup.php';
     echo json_encode(backup_database(),JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
 } elseif ($command === 'flow:migrate') {
