@@ -324,7 +324,7 @@ export function Crm({
       <div className="crm-heading">
         <div>
           <p className="eyebrow">COMERCIAL · SEU ESPAÇO</p>
-          <h1>{agenda ? "Agendamentos" : "CRM"}</h1>
+          <h1>{agenda ? "Agendamentos" : "CRM follow-up"}</h1>
           <p className="muted">Da primeira resposta à próxima conversa.</p>
         </div>
         {editable && (

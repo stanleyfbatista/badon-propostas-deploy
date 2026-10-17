@@ -13,6 +13,7 @@ import {
 import { Api, Control, Modal } from "./Crm";
 import { todayLocal, dueLabel } from "./task-model";
 import { FlowUpload } from "./FlowFiles";
+import { ClientCover, ClientMark } from "./FlowWorkspace";
 
 type Client = {
   workspace_id: number;
@@ -24,6 +25,7 @@ type Client = {
   document: string;
   active: boolean;
   details: Record<string, any>;
+  counts?: { projects: number; demands: number; approvals: number };
   create_key?: string;
   existing_workspace?: number;
 };
@@ -268,6 +270,8 @@ export function FlowClients({
     [search, setSearch] = useState(""),
     [active, setActive] = useState(""),
     [contract, setContract] = useState(""),
+    [owner, setOwner] = useState(""),
+    [sort, setSort] = useState("az"),
     [mode, setMode] = useState("cards"),
     [selected, setSelected] = useState<Client | null>(null),
     [page, setPage] = useState(1),
@@ -293,49 +297,58 @@ export function FlowClients({
       alive = false;
     };
   }, [refresh]);
-  const filtered = clients.filter(
-    (c) =>
-      (!active || String(c.active) === active) &&
-      (!contract || contractState(c.details) === contract) &&
-      textSearch(
-        [
-          c.name,
-          c.contact,
-          c.email,
-          c.phone,
-          c.details.segment,
-          c.details.owner,
-        ].join(" "),
-      ).includes(textSearch(search)),
-  );
+  const filtered = clients
+    .filter(
+      (c) =>
+        (!active || String(c.active) === active) &&
+        (!contract || contractState(c.details) === contract) &&
+        (!owner || c.details.owner === owner) &&
+        textSearch(
+          [
+            c.name,
+            c.contact,
+            c.email,
+            c.phone,
+            c.details.segment,
+            c.details.owner,
+          ].join(" "),
+        ).includes(textSearch(search)),
+    )
+    .sort((a, b) =>
+      sort === "az"
+        ? a.name.localeCompare(b.name, "pt-BR")
+        : sort === "za"
+          ? b.name.localeCompare(a.name, "pt-BR")
+          : Number(b.counts?.demands || 0) - Number(a.counts?.demands || 0),
+    );
   const visible = filtered.slice((page - 1) * 12, page * 12);
   const card = (c: Client) => (
     <button
       key={c.workspace_id}
       className="flow-client"
-      onClick={() => setSelected(c)}
+      onClick={() => navigate("client", Number(c.workspace_id))}
     >
-      {c.details.cover && (
-        <img
-          className="flow-client-cover"
-          src={c.details.cover}
-          alt=""
-          referrerPolicy="no-referrer"
-        />
-      )}
+      <ClientCover client={c} small />
       <div className="flow-client-body">
         <div className="flow-heading">
-          <span className="flow-avatar" style={{ background: c.details.color }}>
-            {c.details.photo ? (
-              <img src={c.details.photo} alt="" referrerPolicy="no-referrer" />
-            ) : (
-              c.name.slice(0, 2).toUpperCase()
-            )}
+          <ClientMark client={c} />
+          <span className={"badge " + (c.active ? "stage-done" : "")}>
+            {c.active ? "Ativo" : "Inativo"}
           </span>
-          <span className="badge">{c.active ? "Ativo" : "Inativo"}</span>
         </div>
         <h2>{c.name}</h2>
         <p>{c.details.segment || c.contact || "Perfil do cliente"}</p>
+        <div className="flow-client-counts">
+          <span>
+            <strong>{c.counts?.projects || 0}</strong> projetos
+          </span>
+          <span>
+            <strong>{c.counts?.demands || 0}</strong> demandas
+          </span>
+          <span>
+            <strong>{c.counts?.approvals || 0}</strong> aprovações
+          </span>
+        </div>
         <small
           className={
             contractState(c.details) === "Vencido"
@@ -354,10 +367,10 @@ export function FlowClients({
     <section className="flow-page">
       <div className="flow-heading">
         <div>
-          <p className="eyebrow">/ CLIENTES /</p>
-          <h1>Relações que fazem acontecer.</h1>
+          <p className="eyebrow">/ ESPAÇO DE TRABALHO /</p>
+          <h1>Relacionamentos que fazem acontecer.</h1>
           <p className="muted">
-            Clientes do funil e cadastros diretos, juntos e organizados.
+            Cada cliente tem seu espaço. Você acompanha o todo.
           </p>
         </div>
         <button
@@ -367,7 +380,7 @@ export function FlowClients({
           <Plus size={17} /> Novo cliente
         </button>
       </div>
-      <div className="crm-toolbar">
+      <div className="crm-toolbar flow-client-controls">
         <label className="crm-search">
           <Search size={16} />
           <input
@@ -413,6 +426,46 @@ export function FlowClients({
             <option key={v}>{v}</option>
           ))}
         </select>
+        <select
+          aria-label="Responsável pelo cliente"
+          value={owner}
+          onChange={(e) => {
+            setOwner(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">Todos os responsáveis</option>
+          {Array.from(
+            new Set(clients.map((c) => c.details.owner).filter(Boolean)),
+          ).map((v) => (
+            <option key={v}>{v}</option>
+          ))}
+        </select>
+        <select
+          aria-label="Ordenar clientes"
+          value={sort}
+          onChange={(e) => {
+            setSort(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="az">Nome A–Z</option>
+          <option value="za">Nome Z–A</option>
+          <option value="demands">Mais demandas</option>
+        </select>
+        <button
+          className="flow-text-button"
+          onClick={() => {
+            setSearch("");
+            setActive("");
+            setContract("");
+            setOwner("");
+            setSort("az");
+            setPage(1);
+          }}
+        >
+          Limpar filtros
+        </button>
         <div className="crm-switch">
           <button
             className={mode === "cards" ? "selected" : ""}
@@ -428,6 +481,11 @@ export function FlowClients({
           </button>
         </div>
       </div>
+      {!loading && (
+        <p className="muted flow-results">
+          {filtered.length} de {clients.length} clientes
+        </p>
+      )}
       {error && (
         <p role="alert" className="notice error">
           {error}
@@ -453,7 +511,11 @@ export function FlowClients({
               {visible.map((c) => (
                 <tr key={c.workspace_id}>
                   <td>
-                    <button className="btn" onClick={() => setSelected(c)}>
+                    <button
+                      className="flow-table-client"
+                      onClick={() => navigate("client", Number(c.workspace_id))}
+                    >
+                      <ClientMark client={c} />
                       {c.name}
                     </button>
                   </td>
@@ -522,13 +584,14 @@ export function FlowClients({
   );
 }
 
-function ClientDialog({
+export function ClientDialog({
   initial,
   spaces,
   api,
   navigate,
   close,
   saved,
+  initialTab = "general",
 }: {
   initial: Client;
   spaces: any[];
@@ -536,9 +599,10 @@ function ClientDialog({
   navigate: (v: string, w?: number) => void;
   close: () => void;
   saved: () => Promise<void>;
+  initialTab?: string;
 }) {
   const [c, setC] = useState(initial),
-    [tab, setTab] = useState("general"),
+    [tab, setTab] = useState(initialTab),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [dirty, setDirty] = useState(false),
@@ -911,7 +975,7 @@ function ClientDialog({
                   !dirty ||
                   confirm("Descartar alterações não salvas e abrir projetos?")
                 )
-                  navigate("projects", Number(c.workspace_id));
+                  navigate("client", Number(c.workspace_id));
               }}
             >
               Projetos e demandas <ArrowRight size={16} />
@@ -1192,7 +1256,8 @@ export function FlowProjects({
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [refresh, setRefresh] = useState(0),
-    [key, setKey] = useState(() => crypto.randomUUID());
+    [key, setKey] = useState(() => crypto.randomUUID()),
+    [creating, setCreating] = useState(false);
   useEffect(() => {
     let alive = true;
     api("flow-projects", undefined, { workspace })
@@ -1208,63 +1273,66 @@ export function FlowProjects({
   }, [workspace, refresh]);
   return (
     <section>
-      <p className="eyebrow">/ PROJETOS /</p>
-      <h1>Estratégia que vira entrega.</h1>
-      <p className="muted">
-        Projetos do espaço selecionado. Formulários, equipe e demandas
-        anteriores continuam disponíveis.
-      </p>
+      <div className="flow-heading">
+        <h2>Projetos do cliente</h2>
+        <button className="btn primary" onClick={() => setCreating((v) => !v)}>
+          <Plus size={16} /> {creating ? "Fechar criação" : "Novo projeto"}
+        </button>
+      </div>
       {error && (
         <p role="alert" className="notice error">
           {error}
         </p>
       )}
-      <form
-        className="flow-panel"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          try {
-            await api("flow-project-create", {
-              workspace,
-              name,
-              description,
-              create_key: key,
-            });
-            setName("");
-            setDescription("");
-            setKey(crypto.randomUUID());
-            setRefresh((n) => n + 1);
-            setError("");
-          } catch (e) {
-            setError((e as Error).message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <div className="flow-two">
-          <Control label="Nome do projeto">
-            <input
-              required
-              maxLength={150}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Campanha de novembro"
-            />
-          </Control>
-          <Control label="Descrição">
-            <input
-              maxLength={4000}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </Control>
-        </div>
-        <button className="btn primary" disabled={busy}>
-          <Plus size={16} /> Criar projeto
-        </button>
-      </form>
+      {creating && (
+        <form
+          className="flow-panel"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            try {
+              await api("flow-project-create", {
+                workspace,
+                name,
+                description,
+                create_key: key,
+              });
+              setName("");
+              setDescription("");
+              setKey(crypto.randomUUID());
+              setRefresh((n) => n + 1);
+              setCreating(false);
+              setError("");
+            } catch (e) {
+              setError((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="flow-two">
+            <Control label="Nome do projeto">
+              <input
+                required
+                maxLength={150}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Campanha de novembro"
+              />
+            </Control>
+            <Control label="Descrição">
+              <input
+                maxLength={4000}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Control>
+          </div>
+          <button className="btn primary" disabled={busy}>
+            <Plus size={16} /> Criar projeto
+          </button>
+        </form>
+      )}
       <div className="flow-client-grid">
         {items.map((p) => (
           <button
@@ -1272,18 +1340,33 @@ export function FlowProjects({
             key={p.id}
             onClick={() => navigate("tasks", workspace, Number(p.id))}
           >
-            <small>BD-{String(p.id).padStart(4, "0")}</small>
+            <small>/ PROJETO BD-{String(p.id).padStart(4, "0")} /</small>
             <h2>{p.name}</h2>
             <p>{p.description || "Abra para organizar as demandas."}</p>
+            <p className="muted">
+              {p.done || 0} de {p.tasks} entregas concluídas
+            </p>
+            <progress value={Number(p.done || 0)} max={Number(p.tasks) || 1} />
+            {(p.preview || []).map((t: any) => (
+              <div className="flow-project-preview" key={t.id}>
+                <span>
+                  {t.status === "done" ? "✓" : "□"} {t.title}
+                </span>
+                <small>{dueLabel(t.due_date)}</small>
+              </div>
+            ))}
             <span>
-              {p.tasks} demanda(s) <ArrowRight size={16} />
+              {p.tasks} demanda(s) · Abrir projeto <ArrowRight size={16} />
             </span>
           </button>
         ))}
       </div>
-      <button className="btn" onClick={() => navigate("tasks", workspace)}>
-        Todas as demandas deste espaço
-      </button>
+      {!items.length && !error && (
+        <p className="flow-empty">
+          Os projetos deste cliente aparecem aqui. Crie um projeto para
+          organizar as próximas entregas.
+        </p>
+      )}
     </section>
   );
 }

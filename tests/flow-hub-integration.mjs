@@ -36,6 +36,7 @@ export async function flowHubTests({
       "flow-client-history",
       "flow-sale-item",
       "flow-projects",
+      "flow-work",
     ])
       assert.equal(
         (
@@ -243,6 +244,76 @@ export async function flowHubTests({
   });
   assert.equal(dashboard.status, 200, JSON.stringify(dashboard.body));
   assert.equal(dashboard.body.attention_end, "2027-01-08");
+  assert.equal(
+    dashboard.body.tasks.find((t) => Number(t.id) === parent.body.id).assignee,
+    actor,
+  );
+  const work = await agency.req("flow-work", undefined, {
+    workspace: cid,
+    project: project.body.id,
+    search: "Criativo",
+    assignee: actor,
+    from: "2027-01-01",
+    to: "2027-01-31",
+  });
+  assert.equal(work.status, 200, JSON.stringify(work.body));
+  assert.equal(work.body.total, 2);
+  assert.ok(
+    work.body.items.every(
+      (t) =>
+        Number(t.workspace_id) === cid &&
+        Number(t.project_id) === project.body.id,
+    ),
+  );
+  assert.equal(work.body.items[0].project_name, "Campanha novembro");
+  assert.equal(
+    (
+      await agency.req("flow-work", undefined, {
+        workspace: cid,
+        from: "2027-02-01",
+        to: "2027-02-28",
+      })
+    ).body.total,
+    0,
+  );
+  assert.equal(
+    (
+      await agency.req("flow-work", undefined, {
+        workspace: cid,
+        status: "review",
+      })
+    ).body.total,
+    0,
+  );
+  assert.equal(
+    (
+      await agency.req("flow-work", undefined, {
+        workspace: cid,
+        from: "not-a-date",
+      })
+    ).status,
+    422,
+  );
+  const privateEditor = await editor.req("task-create", {
+    ...task,
+    workspace: wa,
+    project_id: null,
+    assignee: null,
+    visibility: "private",
+    create_key: randomUUID(),
+    title: "Editor private isolation",
+  });
+  assert.equal(privateEditor.status, 200);
+  assert.ok(
+    !(await agency.req("flow-work")).body.items.some(
+      (t) => Number(t.id) === privateEditor.body.id,
+    ),
+  );
+  const listedClient = (await agency.req("flow-clients")).body.items.find(
+    (c) => Number(c.workspace_id) === cid,
+  );
+  assert.equal(Number(listedClient.counts.projects), 1);
+  assert.equal(Number(listedClient.counts.demands), 2);
   const opp = {
     workspace: wa,
     create_key: randomUUID(),

@@ -21,7 +21,7 @@ if ($method === 'POST') {
     } else $in = $_POST;
 }
 $action = text_value($_GET['action'] ?? 'boot');
-if ($method !== 'POST' && !in_array($action, ['boot', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item', 'task-list', 'task-item', 'task-options', 'task-day','flow-clients','flow-client-history','flow-projects','flow-sales','flow-sale-item','flow-overview'], true)) studio_error(405, 'Esta ação exige POST.');
+if ($method !== 'POST' && !in_array($action, ['boot', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item', 'task-list', 'task-item', 'task-options', 'task-day','flow-clients','flow-client-history','flow-projects','flow-sales','flow-sale-item','flow-overview','flow-work'], true)) studio_error(405, 'Esta ação exige POST.');
 $u = studio_user();
 try {
     if ($action === 'login') {

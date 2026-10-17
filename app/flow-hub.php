@@ -93,7 +93,35 @@ function flow_handle(string $action,array $u,array $in): never {
     if (!flow_ready()) studio_error(503,'Execute flow:migrate no cPanel para ativar a unificação. Dados anteriores preservados.');
     if ($action==='flow-clients') {
         $q=db()->query('SELECT c.*,w.name FROM bf_flow_clients c JOIN bf_workspaces w ON w.id=c.workspace_id ORDER BY w.name');
-        studio_json(['items'=>array_map('flow_client_row',$q->fetchAll()),'spaces'=>db()->query('SELECT w.id,w.name FROM bf_workspaces w LEFT JOIN bf_flow_clients c ON c.workspace_id=w.id WHERE c.workspace_id IS NULL ORDER BY w.name')->fetchAll()]);
+        $items=array_map('flow_client_row',$q->fetchAll());
+        $counts=db()->prepare("SELECT COUNT(*) AS demands,COALESCE(SUM(status='review'),0) AS approvals FROM bf_tasks WHERE workspace_id=? AND archived=0 AND status<>'done' AND (visibility='team' OR creator=?)");
+        $projects=db()->prepare('SELECT COUNT(*) FROM bf_flow_projects WHERE workspace_id=?');
+        foreach ($items as &$client) {
+            $counts->execute([$client['workspace_id'],crm_actor($u)]); $client['counts']=$counts->fetch();
+            $projects->execute([$client['workspace_id']]); $client['counts']['projects']=(int)$projects->fetchColumn();
+        }
+        studio_json(['items'=>$items,'spaces'=>db()->query('SELECT w.id,w.name FROM bf_workspaces w LEFT JOIN bf_flow_clients c ON c.workspace_id=w.id WHERE c.workspace_id IS NULL ORDER BY w.name')->fetchAll()]);
+    }
+    if ($action==='flow-work') {
+        // Agency-wide delivery view; private tasks remain creator-only.
+        $where=["t.archived=0","(t.visibility='team' OR t.creator=?)"];
+        $args=[crm_actor($u)];
+        if (!empty($_GET['workspace'])) { $where[]='t.workspace_id=?'; $args[]=(int)$_GET['workspace']; }
+        if (!empty($_GET['project'])) { $where[]='t.project_id=?'; $args[]=(int)$_GET['project']; }
+        if (!empty($_GET['assignee'])) { $where[]='t.assignee=?'; $args[]=studio_text($_GET['assignee'],32); }
+        if (!empty($_GET['status'])) { $where[]='t.status=?'; $args[]=studio_text($_GET['status'],16); }
+        $search=studio_text($_GET['search']??'',200);
+        if ($search!=='') { $where[]='(t.title LIKE ? OR p.name LIKE ? OR w.name LIKE ?)'; array_push($args,"%$search%","%$search%","%$search%"); }
+        foreach (['from'=>'>=','to'=>'<='] as $key=>$op) if (!empty($_GET[$key])) { $where[]="t.due_date $op ?"; $args[]=tasks_date($_GET[$key]); }
+        $join=' FROM bf_tasks t JOIN bf_workspaces w ON w.id=t.workspace_id LEFT JOIN bf_flow_projects p ON p.id=t.project_id AND p.workspace_id=t.workspace_id LEFT JOIN bf_profiles a ON a.actor=t.assignee';
+        $filter=implode(' AND ',$where);
+        $q=db()->prepare("SELECT COUNT(*) $join WHERE $filter"); $q->execute($args); $total=(int)$q->fetchColumn();
+        $page=max(1,min(100000,(int)($_GET['page']??1)));
+        $q=db()->prepare("SELECT t.*,w.name AS client,p.name AS project_name,a.name AS assignee_name $join WHERE $filter ORDER BY (t.status='done'),t.due_date IS NULL,t.due_date,t.id LIMIT 200 OFFSET ".(($page-1)*200));
+        $q->execute($args);
+        $items=array_map('tasks_row',$q->fetchAll());
+        $people=!empty($_GET['workspace'])?crm_people((int)$_GET['workspace']):db()->query("SELECT people.actor,people.email,p.name FROM (SELECT CONCAT('a:',id) AS actor,email FROM admins UNION ALL SELECT CONCAT('u:',id) AS actor,email FROM bf_users WHERE EXISTS (SELECT 1 FROM bf_members m WHERE m.user_id=bf_users.id)) people LEFT JOIN bf_profiles p ON p.actor=people.actor ORDER BY p.name,people.email")->fetchAll();
+        studio_json(['items'=>$items,'total'=>$total,'page'=>$page,'people'=>$people]);
     }
     if ($action==='flow-client-create') {
         $key=flow_key($in['create_key']??null);
@@ -129,7 +157,7 @@ function flow_handle(string $action,array $u,array $in): never {
         $today=tasks_date($_GET['today']??null);
         if (!$today) throw new InvalidArgumentException('Informe o dia de referência.');
         $end=(new DateTimeImmutable($today))->modify('+3 days')->format('Y-m-d');
-        $q=db()->prepare("SELECT t.id,t.title,t.workspace_id,t.project_id,t.due_date,t.status,w.name AS client FROM bf_tasks t JOIN bf_workspaces w ON w.id=t.workspace_id WHERE t.archived=0 AND t.status<>'done' AND (t.visibility='team' OR t.creator=?) ORDER BY t.due_date IS NULL,t.due_date,t.id");
+        $q=db()->prepare("SELECT t.id,t.title,t.workspace_id,t.project_id,t.due_date,t.status,t.assignee,t.start_date,p.name AS project_name,w.name AS client FROM bf_tasks t JOIN bf_workspaces w ON w.id=t.workspace_id LEFT JOIN bf_flow_projects p ON p.id=t.project_id AND p.workspace_id=t.workspace_id WHERE t.archived=0 AND t.status<>'done' AND (t.visibility='team' OR t.creator=?) ORDER BY t.due_date IS NULL,t.due_date,t.id");
         // project_id is optional until the task extension migration has run.
         $q->execute([crm_actor($u)]); $tasks=$q->fetchAll();
         studio_json(['tasks'=>$tasks,'today'=>$today,'attention_end'=>$end,'clients'=>(int)db()->query('SELECT COUNT(*) FROM bf_flow_clients WHERE active=1')->fetchColumn(),'sales'=>(int)db()->query("SELECT COUNT(*) FROM bf_flow_sales WHERE state<>'paid'")->fetchColumn()]);
@@ -141,7 +169,10 @@ function flow_handle(string $action,array $u,array $in): never {
             db()->prepare('INSERT INTO bf_flow_projects (workspace_id,create_key,name,description,created_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)')->execute([$w,$key,studio_text($in['name']??'',150,true),studio_text($in['description']??'',4000),utc_now()]);
             studio_json(['id'=>(int)db()->lastInsertId()]);
         }
-        $q=db()->prepare('SELECT p.*,(SELECT COUNT(*) FROM bf_tasks t WHERE t.project_id=p.id AND t.archived=0 AND (t.visibility=\'team\' OR t.creator=?)) AS tasks FROM bf_flow_projects p WHERE p.workspace_id=? ORDER BY p.id DESC'); $q->execute([crm_actor($u),$w]); studio_json(['items'=>$q->fetchAll()]);
+        $q=db()->prepare('SELECT p.*,(SELECT COUNT(*) FROM bf_tasks t WHERE t.project_id=p.id AND t.archived=0 AND (t.visibility=\'team\' OR t.creator=?)) AS tasks FROM bf_flow_projects p WHERE p.workspace_id=? ORDER BY p.id DESC'); $q->execute([crm_actor($u),$w]); $items=$q->fetchAll();
+        $summary=db()->prepare("SELECT id,title,status,due_date FROM bf_tasks WHERE project_id=? AND workspace_id=? AND archived=0 AND (visibility='team' OR creator=?) ORDER BY due_date IS NULL,due_date,id");
+        foreach($items as &$p) { $summary->execute([$p['id'],$w,crm_actor($u)]);$tasks=$summary->fetchAll();$p['done']=count(array_filter($tasks,fn($t)=>$t['status']==='done'));$p['preview']=array_slice($tasks,0,3); }
+        studio_json(['items'=>$items]);
     }
     if ($action==='flow-sales') {
         $q=db()->query("SELECT s.*,o.name,o.company,o.amount,o.workspace_id,o.phone,o.email FROM bf_flow_sales s JOIN bf_opportunities o ON o.id=s.opportunity_id ORDER BY s.updated_at DESC");

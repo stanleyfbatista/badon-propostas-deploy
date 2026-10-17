@@ -24,6 +24,7 @@ import {
 import "./tasks.css";
 import { FlowTextEditor } from "./FlowText";
 import { FlowUpload } from "./FlowFiles";
+import { downloadDeliveryCalendar } from "./flow-calendar";
 import { TaskList, QuickTask } from "./TaskList";
 import {
   taskStatuses,
@@ -1158,6 +1159,16 @@ export function TaskDialog({
           </p>
         )}
         <div className="crm-actions">
+          {!!item.id && item.due_date && (
+            <button
+              type="button"
+              className="btn"
+              disabled={busy || dirty}
+              onClick={() => downloadDeliveryCalendar(item, workspace)}
+            >
+              <CalendarDays size={16} /> Exportar para agenda (.ics)
+            </button>
+          )}
           <button
             type="button"
             className="btn"

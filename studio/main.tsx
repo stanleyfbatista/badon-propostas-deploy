@@ -57,7 +57,9 @@ import { Crm, ProfilePanel, Avatar } from "./Crm";
 import { Tasks } from "./Tasks";
 import { RememberChoice } from "./RememberChoice";
 import { FlowOverview, FlowClients, FlowSales, FlowProjects } from "./Flow";
+import { FlowHome, FlowWork, FlowClientSpace } from "./FlowWorkspace";
 import "./flow.css";
+import "./flow-workspace.css";
 import { FlowUploadContext } from "./FlowFiles";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
@@ -211,6 +213,7 @@ function App() {
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [project, setProject] = useState(0);
+  const [crmSection, setCrmSection] = useState("followup");
   function navigate(next: string, target?: number, projectId = 0) {
     if (target) setWorkspace(target);
     setProject(projectId);
@@ -407,7 +410,7 @@ function App() {
     );
   return (
     <FlowUploadContext.Provider value={session.request}>
-      <div className="app">
+      <div className={"app" + (!form ? " flow-shell" : "")}>
         <header className="app-header">
           <Brand
             onClick={(event) => {
@@ -415,7 +418,37 @@ function App() {
               void signOut();
             }}
           />
-          <div className="workspace">
+          {!form && (
+            <div className="flow-breadcrumb">
+              Workspace <span>/</span>{" "}
+              <strong>
+                {(
+                  {
+                    overview: "Visão geral",
+                    clients: "Clientes",
+                    client: ws?.name,
+                    tasks: "Demandas",
+                    approvals: "Aprovações",
+                    agenda: "Agenda",
+                    crm: "CRM follow-up",
+                    forms: "Funis e formulários",
+                    profile: "Meu perfil",
+                    settings: "Configurações",
+                    members: "Equipe e acessos",
+                    agency: "Espaços e acessos",
+                  } as Record<string, string | undefined>
+                )[view] || "Bādon Flow"}
+              </strong>
+            </div>
+          )}
+          <div
+            className={
+              "workspace" +
+              (!form && !["crm", "forms", "members", "agency"].includes(view)
+                ? " flow-context-hidden"
+                : "")
+            }
+          >
             <span>ESPAÇO DE TRABALHO</span>
             <select
               aria-label="Espaço de trabalho"
@@ -538,7 +571,17 @@ function App() {
         ) : (
           <div className="workspace-body">
             <aside className="sidebar">
-              <p className="eyebrow">SEU ESPAÇO</p>
+              <div className="flow-sidebar-brand">
+                <img src="/flow-brand/logo-badon.svg" alt="Produtora Bādon" />
+                <span>flow</span>
+              </div>
+              <div className="flow-workspace-card">
+                <img src="/flow-brand/simbolo-badon.svg" alt="" />
+                <div>
+                  Produtora Bādon<small>Gestão de clientes &amp; criação</small>
+                </div>
+              </div>
+              <p className="eyebrow">WORKSPACE</p>
               {boot.user.agency && (
                 <>
                   <button
@@ -548,45 +591,42 @@ function App() {
                     <LayoutDashboardIcon /> Visão geral
                   </button>
                   <button
-                    className={view === "clients" ? "selected" : ""}
+                    className={
+                      ["clients", "client"].includes(view) ? "selected" : ""
+                    }
                     onClick={() => navigate("clients")}
                   >
                     <Users size={18} /> Clientes
                   </button>
-                  <button
-                    className={view === "projects" ? "selected" : ""}
-                    onClick={() => navigate("projects")}
-                  >
-                    <Folder size={18} /> Projetos
-                  </button>
                 </>
               )}
-              <button
-                className={view === "day" ? "selected" : ""}
-                onClick={() => setView("day")}
-              >
-                <Sun size={18} /> Meu dia
-              </button>
               <button
                 className={view === "tasks" ? "selected" : ""}
                 onClick={() => navigate("tasks")}
               >
-                <ListChecks size={18} /> Tarefas
+                <ListChecks size={18} /> Demandas
               </button>
+              {boot.user.agency && (
+                <button
+                  className={view === "approvals" ? "selected" : ""}
+                  onClick={() => navigate("approvals")}
+                >
+                  <Check size={18} /> Aprovações
+                </button>
+              )}
+              <button
+                className={view === "agenda" ? "selected" : ""}
+                onClick={() => navigate("agenda")}
+              >
+                <CalendarDays size={18} /> Agenda
+              </button>
+              <p className="eyebrow flow-nav-divider">RELACIONAMENTO</p>
               <button
                 className={view === "crm" ? "selected" : ""}
                 onClick={() => setView("crm")}
               >
-                <BriefcaseBusiness size={18} /> CRM e follow-up
+                <BriefcaseBusiness size={18} /> CRM follow-up
               </button>
-              {boot.user.agency && (
-                <button
-                  className={view === "sales" ? "selected" : ""}
-                  onClick={() => navigate("sales")}
-                >
-                  <Check size={18} /> Aprovações e pagamentos
-                </button>
-              )}
               <button
                 className={view === "forms" ? "selected" : ""}
                 onClick={() => setView("forms")}
@@ -595,38 +635,33 @@ function App() {
                 Funis e formulários
               </button>
               <button
-                className={view === "agenda" ? "selected" : ""}
-                onClick={() => setView("agenda")}
+                className={
+                  "flow-settings-link " +
+                  (["settings", "members", "agency", "profile"].includes(view)
+                    ? "selected"
+                    : "")
+                }
+                onClick={() => navigate("settings")}
               >
-                <CalendarDays size={18} /> Agendamentos
-              </button>
-              {(boot.user.agency || ws?.role === "admin") && (
-                <button
-                  className={view === "members" ? "selected" : ""}
-                  onClick={() => setView("members")}
-                >
-                  <Users size={18} />
-                  Equipe e acessos
-                </button>
-              )}
-              {boot.user.agency && (
-                <button
-                  onClick={() => setView("agency")}
-                  className={view === "agency" ? "selected" : ""}
-                >
-                  <Folder size={18} />
-                  Espaços e acessos
-                </button>
-              )}
-              <button
-                className={view === "profile" ? "selected" : ""}
-                onClick={() => setView("profile")}
-              >
-                <UserRound size={18} /> Meu perfil
+                <Settings2 size={18} /> Configurações
               </button>
               <div className="sidebar-note">
-                <span className="dot" /> Tudo no seu domínio
-                <small>Da primeira conversa à entrega. Bādon Flow.</small>
+                Gente de verdade,
+                <br />
+                perto do seu negócio.
+                <small>Um lugar para fazer acontecer.</small>
+                <button
+                  className="flow-sidebar-user"
+                  onClick={() => navigate("profile")}
+                >
+                  <Avatar person={boot.profile || boot.user} />
+                  <span>
+                    {boot.profile?.name || boot.user.email}
+                    <small>
+                      {boot.user.agency ? "Agência Bādon" : "Meu perfil"}
+                    </small>
+                  </span>
+                </button>
               </div>
             </aside>
             <main
@@ -638,7 +673,14 @@ function App() {
               }
             >
               {boot.user.agency &&
-                ["overview", "clients", "sales", "projects"].includes(view) &&
+                [
+                  "overview",
+                  "clients",
+                  "client",
+                  "sales",
+                  "projects",
+                  "approvals",
+                ].includes(view) &&
                 !boot.flow_ready && (
                   <section className="flow-panel">
                     <p className="eyebrow">/ BĀDON FLOW /</p>
@@ -658,10 +700,90 @@ function App() {
                   </section>
                 )}
               {boot.user.agency && boot.flow_ready && view === "overview" && (
-                <FlowOverview api={api} navigate={navigate} />
+                <FlowHome
+                  api={api}
+                  actor={boot.profile!.actor}
+                  spaces={boot.workspaces}
+                  navigate={navigate}
+                />
               )}
               {boot.user.agency && boot.flow_ready && view === "clients" && (
                 <FlowClients api={api} navigate={navigate} reload={load} />
+              )}
+              {boot.user.agency && boot.flow_ready && view === "client" && (
+                <FlowClientSpace
+                  key={workspace}
+                  api={api}
+                  actor={boot.profile!.actor}
+                  spaces={boot.workspaces}
+                  workspace={workspace}
+                  project={project}
+                  navigate={navigate}
+                  reload={load}
+                />
+              )}
+              {boot.user.agency &&
+                boot.flow_ready &&
+                ["tasks", "approvals", "agenda"].includes(view) && (
+                  <FlowWork
+                    key={view}
+                    api={api}
+                    actor={boot.profile!.actor}
+                    spaces={boot.workspaces}
+                    mode={
+                      view === "agenda"
+                        ? "calendar"
+                        : view === "approvals"
+                          ? "review"
+                          : "board"
+                    }
+                  />
+                )}
+              {view === "settings" && (
+                <section>
+                  <p className="eyebrow">/ SEU ESPAÇO /</p>
+                  <h1>Configurações e acessos.</h1>
+                  <p className="muted">
+                    Organize a equipe, seu perfil e as conexões da plataforma.
+                  </p>
+                  <div className="flow-client-grid">
+                    <button
+                      className="flow-panel flow-project"
+                      onClick={() => navigate("profile")}
+                    >
+                      <UserRound />
+                      <h2>Meu perfil</h2>
+                      <p>Nome, foto e preferências.</p>
+                    </button>
+                    {(boot.user.agency || ws?.role === "admin") && (
+                      <button
+                        className="flow-panel flow-project"
+                        onClick={() => navigate("members")}
+                      >
+                        <Users />
+                        <h2>Equipe e acessos</h2>
+                        <p>Permissões do espaço selecionado.</p>
+                      </button>
+                    )}
+                    {boot.user.agency && (
+                      <button
+                        className="flow-panel flow-project"
+                        onClick={() => navigate("agency")}
+                      >
+                        <Folder />
+                        <h2>Espaços e acessos</h2>
+                        <p>Espaços existentes de formulários e clientes.</p>
+                      </button>
+                    )}
+                  </div>
+                  <section className="flow-panel">
+                    <h2>Integrações</h2>
+                    <p>
+                      Google Agenda e Asaas ainda não conectados. A exportação
+                      de calendário e a confirmação de recebimento são manuais.
+                    </p>
+                  </section>
+                </section>
               )}
               {boot.user.agency && boot.flow_ready && view === "sales" && (
                 <FlowSales api={api} />
@@ -690,6 +812,7 @@ function App() {
               )}
               {boot.tasks_ready &&
                 boot.profile &&
+                (!boot.user.agency || !boot.flow_ready) &&
                 ["tasks", "day"].includes(view) &&
                 workspace > 0 && (
                   <Tasks
@@ -713,8 +836,31 @@ function App() {
                     </p>
                   </section>
                 )}
+              {boot.crm_ready && view === "crm" && boot.user.agency && (
+                <div className="flow-tabs">
+                  <button
+                    className={crmSection === "followup" ? "selected" : ""}
+                    onClick={() => setCrmSection("followup")}
+                  >
+                    CRM follow-up
+                  </button>
+                  <button
+                    className={crmSection === "commercial" ? "selected" : ""}
+                    onClick={() => setCrmSection("commercial")}
+                  >
+                    Aprovação comercial e pagamento
+                  </button>
+                </div>
+              )}
               {boot.crm_ready &&
-                ["crm", "agenda"].includes(view) &&
+                view === "crm" &&
+                boot.user.agency &&
+                crmSection === "commercial" &&
+                boot.flow_ready && <FlowSales api={api} />}
+              {boot.crm_ready &&
+                ((view === "crm" &&
+                  (!boot.user.agency || crmSection === "followup")) ||
+                  (view === "agenda" && !boot.user.agency)) &&
                 workspace > 0 && (
                   <Crm
                     key={workspace + ":" + view}
@@ -864,7 +1010,7 @@ function FormList({
         <div>
           <p className="eyebrow">DE PERGUNTAS A OPORTUNIDADES</p>
           <h1>
-            Seus formulários
+            Funis e formulários
             <span className="count">{data?.forms.length || 0}</span>
           </h1>
           <p className="muted">
@@ -1030,7 +1176,7 @@ function FormList({
             aria-modal="true"
             aria-labelledby="create-title"
           >
-            <h2 id="create-title">Uma nova conversa.</h2>
+            <h2 id="create-title">Criar formulário</h2>
             <p className="muted">
               Comece com um nome. As perguntas vêm depois.
             </p>
