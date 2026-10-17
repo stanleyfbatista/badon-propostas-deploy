@@ -82,6 +82,61 @@ export async function studioTests({
   }
   const agency = new Api();
   await agency.req("boot");
+  const invalidAuth = new Api();
+  await invalidAuth.req("boot");
+  const mailCountBeforeValidation = messages.length;
+  const tokensBeforeValidation = sql(
+    "SELECT COUNT(*) FROM badon_test.bf_tokens",
+  ).trim();
+  for (const action of ["login", "magic"]) {
+    for (const email of [
+      undefined,
+      "",
+      "   ",
+      "sem-email",
+      "nome@empresa",
+      "nome@@empresa.com",
+      [],
+      123,
+    ]) {
+      const result = await invalidAuth.req(action, {
+        email,
+        password: "test-password",
+      });
+      assert.equal(
+        result.status,
+        422,
+        JSON.stringify({ action, email, body: result.body }),
+      );
+      assert.ok(result.body.error);
+      assert.equal(result.body.ok, undefined);
+    }
+  }
+  assert.equal(
+    (
+      await invalidAuth.req("login", {
+        email: "admin@example.invalid",
+        password: "",
+      })
+    ).status,
+    422,
+  );
+  assert.equal(messages.length, mailCountBeforeValidation);
+  assert.equal(
+    sql("SELECT COUNT(*) FROM badon_test.bf_tokens").trim(),
+    tokensBeforeValidation,
+  );
+  const incorrectPassword = await invalidAuth.req("login", {
+    email: "admin@example.invalid",
+    password: "incorrect-password",
+  });
+  const unknownAccount = await invalidAuth.req("login", {
+    email: "unknown@example.invalid",
+    password: "incorrect-password",
+  });
+  assert.equal(incorrectPassword.status, 401);
+  assert.equal(unknownAccount.status, 401);
+  assert.deepEqual(incorrectPassword.body, unknownAccount.body);
   assert.equal(
     (await agency.req("login", { email: "admin@example.invalid", password }))
       .status,
@@ -818,7 +873,20 @@ export async function studioTests({
     messages,
     Api,
   });
-  await flowHubTests({base,agency,editor,reader,other,wa,wb,run,php,cli,sql,messages});
+  await flowHubTests({
+    base,
+    agency,
+    editor,
+    reader,
+    other,
+    wa,
+    wb,
+    run,
+    php,
+    cli,
+    sql,
+    messages,
+  });
   const member = (
     await agency.req("members", undefined, { workspace: wa })
   ).body.members.find((m) => m.email === "reader@example.invalid");
@@ -835,13 +903,30 @@ export async function studioTests({
   );
   const magic = new Api();
   await magic.req("boot");
+  const beforeUnknownMagic = messages.length;
+  const beforeUnknownTokens = sql(
+    "SELECT COUNT(*) FROM badon_test.bf_tokens",
+  ).trim();
+  const unknownMagic = await magic.req("magic", {
+    email: "not-authorized@example.invalid",
+  });
+  assert.equal(unknownMagic.status, 200);
+  assert.equal(messages.length, beforeUnknownMagic);
   assert.equal(
-    (await magic.req("magic", { email: "editor@example.invalid" })).status,
-    200,
+    sql("SELECT COUNT(*) FROM badon_test.bf_tokens").trim(),
+    beforeUnknownTokens,
   );
+  const validMagic = await magic.req("magic", {
+    email: "  EDITOR@example.invalid  ",
+  });
+  assert.equal(validMagic.status, 200);
+  assert.deepEqual(validMagic.body, unknownMagic.body); // Não revela contas cadastradas.
+  assert.equal(messages.length, beforeUnknownMagic + 1);
+  assert.match(recipients.at(-1), /editor@example.invalid/);
   const magicToken = messages.at(-1).match(/#token=([a-f0-9]{64})/)[1];
   assert.equal((await magic.req("accept", { token: magicToken })).status, 200);
   assert.equal((await magic.req("boot")).body.user.agency, false);
+  assert.equal((await magic.req("accept", { token: magicToken })).status, 422);
   assert.equal(
     (await agency.req("forms", undefined, { workspace: badon })).status,
     200,

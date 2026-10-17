@@ -63,6 +63,7 @@ import "./flow-workspace.css";
 import { FlowUploadContext } from "./FlowFiles";
 import { FlowWelcome, accessAudience, accessUrl } from "./FlowWelcome";
 import { FlowMemberHome } from "./FlowMemberHome";
+import { validateLoginFields, LoginFieldError } from "./login-validation";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -214,6 +215,23 @@ function App() {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [loginFieldError, setLoginFieldError] =
+    useState<LoginFieldError | null>(null);
+  const [loginAction, setLoginAction] = useState<"login" | "magic">("login");
+  function validateLogin(form: HTMLFormElement, mode: "login" | "magic") {
+    setNotice("");
+    setError("");
+    const data = new FormData(form);
+    const issue = validateLoginFields(
+      mode,
+      String(data.get("email") || ""),
+      String(data.get("password") || ""),
+    );
+    setLoginFieldError(issue);
+    if (issue)
+      (form.elements.namedItem(issue.field) as HTMLInputElement)?.focus();
+    return !issue;
+  }
   const [project, setProject] = useState(0);
   const [crmSection, setCrmSection] = useState("followup");
   function navigate(next: string, target?: number, projectId = 0) {
@@ -365,8 +383,20 @@ function App() {
               </p>
             )}
             <form
+              noValidate
+              onChange={() => {
+                setNotice("");
+                setError("");
+                setLoginFieldError(null);
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
+                if (
+                  busy ||
+                  (!token && !validateLogin(e.currentTarget, "login"))
+                )
+                  return;
+                setLoginAction("login");
                 const d = new FormData(e.currentTarget);
                 task(async () => {
                   await api(
@@ -374,7 +404,9 @@ function App() {
                     token
                       ? { token, password: d.get("password") }
                       : {
-                          email: d.get("email"),
+                          email: String(d.get("email") || "")
+                            .trim()
+                            .toLowerCase(),
                           password: d.get("password"),
                           remember: d.get("remember") === "on",
                         },
@@ -385,13 +417,29 @@ function App() {
               }}
             >
               {!token && (
-                <Input
-                  label="E-mail"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="username"
-                />
+                <>
+                  <Input
+                    label="E-mail"
+                    name="email"
+                    type="email"
+                    required
+                    maxLength={190}
+                    disabled={busy}
+                    placeholder="nome@empresa.com"
+                    aria-invalid={
+                      loginFieldError?.field === "email" || undefined
+                    }
+                    aria-describedby={
+                      loginFieldError?.field === "email"
+                        ? "login-field-error"
+                        : "login-email-help"
+                    }
+                    autoComplete="username"
+                  />
+                  <small id="login-email-help" className="auth-field-help">
+                    Use o e-mail autorizado no convite da Bādon.
+                  </small>
+                </>
               )}
               <Input
                 label={
@@ -400,29 +448,71 @@ function App() {
                 name="password"
                 type="password"
                 required={!token}
+                disabled={busy}
+                aria-invalid={
+                  loginFieldError?.field === "password" || undefined
+                }
+                aria-describedby={
+                  loginFieldError?.field === "password"
+                    ? "login-field-error"
+                    : undefined
+                }
                 autoComplete={token ? "new-password" : "current-password"}
               />
+              {loginFieldError && (
+                <p
+                  id="login-field-error"
+                  role="alert"
+                  className="auth-field-error"
+                >
+                  {loginFieldError.message}
+                </p>
+              )}
               {!token && (
                 <RememberChoice available={!!boot.remember_available} />
               )}
               <Button kind="primary" disabled={busy}>
-                {token ? "Confirmar acesso" : "Entrar"}
+                {busy && loginAction === "login"
+                  ? "Verificando acesso…"
+                  : token
+                    ? "Confirmar acesso"
+                    : "Entrar"}
                 <ArrowRight size={17} />
               </Button>
               {!token && (
-                <Button
-                  type="button"
-                  disabled={busy}
-                  onClick={(e) => {
-                    const d = new FormData(e.currentTarget.form!);
-                    task(async () => {
-                      const r = await api("magic", { email: d.get("email") });
-                      setNotice(r.message);
-                    });
-                  }}
-                >
-                  Receber link de acesso por e-mail
-                </Button>
+                <div className="auth-passwordless">
+                  <p>Prefere entrar sem senha?</p>
+                  <Button
+                    type="button"
+                    disabled={busy}
+                    onClick={(e) => {
+                      if (
+                        busy ||
+                        !validateLogin(e.currentTarget.form!, "magic")
+                      )
+                        return;
+                      setLoginAction("magic");
+                      const d = new FormData(e.currentTarget.form!);
+                      const email = String(d.get("email") || "")
+                        .trim()
+                        .toLowerCase();
+                      task(async () => {
+                        const r = await api("magic", { email });
+                        setNotice(
+                          `Solicitação recebida para ${email}. ${r.message} Confira também o spam. Se ainda não ativou sua conta, use o convite da Bādon.`,
+                        );
+                      });
+                    }}
+                  >
+                    {busy && loginAction === "magic"
+                      ? "Solicitando link…"
+                      : "Receber link de acesso por e-mail"}
+                  </Button>
+                  <small>
+                    Preencha o e-mail acima. Não é necessário informar a senha.
+                    O link é de uso único e vale por 15 minutos.
+                  </small>
+                </div>
               )}
             </form>
             {error && (
@@ -431,7 +521,7 @@ function App() {
               </p>
             )}
             {notice && (
-              <p role="status" className="notice">
+              <p role="status" className="notice auth-request-notice">
                 {notice}
               </p>
             )}
@@ -1321,7 +1411,13 @@ function Members({
   return (
     <section>
       <p className="eyebrow">ACESSO COM RESPONSABILIDADE</p>
-      <h1>Sua equipe, no lugar certo.</h1>
+      <h1>Pessoas e acessos do espaço.</h1>
+      <p className="muted">
+        Selecione o espaço do cliente no topo e convide o e-mail que ele usará
+        para entrar. O convite autoriza somente esse espaço, é de uso único e
+        vale por 48 horas. No primeiro acesso, a pessoa define a própria senha;
+        não enviamos senhas por e-mail.
+      </p>
       <p className="muted">
         Administradores gerenciam a equipe; editores criam e publicam; leitores
         consultam e exportam respostas.
@@ -1335,7 +1431,7 @@ function Members({
         }}
       >
         <Input
-          label="E-mail do novo membro"
+          label="E-mail do cliente ou membro"
           type="email"
           required
           name="email"

@@ -372,3 +372,37 @@
     flex-wrap: wrap;
   }
 }
+.login-page .auth-field-help {
+  margin-top: -10px;
+  color: #616b7c;
+}
+.login-page .auth-field-error {
+  margin: 0;
+  color: #b42332;
+  font-size: 14px;
+}
+.login-page input[aria-invalid="true"] {
+  border-color: #b42332;
+}
+.auth-passwordless {
+  border-top: 1px solid #e3e7ed;
+  padding-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+.login-page .auth-passwordless p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.login-page .auth-passwordless small {
+  margin: 0;
+  color: #616b7c;
+  line-height: 1.5;
+}
+.login-page .auth-request-notice {
+  background: #edf3fd;
+  border: 1px solid #d4e1f9;
+  color: #244572;
+  overflow-wrap: anywhere;
+}

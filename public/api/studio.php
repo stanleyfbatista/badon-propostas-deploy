@@ -26,12 +26,14 @@ $u = studio_user();
 try {
     if ($action === 'login') {
         $email = strtolower(studio_text($in['email'] ?? '', 190));
+        if (!is_string($in['email'] ?? null) || !filter_var($email, FILTER_VALIDATE_EMAIL)) studio_error(422, 'Informe um e-mail válido para continuar.');
+        $password = is_string($in['password'] ?? null) ? $in['password'] : '';
+        if ($password === '') studio_error(422, 'Informe sua senha ou escolha receber um link por e-mail.');
         $ip = rate_allowed('studio-login-ip', client_identity(), 30, 900);
         $account = rate_allowed('studio-login-account', $email, 10, 900);
         if (!$ip || !$account) studio_error(429, 'Aguarde 15 minutos antes de tentar novamente.');
         $q = db()->prepare('SELECT * FROM admins WHERE email = ?'); $q->execute([$email]); $user = $q->fetch(); $agency = (bool)$user;
         if (!$user) { $q = db()->prepare('SELECT * FROM bf_users WHERE email = ?'); $q->execute([$email]); $user = $q->fetch(); }
-        $password = is_string($in['password'] ?? null) ? $in['password'] : '';
         $valid = password_verify($password, $user['password_hash'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
         if (!$user || !$valid) studio_error(401, 'E-mail ou senha incorretos.');
         $remember=($in['remember']??false)===true;
@@ -40,14 +42,15 @@ try {
     }
     if ($action === 'magic') {
         $email = strtolower(studio_text($in['email'] ?? '', 190));
+        if (!is_string($in['email'] ?? null) || !filter_var($email, FILTER_VALIDATE_EMAIL)) studio_error(422, 'Informe um e-mail válido para solicitar o link de acesso.');
         if (!rate_allowed('magic-ip', client_identity(), 10, 3600) || !rate_allowed('magic-email', $email, 3, 3600)) studio_error(429, 'Aguarde antes de pedir outro link.');
         $q = db()->prepare('SELECT email FROM admins WHERE email = ? UNION SELECT email FROM bf_users WHERE email = ?'); $q->execute([$email, $email]);
         if ($q->fetchColumn()) {
             $token = bin2hex(random_bytes(32));
             db()->prepare("INSERT INTO bf_tokens (token_hash, kind, email, expires_at) VALUES (?, 'magic', ?, ?)")->execute([hash('sha256', $token), $email, gmdate('Y-m-d H:i:s', time() + 900)]);
-            if (!studio_send_mail($email, 'Seu acesso ao Bādon Forms', "Acesse em até 15 minutos. O link funciona uma vez.\n\n" . $config['base_url'] . '/entrar#token=' . $token)) db()->prepare('DELETE FROM bf_tokens WHERE token_hash = ?')->execute([hash('sha256', $token)]);
+            if (!studio_send_mail($email, 'Seu acesso ao Bādon Flow', "Você solicitou um link para entrar no Bādon Flow. Acesse em até 15 minutos. O link funciona uma vez.\n\n" . $config['base_url'] . '/entrar#token=' . $token . "\n\nSe não fez esta solicitação, ignore esta mensagem. Não compartilhe o link.")) db()->prepare('DELETE FROM bf_tokens WHERE token_hash = ?')->execute([hash('sha256', $token)]);
         }
-        studio_json(['ok' => true, 'message' => 'Se este e-mail tiver acesso, enviaremos um link válido por 15 minutos.']);
+        studio_json(['ok' => true, 'message' => 'Se este e-mail tiver uma conta ativada na Bādon, enviaremos um link de acesso válido por 15 minutos.']);
     }
     if ($action === 'accept') {
         if (!rate_allowed('token-accept', client_identity(), 20, 900)) studio_error(429, 'Aguarde antes de tentar novamente.');
@@ -123,7 +126,7 @@ try {
         db()->prepare("INSERT INTO bf_tokens (token_hash, kind, email, workspace_id, role, expires_at) VALUES (?, 'invite', ?, ?, ?, ?)")->execute([hash('sha256', $token), $email, $workspace, $role, $expires]);
         db()->commit();
         $url = $config['base_url'] . '/entrar#token=' . $token;
-        $sent = studio_send_mail($email, 'Convite para o Bādon Forms', "Você recebeu um convite para participar de um espaço no Bādon Forms. Abra o link em até 48 horas e defina sua senha para aceitar.\n\n" . $url . "\n\nSe não esperava este convite, ignore esta mensagem.");
+        $sent = studio_send_mail($email, 'Seu convite para o Bādon Flow', "A Bādon convidou este e-mail para acessar um espaço privado no Bādon Flow. Abra o link em até 48 horas. No primeiro acesso, defina sua própria senha. Se já tem uma conta, basta confirmar o convite.\n\n" . $url . "\n\nDepois de ativar sua conta, você poderá entrar com e-mail e senha ou solicitar um link de acesso por e-mail na tela de login.\n\nSe não esperava este convite, ignore esta mensagem. Não compartilhe o link.");
         // Token somente como hash no banco; o link é devolvido apenas ao
         // administrador que acabou de criá-lo, por resposta privada sem cache.
         studio_json(['ok' => true, 'delivery' => $sent ? 'accepted' : 'failed', 'invite_url' => $url, 'email' => $email, 'expires_at' => $expires], $sent ? 200 : 202);
