@@ -65,6 +65,8 @@ for (const props of [{ initialOpen: true }, { sessionExpired: true }]) {
 for (const [, src] of landing.matchAll(/src="([^"]+)"/g))
   assert.ok(existsSync("public" + src), "Asset local disponível: " + src);
 const app = readFileSync("studio/main.tsx", "utf8");
+assert.match(app, /className="google-signin-icon" src="\/assets\/google-g.png" width="20" height="20" alt="" aria-hidden="true"/);
+assert.ok(existsSync("public/assets/google-g.png"), "Google logo bundled locally");
 const loginOrder = [app.indexOf('className="auth-google"'), app.indexOf('label="E-mail"'), app.indexOf('name="password"', app.indexOf('label="E-mail"')), app.indexOf('<Button kind="primary" disabled={busy}>', app.indexOf('label="E-mail"')), app.indexOf('className="auth-passwordless"')];
 assert.ok(loginOrder.every((position, index) => position >= 0 && (index === 0 || position > loginOrder[index - 1])), "Login order: Google, email, password, sign in, email link");
 assert.match(app, /initialOpen=\{!!token \|\| location.pathname !== "\/"\}/);

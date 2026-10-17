@@ -391,6 +391,9 @@
   gap: 10px;
 }
 .auth-google { display: grid; gap: 10px; }
+.auth-google .btn { position: relative; padding-inline: 46px; background: #fff; }
+/* Google asset: https://developers.google.com/identity/branding-guidelines */
+.auth-google .google-signin-icon { position: absolute; left: 16px; width: 20px; height: 20px; object-fit: contain; }
 .login-page .auth-google small { color: var(--muted); line-height: 1.5; }
 .auth-divider { display: flex; align-items: center; gap: 14px; margin: 6px 0; color: var(--muted); font-size: 13px; }
 .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line, #dfe5ed); }

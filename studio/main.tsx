@@ -431,7 +431,7 @@ function App() {
                         const r = await api("google-login", { remember: d.get("remember") === "on" });
                         window.location.assign(r.url);
                       });
-                    }}>Entrar com Google</Button>
+                    }}><img className="google-signin-icon" src="/assets/google-g.png" width="20" height="20" alt="" aria-hidden="true" />Entrar com Google</Button>
                     <small>Para contas já vinculadas. No primeiro acesso, use seu convite ou o link por e-mail.</small>
                   </div>
                   <div className="auth-divider"><span>ou entre com seu e-mail</span></div>
