@@ -822,12 +822,9 @@ export function TaskDialog({
                 />
               </Control>
               <div
-                className={
-                  "task-fields-grid task-properties status-" +
-                  item.status +
-                  " priority-" +
-                  item.priority
-                }
+                className="task-fields-grid task-properties"
+                data-status={item.status}
+                data-priority={item.priority}
               >
                 <Control label="Status" icon={<CircleDot size={15} />}>
                   <select

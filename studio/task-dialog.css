@@ -134,20 +134,24 @@
 .task-detail-dialog .task-properties :is(input, select):focus {
   border-color: var(--blue);
 }
-.task-properties.status-review select:has(option[value="review"]:checked) {
+.task-properties[data-status="review"]
+  select:has(option[value="review"]:checked) {
   background: #fff1c9;
   color: #916200;
 }
-.task-properties.status-doing select:has(option[value="doing"]:checked) {
+.task-properties[data-status="doing"]
+  select:has(option[value="doing"]:checked) {
   background: #e9f0ff;
   color: #1757b8;
 }
-.task-properties.status-done select:has(option[value="done"]:checked) {
+.task-properties[data-status="done"] select:has(option[value="done"]:checked) {
   background: #e6f4ec;
   color: #26734c;
 }
-.task-properties.priority-urgent select:has(option[value="urgent"]:checked),
-.task-properties.priority-high select:has(option[value="high"]:checked) {
+.task-properties[data-priority="urgent"]
+  select:has(option[value="urgent"]:checked),
+.task-properties[data-priority="high"]
+  select:has(option[value="high"]:checked) {
   color: #ba2636;
   background: #fff0f2;
 }
