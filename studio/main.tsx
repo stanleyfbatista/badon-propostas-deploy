@@ -61,6 +61,7 @@ import { FlowHome, FlowWork, FlowClientSpace } from "./FlowWorkspace";
 import "./flow.css";
 import "./flow-workspace.css";
 import { FlowUploadContext } from "./FlowFiles";
+import { FlowWelcome } from "./FlowWelcome";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -264,7 +265,12 @@ function App() {
   useEffect(() => {
     if (!boot) return;
     // Tokens have already been captured in state; keep them out of the URL.
-    const path = boot.user && !token ? "/painel" : "/entrar";
+    const path =
+      boot.user && !token
+        ? "/painel"
+        : !token && location.pathname === "/"
+          ? "/"
+          : "/entrar";
     if (location.pathname !== path || location.hash)
       history.replaceState(null, "", path);
   }, [boot?.user, token]);
@@ -319,94 +325,101 @@ function App() {
     );
   if (!boot.user || token)
     return (
-      <div className="login-page">
-        <Brand />
-        <p className="eyebrow">DA PRIMEIRA CONVERSA À ENTREGA</p>
-        <h1>
-          {token
-            ? "Seu espaço está pronto para você."
-            : "Gente de verdade, perto do seu negócio."}
-        </h1>
-        <p>
-          {token
-            ? "Confirme o acesso. Se for seu primeiro convite, defina uma senha."
-            : "Entre no Bādon Flow para conectar funis, clientes, projetos e demandas."}
-        </p>
-        {sessionExpired && (
-          <p role="alert" className="notice error">
-            Sua sessão expirou. <a href="/entrar">Voltar ao login</a> para
-            tentar novamente.
+      <FlowWelcome
+        initialOpen={!!token || location.pathname !== "/"}
+        sessionExpired={sessionExpired}
+      >
+        <div className="login-page">
+          <Brand />
+          <p className="eyebrow">DA PRIMEIRA CONVERSA À ENTREGA</p>
+          <h1 id="welcome-login-title">
+            {token
+              ? "Seu espaço está pronto para você."
+              : "Bom ter você por aqui."}
+          </h1>
+          <p>
+            {token
+              ? "Confirme o acesso. Se for seu primeiro convite, defina uma senha."
+              : "Entre no Bādon Flow para conectar funis, clientes, projetos e demandas."}
           </p>
-        )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const d = new FormData(e.currentTarget);
-            task(async () => {
-              await api(
-                token ? "accept" : "login",
-                token
-                  ? { token, password: d.get("password") }
-                  : {
-                      email: d.get("email"),
-                      password: d.get("password"),
-                      remember: d.get("remember") === "on",
-                    },
-              );
-              setToken("");
-              await load();
-            });
-          }}
-        >
-          {!token && (
+          {sessionExpired && (
+            <p role="alert" className="notice error">
+              Sua sessão expirou. <a href="/entrar">Voltar ao login</a> para
+              tentar novamente.
+            </p>
+          )}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const d = new FormData(e.currentTarget);
+              task(async () => {
+                await api(
+                  token ? "accept" : "login",
+                  token
+                    ? { token, password: d.get("password") }
+                    : {
+                        email: d.get("email"),
+                        password: d.get("password"),
+                        remember: d.get("remember") === "on",
+                      },
+                );
+                setToken("");
+                await load();
+              });
+            }}
+          >
+            {!token && (
+              <Input
+                label="E-mail"
+                name="email"
+                type="email"
+                required
+                autoComplete="username"
+              />
+            )}
             <Input
-              label="E-mail"
-              name="email"
-              type="email"
-              required
-              autoComplete="username"
+              label={
+                token ? "Senha para novo cadastro (12 a 72 bytes)" : "Senha"
+              }
+              name="password"
+              type="password"
+              required={!token}
+              autoComplete={token ? "new-password" : "current-password"}
             />
-          )}
-          <Input
-            label={token ? "Senha para novo cadastro (12 a 72 bytes)" : "Senha"}
-            name="password"
-            type="password"
-            required={!token}
-            autoComplete={token ? "new-password" : "current-password"}
-          />
-          {!token && <RememberChoice available={!!boot.remember_available} />}
-          <Button kind="primary" disabled={busy}>
-            {token ? "Confirmar acesso" : "Entrar"}
-            <ArrowRight size={17} />
-          </Button>
-          {!token && (
-            <Button
-              type="button"
-              disabled={busy}
-              onClick={(e) => {
-                const d = new FormData(e.currentTarget.form!);
-                task(async () => {
-                  const r = await api("magic", { email: d.get("email") });
-                  setNotice(r.message);
-                });
-              }}
-            >
-              Receber link de acesso por e-mail
+            {!token && <RememberChoice available={!!boot.remember_available} />}
+            <Button kind="primary" disabled={busy}>
+              {token ? "Confirmar acesso" : "Entrar"}
+              <ArrowRight size={17} />
             </Button>
+            {!token && (
+              <Button
+                type="button"
+                disabled={busy}
+                onClick={(e) => {
+                  const d = new FormData(e.currentTarget.form!);
+                  task(async () => {
+                    const r = await api("magic", { email: d.get("email") });
+                    setNotice(r.message);
+                  });
+                }}
+              >
+                Receber link de acesso por e-mail
+              </Button>
+            )}
+          </form>
+          {error && (
+            <p role="alert" className="notice error">
+              {error}
+            </p>
           )}
-        </form>
-        {error && (
-          <p role="alert" className="notice error">
-            {error}
-          </p>
-        )}
-        {notice && (
-          <p role="status" className="notice">
-            {notice}
-          </p>
-        )}
-        <small>Uma ferramenta da Produtora Bādon.</small>
-      </div>
+          {notice && (
+            <p role="status" className="notice">
+              {notice}
+            </p>
+          )}
+          <small>Uma ferramenta da Produtora Bādon.</small>
+        </div>
+      </FlowWelcome>
     );
   return (
     <FlowUploadContext.Provider value={session.request}>
