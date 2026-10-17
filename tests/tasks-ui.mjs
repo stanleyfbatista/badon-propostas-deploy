@@ -121,7 +121,7 @@ for (const editable of [false, true]) {
   assert.equal(html.includes('fieldset disabled=""'), !editable);
   assert.match(html, /flow-date-calendar/);
   assert.ok(!html.includes('type="date"'));
-  assert.ok(!html.includes('Capa · URL HTTPS'));
+  assert.ok(!html.includes("Capa · URL HTTPS"));
   const card = render(TaskCard, {
     item,
     people: [],
@@ -136,6 +136,36 @@ for (const editable of [false, true]) {
   assert.match(card, /Tarefa particular/);
   assert.ok(!card.includes("<script>"));
 }
+const organized = render(TaskDialog, {
+  initial: { item, extensions_ready: true, children: [] },
+  people: [],
+  actor: "u:1",
+  workspace: 1,
+  api,
+  editable: true,
+  close() {},
+  saved() {},
+  openChild() {},
+});
+const sections = [
+  "task-description",
+  "Anexos e referências",
+  "Subtarefas",
+  "Checklist",
+];
+for (let i = 1; i < sections.length; i++)
+  assert.ok(
+    organized.indexOf(sections[i - 1]) < organized.indexOf(sections[i]),
+  );
+assert.ok(!organized.includes("Adicionar link"));
+assert.ok(!organized.includes("Endereço do link"));
+assert.match(organized, /aria-label="Inserir link"/);
+const taskFormId = organized.match(/<form id="([^"]+)"/)[1];
+assert.ok(organized.includes('form="' + taskFormId + '" type="submit"'));
+assert.ok(
+  organized.includes('form="' + taskFormId + '" aria-label="Texto do item 1"'),
+);
+assert.ok(organized.indexOf("</form>") < organized.indexOf("Subtarefas"));
 const archived = render(TaskDialog, {
   initial: { item: { ...item, archived: 1 }, events: [] },
   people: [],

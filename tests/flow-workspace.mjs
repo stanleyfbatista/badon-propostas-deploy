@@ -96,6 +96,27 @@ const filesMarkup = render(TaskAttachments, {
 assert.match(filesMarkup, /Visualizar Arte/);
 assert.match(filesMarkup, /Remover capa/);
 assert.ok(!filesMarkup.includes("URL HTTPS"));
+assert.ok(!filesMarkup.includes("Adicionar link"));
+assert.ok(!filesMarkup.includes("Endereço do link"));
+const legacyReferences = render(TaskAttachments, {
+  item: {
+    ...originalTask,
+    extras: {
+      ...originalTask.extras,
+      links: [
+        {
+          name: "Referência existente",
+          url: "https://example.invalid/reference",
+        },
+      ],
+    },
+  },
+  workspace: 2,
+  change() {},
+  onBusy() {},
+});
+assert.match(legacyReferences, /href="https:\/\/example.invalid\/reference"/);
+assert.match(legacyReferences, /Referência existente/);
 const dateMarkup = render(DateField, {
   value: "2026-10-17",
   min: "2026-10-17",

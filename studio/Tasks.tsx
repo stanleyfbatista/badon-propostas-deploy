@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useId } from "react";
 import {
   Plus,
   Check,
@@ -721,6 +721,7 @@ export function TaskDialog({
   saved: () => void;
   openChild?: (item: any) => void;
 }) {
+  const taskFormId = useId();
   const [item, setItem] = useState<TaskItem>(initial.item);
   const [dirty, setDirty] = useState(false);
   const [children, setChildren] = useState<any[]>(initial.children || []);
@@ -808,6 +809,7 @@ export function TaskDialog({
             {item.archived ? <span className="tag">Arquivada</span> : null}
           </div>
           <form
+            id={taskFormId}
             onSubmit={(e) => {
               e.preventDefault();
               if (item.description.length > 10000) {
@@ -876,109 +878,7 @@ export function TaskDialog({
                   />
                 </div>
               )}
-              <h3>
-                Checklist{" "}
-                <small>
-                  {item.checklist.filter((c) => c.done).length}/
-                  {item.checklist.length}
-                </small>
-              </h3>
-              <div className="task-checklist">
-                {item.checklist.map((c, i) => (
-                  <div key={c.id}>
-                    <input
-                      type="checkbox"
-                      aria-label={"Concluir item " + (i + 1)}
-                      checked={c.done}
-                      onChange={(e) =>
-                        change(
-                          "checklist",
-                          item.checklist.map((x) =>
-                            x.id === c.id
-                              ? { ...x, done: e.target.checked }
-                              : x,
-                          ),
-                        )
-                      }
-                    />
-                    <input
-                      aria-label={"Texto do item " + (i + 1)}
-                      required
-                      maxLength={300}
-                      value={c.text}
-                      onChange={(e) =>
-                        change(
-                          "checklist",
-                          item.checklist.map((x) =>
-                            x.id === c.id ? { ...x, text: e.target.value } : x,
-                          ),
-                        )
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn"
-                      aria-label={"Remover item " + (i + 1)}
-                      onClick={() =>
-                        change(
-                          "checklist",
-                          item.checklist.filter((x) => x.id !== c.id),
-                        )
-                      }
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                className="btn"
-                type="button"
-                disabled={item.checklist.length >= 50}
-                onClick={() =>
-                  change("checklist", [
-                    ...item.checklist,
-                    { id: crypto.randomUUID(), text: "", done: false },
-                  ])
-                }
-              >
-                <Plus size={15} /> Item do checklist
-              </button>
             </fieldset>
-            {error && (
-              <p className="notice error" role="alert">
-                {error}
-              </p>
-            )}
-            <div className="crm-actions">
-              {!!item.id && item.due_date && (
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={busy || dirty}
-                  onClick={() => downloadDeliveryCalendar(item, workspace)}
-                >
-                  <CalendarDays size={16} /> Exportar para agenda (.ics)
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn"
-                disabled={busy}
-                onClick={dismiss}
-              >
-                Fechar
-              </button>
-              {writable && (
-                <button className="btn primary" disabled={busy}>
-                  {busy
-                    ? "Salvando…"
-                    : item.id
-                      ? "Salvar tarefa"
-                      : "Criar tarefa"}
-                </button>
-              )}
-            </div>
           </form>
           {extensions && !!item.id && openChild && (
             <section className="flow-sale-control">
@@ -1043,6 +943,118 @@ export function TaskDialog({
               )}
             </section>
           )}
+          <fieldset
+            disabled={!writable || busy}
+            className="task-fields task-checklist-section"
+          >
+            <h3>
+              Checklist{" "}
+              <small>
+                {item.checklist.filter((c) => c.done).length}/
+                {item.checklist.length}
+              </small>
+            </h3>
+            <div className="task-checklist">
+              {item.checklist.map((c, i) => (
+                <div key={c.id}>
+                  <input
+                    form={taskFormId}
+                    type="checkbox"
+                    aria-label={"Concluir item " + (i + 1)}
+                    checked={c.done}
+                    onChange={(e) =>
+                      change(
+                        "checklist",
+                        item.checklist.map((x) =>
+                          x.id === c.id ? { ...x, done: e.target.checked } : x,
+                        ),
+                      )
+                    }
+                  />
+                  <input
+                    form={taskFormId}
+                    aria-label={"Texto do item " + (i + 1)}
+                    required
+                    maxLength={300}
+                    value={c.text}
+                    onChange={(e) =>
+                      change(
+                        "checklist",
+                        item.checklist.map((x) =>
+                          x.id === c.id ? { ...x, text: e.target.value } : x,
+                        ),
+                      )
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="btn"
+                    aria-label={"Remover item " + (i + 1)}
+                    onClick={() =>
+                      change(
+                        "checklist",
+                        item.checklist.filter((x) => x.id !== c.id),
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              className="btn"
+              type="button"
+              disabled={item.checklist.length >= 50}
+              onClick={() =>
+                change("checklist", [
+                  ...item.checklist,
+                  { id: crypto.randomUUID(), text: "", done: false },
+                ])
+              }
+            >
+              <Plus size={15} /> Item do checklist
+            </button>
+          </fieldset>
+          {error && (
+            <p className="notice error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="crm-actions">
+            {!!item.id && item.due_date && (
+              <button
+                type="button"
+                className="btn"
+                disabled={busy || dirty}
+                onClick={() => downloadDeliveryCalendar(item, workspace)}
+              >
+                <CalendarDays size={16} /> Exportar para agenda (.ics)
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn"
+              disabled={busy}
+              onClick={dismiss}
+            >
+              Fechar
+            </button>
+            {writable && (
+              <button
+                form={taskFormId}
+                type="submit"
+                className="btn primary"
+                disabled={busy}
+              >
+                {busy
+                  ? "Salvando…"
+                  : item.id
+                    ? "Salvar tarefa"
+                    : "Criar tarefa"}
+              </button>
+            )}
+          </div>
           {!!item.id && editable && (
             <button
               className="btn"

@@ -19,10 +19,8 @@ export function TaskAttachments({
 }) {
   const [uploaded, setUploaded] = useState<AttachedFile[]>([]),
     [preview, setPreview] = useState(""),
-    [adding, setAdding] = useState(false),
     [editing, setEditing] = useState<number | null>(null),
     [name, setName] = useState(""),
-    [url, setUrl] = useState(""),
     [error, setError] = useState("");
   const extras = item.extras || { tags: [], links: [], cover: "" };
   const metadata = [...files, ...uploaded];
@@ -133,13 +131,10 @@ export function TaskAttachments({
                   onClick={() => {
                     setEditing(i);
                     setName(link.name);
-                    setUrl(link.url);
                     setError("");
-                    setAdding(true);
                   }}
                 >
                   Editar nome
-                  {link.url.startsWith("/api/flow-file.php") ? "" : " / link"}
                 </button>
                 <button
                   type="button"
@@ -150,7 +145,6 @@ export function TaskAttachments({
                       links: extras.links.filter((_, j) => i !== j),
                     });
                     if (preview === link.url) setPreview("");
-                    setAdding(false);
                     setEditing(null);
                   }}
                 >
@@ -161,87 +155,41 @@ export function TaskAttachments({
           </article>
         ))}
       </div>
-      <button
-        type="button"
-        className="btn"
-        onClick={() => {
-          setAdding(!adding);
-          setEditing(null);
-          setName("");
-          setUrl("");
-          setError("");
-        }}
-      >
-        <Link size={15} /> Adicionar link
-      </button>
-      {adding && (
+      {editing !== null && (
         <div className="flow-resource">
           <input
-            aria-label="Nome do link"
+            aria-label="Nome do anexo"
             placeholder="Nome do material"
             value={name}
             maxLength={150}
             onChange={(e) => setName(e.target.value)}
           />
-          {!(
-            editing !== null &&
-            extras.links[editing]?.url.startsWith("/api/flow-file.php")
-          ) && (
-            <input
-              aria-label="Endereço do link"
-              placeholder="https://…"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-          )}
           <button
             type="button"
             className="btn"
             onClick={() => {
-              try {
-                const privateFile =
-                  editing !== null &&
-                  extras.links[editing]?.url.startsWith("/api/flow-file.php");
-                const u = privateFile ? null : new URL(url);
-                if (
-                  (u &&
-                    (u.protocol !== "https:" || u.username || u.password)) ||
-                  !name.trim()
-                )
-                  throw new Error();
+              if (name.trim()) {
                 change({
                   ...extras,
-                  links:
-                    editing === null
-                      ? [...extras.links, { name: name.trim(), url: u!.href }]
-                      : extras.links.map((link, i) =>
-                          i === editing
-                            ? {
-                                name: name.trim(),
-                                url: privateFile ? link.url : u!.href,
-                              }
-                            : link,
-                        ),
+                  links: extras.links.map((link, i) =>
+                    i === editing ? { ...link, name: name.trim() } : link,
+                  ),
                 });
                 setName("");
-                setUrl("");
                 setError("");
-                setAdding(false);
                 setEditing(null);
-              } catch {
-                setError(
-                  "Informe um nome e um link HTTPS válido, sem credenciais.",
-                );
+              } else {
+                setError("Informe um nome para o anexo.");
               }
             }}
           >
-            {editing === null ? "Adicionar" : "Aplicar"}
+            Aplicar nome
           </button>
           <button
             type="button"
             className="btn"
             onClick={() => {
-              setAdding(false);
+              setEditing(null);
               setError("");
             }}
           >
