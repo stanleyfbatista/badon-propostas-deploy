@@ -187,7 +187,18 @@ function tasks_handle(string $action, array $u, array $in): never
             $q=db()->prepare("SELECT id,title,status,due_date FROM bf_tasks WHERE parent_id=? AND workspace_id=? AND (visibility='team' OR creator=?) ORDER BY id");
             $q->execute([$id,$workspace,$actor]);$children=$q->fetchAll();
         }
-        studio_json(['item'=>tasks_row($item),'events'=>$events,'children'=>$children,'dates_ready'=>tasks_dates_ready(),'extensions_ready'=>tasks_extensions_ready()]);
+        $files=[];
+        if (function_exists('flow_ready') && flow_ready()) {
+            $q=db()->prepare('SELECT id,name,mime FROM bf_flow_files WHERE workspace_id=? AND task_id=?');
+            $q->execute([$workspace,$id]);
+            $extra=json_decode($item['extras_json']??'null',true)?:[];
+            $urls=array_column($extra['links']??[],'url'); $urls[]=$extra['cover']??'';
+            foreach($q->fetchAll() as $file) {
+                $url='/api/flow-file.php?id='.$file['id'];
+                if(in_array($url,$urls,true)) $files[]=['url'=>$url,'name'=>$file['name'],'mime'=>$file['mime']];
+            }
+        }
+        studio_json(['item'=>tasks_row($item),'events'=>$events,'children'=>$children,'files'=>$files,'dates_ready'=>tasks_dates_ready(),'extensions_ready'=>tasks_extensions_ready()]);
     }
     if ((int)($in['revision']??0)!==(int)$item['revision']) { db()->rollBack(); studio_error(409,'Esta tarefa mudou. Feche e reabra antes de salvar.'); }
     if ($action==='task-update') {

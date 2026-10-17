@@ -119,7 +119,9 @@ for (const editable of [false, true]) {
   );
   assert.equal(html.includes("Salvar tarefa"), editable);
   assert.equal(html.includes('fieldset disabled=""'), !editable);
-  assert.match(html, /type="date"/);
+  assert.match(html, /flow-date-calendar/);
+  assert.ok(!html.includes('type="date"'));
+  assert.ok(!html.includes('Capa · URL HTTPS'));
   const card = render(TaskCard, {
     item,
     people: [],

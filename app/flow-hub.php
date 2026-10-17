@@ -121,6 +121,12 @@ function flow_handle(string $action,array $u,array $in): never {
         $q->execute($args);
         $items=array_map('tasks_row',$q->fetchAll());
         $people=!empty($_GET['workspace'])?crm_people((int)$_GET['workspace']):db()->query("SELECT people.actor,people.email,p.name FROM (SELECT CONCAT('a:',id) AS actor,email FROM admins UNION ALL SELECT CONCAT('u:',id) AS actor,email FROM bf_users WHERE EXISTS (SELECT 1 FROM bf_members m WHERE m.user_id=bf_users.id)) people LEFT JOIN bf_profiles p ON p.actor=people.actor ORDER BY p.name,people.email")->fetchAll();
+        if(empty($_GET['workspace'])) {
+            $members=db()->query('SELECT user_id,workspace_id FROM bf_members')->fetchAll();
+            $byUser=[];foreach($members as $member)$byUser['u:'.$member['user_id']][]=(int)$member['workspace_id'];
+            foreach($people as &$person)$person['workspace_ids']=$byUser[$person['actor']]??[];
+            unset($person);
+        }
         studio_json(['items'=>$items,'total'=>$total,'page'=>$page,'people'=>$people]);
     }
     if ($action==='flow-client-create') {

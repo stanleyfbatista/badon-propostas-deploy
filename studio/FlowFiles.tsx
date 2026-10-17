@@ -7,19 +7,21 @@ export function FlowUpload({
   images = false,
   label = "Enviar arquivo",
   done,
+  onBusy,
 }: {
   workspace: number;
   task?: number;
   images?: boolean;
   label?: string;
   done: (file: { url: string; name: string; mime: string }) => void;
+  onBusy?: (busy: boolean) => void;
 }) {
   const request = useContext(FlowUploadContext),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   return (
     <div className="flow-upload">
-      <label>
+      <label className="flow-upload-target">
         {busy ? "Enviando…" : label}
         <input
           type="file"
@@ -39,6 +41,7 @@ export function FlowUpload({
               return;
             }
             setBusy(true);
+            onBusy?.(true);
             setError("");
             try {
               const data = new FormData();
@@ -57,6 +60,7 @@ export function FlowUpload({
               setError((e as Error).message);
             } finally {
               setBusy(false);
+              onBusy?.(false);
             }
           }}
         />

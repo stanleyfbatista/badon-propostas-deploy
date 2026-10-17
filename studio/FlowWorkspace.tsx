@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Api, Avatar, Control, Modal, Person } from "./Crm";
 import { TaskDialog } from "./Tasks";
+import { FlowTaskTable } from "./FlowTaskTable";
+import { ChoiceField } from "./TaskControls";
 import { blankTask, dueLabel, todayLocal } from "./task-model";
 import { ClientDialog, contractState, FlowProjects } from "./Flow";
 
@@ -218,7 +220,10 @@ function useDeliveryDialog(
           workspace={target}
           api={api}
           editable
-          close={() => setSelected(null)}
+          close={() => {
+            setSelected(null);
+            changed();
+          }}
           saved={() => {
             setSelected(null);
             changed();
@@ -620,38 +625,38 @@ export function FlowWork(
           />
         </label>
         {!workspace && (
-          <select
-            aria-label="Filtrar cliente"
-            value={client}
-            onChange={(e) => {
-              setClient(Number(e.target.value));
+          <ChoiceField
+            label="Filtrar cliente"
+            value={String(client)}
+            searchable
+            options={[
+              { value: "0", label: "Todos os clientes" },
+              ...spaces.map((s) => ({ value: String(s.id), label: s.name })),
+            ]}
+            onChange={(v) => {
+              setClient(Number(v));
               setAssignee("");
               setPage(1);
             }}
-          >
-            <option value={0}>Todos os clientes</option>
-            {spaces.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          />
         )}
-        <select
-          aria-label="Filtrar responsável"
+        <ChoiceField
+          label="Filtrar responsável"
           value={assignee}
-          onChange={(e) => {
-            setAssignee(e.target.value);
+          searchable
+          options={[
+            { value: "", label: "Todos os responsáveis" },
+            ...owners.map((p) => ({
+              value: p.actor,
+              label: p.name || p.email,
+              person: p,
+            })),
+          ]}
+          onChange={(v) => {
+            setAssignee(v);
             setPage(1);
           }}
-        >
-          <option value="">Todos os responsáveis</option>
-          {owners.map((p) => (
-            <option key={p.actor} value={p.actor}>
-              {p.name || p.email}
-            </option>
-          ))}
-        </select>
+        />
         {mode !== "calendar" && (
           <div className="crm-switch">
             <button
@@ -781,30 +786,17 @@ export function FlowWork(
           </aside>
         </div>
       ) : view === "list" ? (
-        <section className="flow-panel">
-          {items.map((t) => (
-            <button
-              className="flow-row"
-              key={t.id}
-              onClick={() => void editor.open(t)}
-            >
-              <span>
-                <strong>{t.title}</strong>
-                <small>
-                  {t.client} · {t.project_name || "Sem projeto"}
-                </small>
-              </span>
-              <span className={"badge stage-" + t.status}>
-                {stageNames[t.status]}
-              </span>
-              <Deadline item={t} />
-              <ArrowRight size={16} />
-            </button>
-          ))}
-          {!items.length && !loading && (
-            <p className="flow-empty">Nenhuma demanda neste filtro.</p>
-          )}
-        </section>
+        <FlowTaskTable
+          items={items}
+          people={owners}
+          api={api}
+          open={(t) => void editor.open(t)}
+          changed={() => {
+            setLoading(true);
+            setRevision((v) => v + 1);
+          }}
+          disabled={loading || editor.busy}
+        />
       ) : (
         <div
           className={

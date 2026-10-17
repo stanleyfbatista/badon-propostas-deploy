@@ -202,6 +202,82 @@ export async function flowHubTests({
   };
   const parent = await agency.req("task-create", task);
   assert.equal(parent.status, 200, JSON.stringify(parent.body));
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADElEQVQImWNgYGAAAAAEAAGjChXjAAAAAElFTkSuQmCC",
+    "base64",
+  );
+  const imageUpload = await upload(
+    agency,
+    cid,
+    png,
+    "Capa de teste.png",
+    parent.body.id,
+  );
+  assert.equal(imageUpload.status, 200, await imageUpload.clone().text());
+  const imageFile = await imageUpload.json();
+  let parentDetail = (
+    await agency.req("task-item", undefined, {
+      workspace: cid,
+      id: parent.body.id,
+    })
+  ).body;
+  assert.deepEqual(
+    parentDetail.files,
+    [],
+    "Uploads não vinculados não entram na galeria",
+  );
+  const imageExtras = {
+    ...parentDetail.item.extras,
+    cover: imageFile.url,
+    links: [
+      ...parentDetail.item.extras.links,
+      { name: imageFile.name, url: imageFile.url },
+    ],
+  };
+  assert.equal(
+    (
+      await agency.req("task-update", {
+        ...parentDetail.item,
+        workspace: cid,
+        extras: imageExtras,
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await agency.req("task-update", {
+        ...parentDetail.item,
+        workspace: cid,
+        priority: "urgent",
+      })
+    ).status,
+    409,
+    "Edição rápida obsoleta deve preservar anexos novos",
+  );
+  parentDetail = (
+    await agency.req("task-item", undefined, {
+      workspace: cid,
+      id: parent.body.id,
+    })
+  ).body;
+  assert.deepEqual(parentDetail.files, [imageFile]);
+  assert.equal(parentDetail.item.extras.cover, imageFile.url);
+  assert.equal((await fetch(base + imageFile.url)).status, 401);
+  assert.equal(
+    (await fetch(base + imageFile.url, { headers: { Cookie: other.cookie } }))
+      .status,
+    403,
+  );
+  assert.equal(
+    (
+      await agency.req("task-item", undefined, {
+        workspace: cid,
+        id: parent.body.id,
+      })
+    ).body.item.description,
+    "Copy",
+  );
   const sub = await agency.req("task-create", {
     ...task,
     create_key: randomUUID(),

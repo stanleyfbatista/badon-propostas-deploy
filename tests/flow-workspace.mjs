@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 const compiled = await build({
   stdin: {
     contents:
-      'export * from "./studio/FlowWorkspace"; export * from "./studio/flow-calendar";',
+      'export * from "./studio/FlowWorkspace"; export * from "./studio/flow-calendar"; export * from "./studio/FlowTaskTable"; export * from "./studio/TaskControls"; export * from "./studio/TaskAttachments";',
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -24,6 +24,38 @@ new Function("require", "module", "exports", compiled.outputFiles[0].text)(
 );
 const { monthDays, ClientCover, ClientMark, FlowWork, deliveryCalendar } =
   module.exports;
+const {
+  calendarDays,
+  taskFieldUpdate,
+  FlowTaskTable,
+  TaskAttachments,
+  DateField,
+} = module.exports;
+assert.equal(calendarDays("2026-10")[0], "2026-09-28");
+assert.equal(calendarDays("2026-10").length, 42);
+assert.ok(calendarDays("2028-02").includes("2028-02-29"));
+const originalTask = {
+  id: 4,
+  workspace_id: 2,
+  revision: 7,
+  title: "Campanha",
+  description: "Não sobrescrever",
+  status: "doing",
+  priority: "normal",
+  checklist: [{ id: "abc", text: "Preservar", done: false }],
+  extras: {
+    cover: "/api/flow-file.php?id=9",
+    links: [{ name: "Arte", url: "/api/flow-file.php?id=9" }],
+    tags: ["Marca"],
+  },
+};
+const updated = taskFieldUpdate(originalTask, "priority", "high");
+assert.equal(updated.priority, "high");
+assert.equal(updated.revision, 7);
+assert.equal(updated.description, originalTask.description);
+assert.deepEqual(updated.extras, originalTask.extras);
+assert.deepEqual(updated.checklist, originalTask.checklist);
+assert.equal(originalTask.priority, "normal");
 const days = monthDays("2026-10");
 assert.equal(days.length, 42);
 assert.equal(days[0], "2026-09-28");
@@ -35,6 +67,43 @@ const client = {
   details: { color: "#6d805c", cover: "", photo: "" },
 };
 const render = (c, p) => renderToStaticMarkup(React.createElement(c, p));
+const listMarkup = render(FlowTaskTable, {
+  items: [originalTask],
+  people: [],
+  api() {
+    throw Error("No network");
+  },
+  open() {},
+  changed() {},
+  disabled: false,
+});
+for (const label of [
+  "Status de Campanha",
+  "Prioridade de Campanha",
+  "Responsável por Campanha",
+  "Início de Campanha",
+  "Vencimento de Campanha",
+  "Etiquetas de Campanha",
+])
+  assert.ok(listMarkup.includes(label));
+const filesMarkup = render(TaskAttachments, {
+  item: originalTask,
+  workspace: 2,
+  files: [{ url: "/api/flow-file.php?id=9", name: "Arte", mime: "image/png" }],
+  change() {},
+  onBusy() {},
+});
+assert.match(filesMarkup, /Visualizar Arte/);
+assert.match(filesMarkup, /Remover capa/);
+assert.ok(!filesMarkup.includes("URL HTTPS"));
+const dateMarkup = render(DateField, {
+  value: "2026-10-17",
+  min: "2026-10-17",
+  max: "2026-10-19",
+  onChange() {},
+});
+assert.match(dateMarkup, /aria-label="16\/10\/2026"[^>]*disabled/);
+assert.match(dateMarkup, /aria-label="17\/10\/2026" aria-pressed="true"/);
 assert.match(
   render(ClientCover, { client, small: true }),
   /flow-cover-art small/,

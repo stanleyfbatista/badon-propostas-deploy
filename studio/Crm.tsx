@@ -24,6 +24,7 @@ export type Api = (
 ) => Promise<any>;
 export type Request = (url: string, init?: RequestInit) => Promise<any>;
 export type Person = {
+  workspace_ids?: number[];
   actor: string;
   name: string;
   email: string;
