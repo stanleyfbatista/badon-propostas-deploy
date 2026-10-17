@@ -3,6 +3,22 @@ import { createRequire } from "node:module";
 import { build } from "esbuild";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { MarkdownManager } from "@tiptap/markdown";
+import StarterKit from "@tiptap/starter-kit";
+import { resolveExtensions } from "@tiptap/core";
+const markdown = new MarkdownManager({
+  extensions: resolveExtensions([StarterKit]),
+  markedOptions: { breaks: true },
+});
+const legacy =
+  "## Entregas\n\n**Copy** e _estratégia_.\n\n- Criativo 1\n- Criativo 2\n\n[Referência](https://example.invalid)";
+const richDoc = markdown.parse(legacy);
+const richSaved = markdown.serialize(richDoc);
+assert.deepEqual(markdown.parse(richSaved), richDoc);
+assert.match(richSaved, /\*\*Copy\*\*/);
+assert.match(richSaved, /## Entregas/);
+assert.match(richSaved, /- Criativo 1/);
+assert.match(richSaved, /https:\/\/example.invalid/);
 const compiled = await build({
   entryPoints: ["studio/Tasks.tsx"],
   bundle: true,
@@ -52,7 +68,8 @@ const item = {
   ...blankTask("u:1"),
   id: 1,
   title: "<script>alert(1)</script>",
-  description: "Descrição",
+  description:
+    "Descrição\n\n<script>alert(1)</script>\n\n[Link](javascript:alert(1))\n\n**Texto**",
   visibility: "private",
   due_date: "2027-01-04",
   checklist: [{ id: crypto.randomUUID(), text: "Conferir", done: false }],
@@ -79,8 +96,27 @@ for (const editable of [false, true]) {
     saved() {},
   });
   assert.ok(!html.includes("<script>") && html.includes("&lt;script&gt;"));
+  assert.ok(!html.includes('href="javascript:'));
   assert.match(html, /Checklist/);
   assert.match(html, /Comentários e histórico/);
+  assert.match(html, /task-dialog-layout/);
+  assert.match(html, /task-dialog-activity/);
+  assert.match(html, /aria-label="Formatar descrição"/);
+  for (const label of [
+    "Negrito",
+    "Itálico",
+    "Título",
+    "Lista numerada",
+    "Inserir link",
+    "Desfazer",
+    "Refazer",
+  ])
+    assert.ok(html.includes('aria-label="' + label + '"'));
+  assert.ok(html.indexOf("task-properties") < html.indexOf("task-description"));
+  assert.ok(
+    !html.includes("Buscar oportunidade do CRM") &&
+      !html.includes("Vincular oportunidade"),
+  );
   assert.equal(html.includes("Salvar tarefa"), editable);
   assert.equal(html.includes('fieldset disabled=""'), !editable);
   assert.match(html, /type="date"/);

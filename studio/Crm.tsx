@@ -105,11 +105,13 @@ export function Modal({
   children,
   close,
   busy = false,
+  className = "",
 }: {
   title: string;
   children: React.ReactNode;
   close: () => void;
   busy?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -120,7 +122,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className="crm-modal"
+      className={"crm-modal " + className}
       aria-label={title}
       onCancel={(e) => {
         e.preventDefault();
@@ -146,13 +148,20 @@ export function Modal({
 export function Control({
   label,
   children,
+  icon,
+  className = "",
 }: {
   label: string;
   children: React.ReactNode;
+  icon?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="control">
-      <span>{label}</span>
+    <label className={"control " + className}>
+      <span>
+        {icon}
+        {label}
+      </span>
       {children}
     </label>
   );

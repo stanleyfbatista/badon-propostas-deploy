@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Plus,
   Check,
@@ -11,6 +11,13 @@ import {
   List,
   Archive,
   ArrowUpRight,
+  Flag,
+  Tag,
+  CircleDot,
+  Folder,
+  Paperclip,
+  MessageSquare,
+  AlignLeft,
 } from "lucide-react";
 import {
   Api,
@@ -22,6 +29,7 @@ import {
   isoDate,
 } from "./Crm";
 import "./tasks.css";
+import "./task-dialog.css";
 import { FlowTextEditor } from "./FlowText";
 import { FlowUpload } from "./FlowFiles";
 import { downloadDeliveryCalendar } from "./flow-calendar";
@@ -716,20 +724,19 @@ export function TaskDialog({
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [options, setOptions] = useState<any[]>([]);
+  const [clientName, setClientName] = useState(initial.client_name || "");
+  const attachmentsRef = useRef<HTMLDivElement>(null);
   const [optionsError, setOptionsError] = useState("");
   const [projects, setProjects] = useState<any[]>([]);
   const [extensions, setExtensions] = useState(!!initial.extensions_ready);
   useEffect(() => {
-    if (!editable || item.archived) return;
     let alive = true;
     setOptionsError("");
     const timer = setTimeout(() => {
-      api("task-options", undefined, { workspace, search })
+      api("task-options", undefined, { workspace })
         .then((r) => {
           if (alive) {
-            setOptions(r.opportunities);
+            setClientName(r.workspace_name || "");
             setProjects(r.projects || []);
             setExtensions(!!r.extensions_ready);
           }
@@ -742,7 +749,7 @@ export function TaskDialog({
       alive = false;
       clearTimeout(timer);
     };
-  }, [workspace, search, editable, item.archived]);
+  }, [workspace]);
   const change = (key: keyof TaskItem, value: any) => {
     setItem({ ...item, [key]: value });
     setDirty(true);
@@ -778,134 +785,301 @@ export function TaskDialog({
       title={item.id ? "Detalhes da tarefa" : "Nova tarefa"}
       close={dismiss}
       busy={busy}
+      className="task-detail-dialog"
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void action(item.id ? "task-update" : "task-create");
-        }}
-      >
-        <fieldset disabled={!writable || busy} className="task-fields">
-          <Control label="Título *">
-            <input
-              autoFocus
-              required
-              maxLength={200}
-              value={item.title}
-              onChange={(e) => change("title", e.target.value)}
-            />
-          </Control>
-          <div className="control">
-            <span>Descrição e informações da tarefa</span>
-            <FlowTextEditor
-              value={item.description}
-              onChange={(v) => change("description", v)}
-              disabled={!writable || busy}
-            />
+      <div className="task-dialog-layout">
+        <section className="task-dialog-main">
+          <div className="task-context">
+            <Folder size={15} />
+            <strong>{clientName || "Espaço do cliente"}</strong>
+            <span>/</span>
+            <span>
+              {item.parent_id ? "Subtarefa" : "Demanda"}
+              {item.id ? " #" + item.id : ""}
+            </span>
+            {item.archived ? <span className="tag">Arquivada</span> : null}
           </div>
-          {extensions && (
-            <div className="flow-task-extras">
-              <Control
-                label={
-                  item.parent_id ? "Projeto herdado da tarefa-mãe" : "Projeto"
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (item.description.length > 10000) {
+                setError(
+                  "Reduza a descrição para até 10.000 caracteres antes de salvar.",
+                );
+                return;
+              }
+              void action(item.id ? "task-update" : "task-create");
+            }}
+          >
+            <fieldset disabled={!writable || busy} className="task-fields">
+              <Control label="Título *" className="task-title-control">
+                <input
+                  autoFocus
+                  required
+                  maxLength={200}
+                  value={item.title}
+                  onChange={(e) => change("title", e.target.value)}
+                />
+              </Control>
+              <div
+                className={
+                  "task-fields-grid task-properties status-" +
+                  item.status +
+                  " priority-" +
+                  item.priority
                 }
               >
-                <select
-                  disabled={!!item.parent_id}
-                  value={item.project_id || ""}
-                  onChange={(e) =>
-                    change("project_id", Number(e.target.value) || null)
-                  }
+                <Control label="Status" icon={<CircleDot size={15} />}>
+                  <select
+                    value={item.status}
+                    onChange={(e) => change("status", e.target.value)}
+                  >
+                    {Object.entries(taskStatuses).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </Control>
+                <Control label="Responsável" icon={<Users size={15} />}>
+                  <select
+                    disabled={item.visibility === "private"}
+                    value={item.assignee || ""}
+                    onChange={(e) => change("assignee", e.target.value || null)}
+                  >
+                    <option value="">Sem responsável</option>
+                    {people.map((p) => (
+                      <option key={p.actor} value={p.actor}>
+                        {p.name || p.email}
+                      </option>
+                    ))}
+                  </select>
+                </Control>
+                <Control label="Data inicial" icon={<CalendarDays size={15} />}>
+                  <input
+                    type="date"
+                    min="2000-01-01"
+                    max={item.due_date || "2100-12-31"}
+                    disabled={!initial.dates_ready}
+                    value={item.start_date || ""}
+                    onChange={(e) =>
+                      change("start_date", e.target.value || null)
+                    }
+                  />
+                </Control>
+                <Control
+                  label="Data de vencimento"
+                  icon={<CalendarDays size={15} />}
                 >
-                  <option value="">Sem projeto</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      BD-{String(p.id).padStart(4, "0")} · {p.name}
-                    </option>
-                  ))}
-                </select>
-              </Control>
-              <Control label="Etiquetas (separadas por vírgula)">
-                <input
-                  value={(item.extras?.tags || []).join(",")}
-                  maxLength={820}
-                  onChange={(e) =>
-                    change("extras", {
-                      links: [],
-                      cover: "",
-                      ...item.extras,
-                      tags: e.target.value.split(","),
-                    })
-                  }
-                />
-              </Control>
-              <Control label="Capa · URL HTTPS">
-                <input
-                  type="text"
-                  value={item.extras?.cover || ""}
-                  onChange={(e) =>
-                    change("extras", {
-                      tags: [],
-                      links: [],
-                      ...item.extras,
-                      cover: e.target.value,
-                    })
-                  }
-                />
-              </Control>
-              {!!item.id && (
-                <FlowUpload
-                  workspace={workspace}
-                  task={item.id}
-                  images
-                  label="Enviar capa da tarefa"
-                  done={(f) =>
-                    change("extras", {
-                      tags: [],
-                      links: [],
-                      ...item.extras,
-                      cover: f.url,
-                    })
-                  }
-                />
+                  <input
+                    type="date"
+                    min={item.start_date || "2000-01-01"}
+                    max="2100-12-31"
+                    value={item.due_date || ""}
+                    onChange={(e) => change("due_date", e.target.value || null)}
+                  />
+                </Control>
+                <Control label="Visibilidade" icon={<LockKeyhole size={15} />}>
+                  <select
+                    disabled={!!item.id && item.creator !== actor}
+                    value={item.visibility}
+                    onChange={(e) => {
+                      setItem({
+                        ...item,
+                        visibility: e.target.value as TaskItem["visibility"],
+                        assignee:
+                          e.target.value === "private" ? actor : item.assignee,
+                      });
+                      setDirty(true);
+                    }}
+                  >
+                    <option value="team">Equipe deste espaço</option>
+                    <option value="private">Particular — só você</option>
+                  </select>
+                </Control>
+                <Control label="Prioridade" icon={<Flag size={15} />}>
+                  <select
+                    value={item.priority}
+                    onChange={(e) => change("priority", e.target.value)}
+                  >
+                    {Object.entries(taskPriorities).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </Control>
+                {extensions && (
+                  <>
+                    {" "}
+                    <Control
+                      label={
+                        item.parent_id
+                          ? "Projeto herdado da tarefa-mãe"
+                          : "Projeto"
+                      }
+                    >
+                      <select
+                        disabled={!!item.parent_id}
+                        value={item.project_id || ""}
+                        onChange={(e) =>
+                          change("project_id", Number(e.target.value) || null)
+                        }
+                      >
+                        <option value="">Sem projeto</option>
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            BD-{String(p.id).padStart(4, "0")} · {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Control>
+                    <Control label="Etiquetas" icon={<Tag size={15} />}>
+                      <input
+                        placeholder="Separe por vírgulas"
+                        value={(item.extras?.tags || []).join(",")}
+                        maxLength={820}
+                        onChange={(e) =>
+                          change("extras", {
+                            links: [],
+                            cover: "",
+                            ...item.extras,
+                            tags: e.target.value.split(","),
+                          })
+                        }
+                      />
+                    </Control>
+                  </>
+                )}
+              </div>
+
+              {optionsError && (
+                <p className="notice error" role="alert">
+                  {optionsError}
+                </p>
               )}
-              <p className="muted">Links de arquivos e referências</p>
-              {(item.extras?.links || []).map((link, i) => (
-                <div className="flow-resource" key={i}>
-                  <input
-                    aria-label={"Nome do link " + (i + 1)}
-                    required
-                    value={link.name}
-                    onChange={(e) =>
-                      change("extras", {
-                        tags: [],
-                        cover: "",
-                        ...item.extras,
-                        links: item.extras!.links.map((l, j) =>
-                          i === j ? { ...l, name: e.target.value } : l,
-                        ),
-                      })
-                    }
-                  />
-                  <input
-                    type="text"
-                    aria-label={"Endereço do link " + (i + 1)}
-                    required
-                    value={link.url}
-                    onChange={(e) =>
-                      change("extras", {
-                        tags: [],
-                        cover: "",
-                        ...item.extras,
-                        links: item.extras!.links.map((l, j) =>
-                          i === j ? { ...l, url: e.target.value } : l,
-                        ),
-                      })
-                    }
-                  />
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
-                    Abrir
-                  </a>
+              <div className="control task-description">
+                <span>
+                  <AlignLeft size={17} /> Descrição e informações da tarefa
+                </span>
+                <FlowTextEditor
+                  value={item.description}
+                  onAttach={() => {
+                    attachmentsRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                    attachmentsRef.current?.focus();
+                  }}
+                  onChange={(v) => change("description", v)}
+                  disabled={!writable || busy}
+                />
+              </div>
+              {extensions && (
+                <div
+                  className="flow-task-extras"
+                  ref={attachmentsRef}
+                  tabIndex={-1}
+                >
+                  <h3>
+                    <Paperclip size={18} /> Anexos e referências
+                  </h3>
+                  <details className="task-cover-options">
+                    <summary>Capa da tarefa</summary>
+                    {item.extras?.cover && (
+                      <img
+                        className="flow-task-cover"
+                        src={item.extras.cover}
+                        alt="Capa da tarefa"
+                      />
+                    )}
+                    <Control label="Capa · URL HTTPS">
+                      <input
+                        type="text"
+                        value={item.extras?.cover || ""}
+                        onChange={(e) =>
+                          change("extras", {
+                            tags: [],
+                            links: [],
+                            ...item.extras,
+                            cover: e.target.value,
+                          })
+                        }
+                      />
+                    </Control>
+                    {!!item.id && (
+                      <FlowUpload
+                        workspace={workspace}
+                        task={item.id}
+                        images
+                        label="Enviar capa da tarefa"
+                        done={(f) =>
+                          change("extras", {
+                            tags: [],
+                            links: [],
+                            ...item.extras,
+                            cover: f.url,
+                          })
+                        }
+                      />
+                    )}
+                  </details>
+                  {(item.extras?.links || []).map((link, i) => (
+                    <div className="flow-resource" key={i}>
+                      <input
+                        aria-label={"Nome do link " + (i + 1)}
+                        required
+                        value={link.name}
+                        onChange={(e) =>
+                          change("extras", {
+                            tags: [],
+                            cover: "",
+                            ...item.extras,
+                            links: item.extras!.links.map((l, j) =>
+                              i === j ? { ...l, name: e.target.value } : l,
+                            ),
+                          })
+                        }
+                      />
+                      <input
+                        type="text"
+                        aria-label={"Endereço do link " + (i + 1)}
+                        required
+                        value={link.url}
+                        onChange={(e) =>
+                          change("extras", {
+                            tags: [],
+                            cover: "",
+                            ...item.extras,
+                            links: item.extras!.links.map((l, j) =>
+                              i === j ? { ...l, url: e.target.value } : l,
+                            ),
+                          })
+                        }
+                      />
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Abrir
+                      </a>
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() =>
+                          change("extras", {
+                            tags: [],
+                            cover: "",
+                            ...item.extras,
+                            links: item.extras!.links.filter((_, j) => i !== j),
+                          })
+                        }
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
                     className="btn"
@@ -914,345 +1088,207 @@ export function TaskDialog({
                         tags: [],
                         cover: "",
                         ...item.extras,
-                        links: item.extras!.links.filter((_, j) => i !== j),
+                        links: [
+                          ...(item.extras?.links || []),
+                          { name: "", url: "" },
+                        ],
                       })
                     }
                   >
-                    Remover
+                    Adicionar link
                   </button>
+                  {!!item.id ? (
+                    <FlowUpload
+                      workspace={workspace}
+                      task={item.id}
+                      done={(f) =>
+                        change("extras", {
+                          tags: [],
+                          cover: "",
+                          ...item.extras,
+                          links: [
+                            ...(item.extras?.links || []),
+                            { name: f.name, url: f.url },
+                          ],
+                        })
+                      }
+                    />
+                  ) : (
+                    <small>Salve a tarefa para enviar anexos privados.</small>
+                  )}
                 </div>
-              ))}
+              )}
+              <h3>
+                Checklist{" "}
+                <small>
+                  {item.checklist.filter((c) => c.done).length}/
+                  {item.checklist.length}
+                </small>
+              </h3>
+              <div className="task-checklist">
+                {item.checklist.map((c, i) => (
+                  <div key={c.id}>
+                    <input
+                      type="checkbox"
+                      aria-label={"Concluir item " + (i + 1)}
+                      checked={c.done}
+                      onChange={(e) =>
+                        change(
+                          "checklist",
+                          item.checklist.map((x) =>
+                            x.id === c.id
+                              ? { ...x, done: e.target.checked }
+                              : x,
+                          ),
+                        )
+                      }
+                    />
+                    <input
+                      aria-label={"Texto do item " + (i + 1)}
+                      required
+                      maxLength={300}
+                      value={c.text}
+                      onChange={(e) =>
+                        change(
+                          "checklist",
+                          item.checklist.map((x) =>
+                            x.id === c.id ? { ...x, text: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn"
+                      aria-label={"Remover item " + (i + 1)}
+                      onClick={() =>
+                        change(
+                          "checklist",
+                          item.checklist.filter((x) => x.id !== c.id),
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
               <button
-                type="button"
                 className="btn"
+                type="button"
+                disabled={item.checklist.length >= 50}
                 onClick={() =>
-                  change("extras", {
-                    tags: [],
-                    cover: "",
-                    ...item.extras,
-                    links: [
-                      ...(item.extras?.links || []),
-                      { name: "", url: "" },
-                    ],
-                  })
+                  change("checklist", [
+                    ...item.checklist,
+                    { id: crypto.randomUUID(), text: "", done: false },
+                  ])
                 }
               >
-                Adicionar link
+                <Plus size={15} /> Item do checklist
               </button>
-              {!!item.id ? (
-                <FlowUpload
-                  workspace={workspace}
-                  task={item.id}
-                  done={(f) =>
-                    change("extras", {
-                      tags: [],
-                      cover: "",
-                      ...item.extras,
-                      links: [
-                        ...(item.extras?.links || []),
-                        { name: f.name, url: f.url },
-                      ],
-                    })
-                  }
-                />
-              ) : (
-                <small>Salve a tarefa para enviar anexos privados.</small>
-              )}
-            </div>
-          )}
-          <div className="task-fields-grid">
-            <Control label="Status">
-              <select
-                value={item.status}
-                onChange={(e) => change("status", e.target.value)}
-              >
-                {Object.entries(taskStatuses).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </Control>
-            <Control label="Prioridade">
-              <select
-                value={item.priority}
-                onChange={(e) => change("priority", e.target.value)}
-              >
-                {Object.entries(taskPriorities).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </Control>
-            <Control label="Data inicial">
-              <input
-                type="date"
-                min="2000-01-01"
-                max={item.due_date || "2100-12-31"}
-                disabled={!initial.dates_ready}
-                value={item.start_date || ""}
-                onChange={(e) => change("start_date", e.target.value || null)}
-              />
-            </Control>
-            <Control label="Data de vencimento">
-              <input
-                type="date"
-                min={item.start_date || "2000-01-01"}
-                max="2100-12-31"
-                value={item.due_date || ""}
-                onChange={(e) => change("due_date", e.target.value || null)}
-              />
-            </Control>
-            <Control label="Visibilidade">
-              <select
-                disabled={!!item.id && item.creator !== actor}
-                value={item.visibility}
-                onChange={(e) => {
-                  setItem({
-                    ...item,
-                    visibility: e.target.value as TaskItem["visibility"],
-                    assignee:
-                      e.target.value === "private" ? actor : item.assignee,
-                  });
-                  setDirty(true);
-                }}
-              >
-                <option value="team">Equipe deste espaço</option>
-                <option value="private">Particular — só você</option>
-              </select>
-            </Control>
-            <Control label="Responsável">
-              <select
-                disabled={item.visibility === "private"}
-                value={item.assignee || ""}
-                onChange={(e) => change("assignee", e.target.value || null)}
-              >
-                <option value="">Sem responsável</option>
-                {people.map((p) => (
-                  <option key={p.actor} value={p.actor}>
-                    {p.name || p.email}
-                  </option>
-                ))}
-              </select>
-            </Control>
-          </div>
-          <p className="muted">
-            <Users size={14} /> Compartilhada: membros deste espaço podem
-            consultar. Particular: apenas quem criou vê no aplicativo. Leitores
-            não alteram tarefas.
-          </p>
-          <Control label="Buscar oportunidade do CRM">
-            <input
-              placeholder="Nome do contato ou empresa…"
-              value={search}
-              maxLength={150}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </Control>
-          <Control label="Vincular oportunidade (opcional)">
-            <select
-              value={item.opportunity_id || ""}
-              onChange={(e) =>
-                change(
-                  "opportunity_id",
-                  e.target.value ? Number(e.target.value) : null,
-                )
-              }
-            >
-              <option value="">Sem vínculo</option>
-              {item.opportunity_id &&
-                !options.some(
-                  (o) => Number(o.id) === Number(item.opportunity_id),
-                ) && (
-                  <option value={item.opportunity_id}>
-                    {item.opportunity_name || "Oportunidade vinculada"}
-                  </option>
-                )}
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
-                  {o.company ? " · " + o.company : ""}
-                </option>
-              ))}
-            </select>
-          </Control>
-          <small>
-            Até 30 resultados. Busque pelo nome para encontrar outras
-            oportunidades.
-          </small>
-          {optionsError && (
-            <p className="notice error" role="alert">
-              {optionsError}
-            </p>
-          )}
-          <h3>
-            Checklist{" "}
-            <small>
-              {item.checklist.filter((c) => c.done).length}/
-              {item.checklist.length}
-            </small>
-          </h3>
-          <div className="task-checklist">
-            {item.checklist.map((c, i) => (
-              <div key={c.id}>
-                <input
-                  type="checkbox"
-                  aria-label={"Concluir item " + (i + 1)}
-                  checked={c.done}
-                  onChange={(e) =>
-                    change(
-                      "checklist",
-                      item.checklist.map((x) =>
-                        x.id === c.id ? { ...x, done: e.target.checked } : x,
-                      ),
-                    )
-                  }
-                />
-                <input
-                  aria-label={"Texto do item " + (i + 1)}
-                  required
-                  maxLength={300}
-                  value={c.text}
-                  onChange={(e) =>
-                    change(
-                      "checklist",
-                      item.checklist.map((x) =>
-                        x.id === c.id ? { ...x, text: e.target.value } : x,
-                      ),
-                    )
-                  }
-                />
+            </fieldset>
+            {error && (
+              <p className="notice error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="crm-actions">
+              {!!item.id && item.due_date && (
                 <button
                   type="button"
                   className="btn"
-                  aria-label={"Remover item " + (i + 1)}
-                  onClick={() =>
-                    change(
-                      "checklist",
-                      item.checklist.filter((x) => x.id !== c.id),
-                    )
-                  }
+                  disabled={busy || dirty}
+                  onClick={() => downloadDeliveryCalendar(item, workspace)}
                 >
-                  ×
+                  <CalendarDays size={16} /> Exportar para agenda (.ics)
                 </button>
-              </div>
-            ))}
-          </div>
-          <button
-            className="btn"
-            type="button"
-            disabled={item.checklist.length >= 50}
-            onClick={() =>
-              change("checklist", [
-                ...item.checklist,
-                { id: crypto.randomUUID(), text: "", done: false },
-              ])
-            }
-          >
-            <Plus size={15} /> Item do checklist
-          </button>
-        </fieldset>
-        {error && (
-          <p className="notice error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="crm-actions">
-          {!!item.id && item.due_date && (
-            <button
-              type="button"
-              className="btn"
-              disabled={busy || dirty}
-              onClick={() => downloadDeliveryCalendar(item, workspace)}
-            >
-              <CalendarDays size={16} /> Exportar para agenda (.ics)
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn"
-            disabled={busy}
-            onClick={dismiss}
-          >
-            Fechar
-          </button>
-          {writable && (
-            <button className="btn primary" disabled={busy}>
-              {busy ? "Salvando…" : item.id ? "Salvar tarefa" : "Criar tarefa"}
-            </button>
-          )}
-        </div>
-      </form>
-      {extensions && !!item.id && openChild && (
-        <section className="flow-sale-control">
-          <h3>{item.parent_id ? "Tarefa-mãe" : "Subtarefas"}</h3>
-          {item.parent_id ? (
-            <button
-              className="btn"
-              disabled={busy || dirty}
-              onClick={() =>
-                void api("task-item", undefined, {
-                  workspace,
-                  id: item.parent_id!,
-                })
-                  .then(openChild)
-                  .catch((e) => setError(e.message))
-              }
-            >
-              Abrir tarefa-mãe
-            </button>
-          ) : (
-            <>
-              {(initial.children || []).map((child: any) => (
+              )}
+              <button
+                type="button"
+                className="btn"
+                disabled={busy}
+                onClick={dismiss}
+              >
+                Fechar
+              </button>
+              {writable && (
+                <button className="btn primary" disabled={busy}>
+                  {busy
+                    ? "Salvando…"
+                    : item.id
+                      ? "Salvar tarefa"
+                      : "Criar tarefa"}
+                </button>
+              )}
+            </div>
+          </form>
+          {extensions && !!item.id && openChild && (
+            <section className="flow-sale-control">
+              <h3>{item.parent_id ? "Tarefa-mãe" : "Subtarefas"}</h3>
+              {item.parent_id ? (
                 <button
-                  className="flow-row"
-                  key={child.id}
+                  className="btn"
                   disabled={busy || dirty}
                   onClick={() =>
                     void api("task-item", undefined, {
                       workspace,
-                      id: child.id,
+                      id: item.parent_id!,
                     })
                       .then(openChild)
                       .catch((e) => setError(e.message))
                   }
                 >
-                  <span>
-                    <strong>{child.title}</strong>
-                    <small>{taskStatuses[child.status]}</small>
-                  </span>
+                  Abrir tarefa-mãe
                 </button>
-              ))}
-              {writable && (
-                <button
-                  className="btn"
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    openChild({
-                      item: {
-                        ...blankTask(actor),
-                        parent_id: item.id,
-                        project_id: item.project_id,
-                        visibility: item.visibility,
-                      },
-                      events: [],
-                      children: [],
-                      dates_ready: initial.dates_ready,
-                      extensions_ready: true,
-                    })
-                  }
-                >
-                  <Plus size={16} /> Nova subtarefa
-                </button>
+              ) : (
+                <>
+                  {(initial.children || []).map((child: any) => (
+                    <button
+                      className="flow-row"
+                      key={child.id}
+                      disabled={busy || dirty}
+                      onClick={() =>
+                        void api("task-item", undefined, {
+                          workspace,
+                          id: child.id,
+                        })
+                          .then(openChild)
+                          .catch((e) => setError(e.message))
+                      }
+                    >
+                      <span>
+                        <strong>{child.title}</strong>
+                        <small>{taskStatuses[child.status]}</small>
+                      </span>
+                    </button>
+                  ))}
+                  {writable && (
+                    <button
+                      className="btn"
+                      disabled={busy || dirty}
+                      onClick={() =>
+                        openChild({
+                          item: {
+                            ...blankTask(actor),
+                            parent_id: item.id,
+                            project_id: item.project_id,
+                            visibility: item.visibility,
+                          },
+                          events: [],
+                          children: [],
+                          dates_ready: initial.dates_ready,
+                          extensions_ready: true,
+                        })
+                      }
+                    >
+                      <Plus size={16} /> Nova subtarefa
+                    </button>
+                  )}
+                </>
               )}
-            </>
+            </section>
           )}
-        </section>
-      )}
-      {!!item.id && (
-        <>
-          {editable && (
+          {!!item.id && editable && (
             <button
               className="btn"
               disabled={busy || dirty}
@@ -1271,51 +1307,65 @@ export function TaskDialog({
               {item.archived ? "Restaurar tarefa" : "Arquivar tarefa"}
             </button>
           )}
-          <hr />
-          <h3>Comentários e histórico</h3>
-          {writable && (
-            <form
-              className="crm-note"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void action("task-comment", { message: comment });
-              }}
-            >
-              <Control label="Novo comentário">
-                <textarea
-                  required
-                  maxLength={2000}
-                  disabled={busy}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-              </Control>
-              <button
-                className="btn"
-                disabled={busy || dirty || !comment.trim()}
-              >
-                Publicar comentário
-              </button>
-              {dirty && (
-                <small>Salve a tarefa antes de publicar o comentário.</small>
-              )}
-            </form>
+        </section>
+        <aside className="task-dialog-activity">
+          <h3>
+            <MessageSquare size={18} /> Comentários e histórico
+          </h3>
+          {!item.id && (
+            <p className="muted">
+              Salve a tarefa para iniciar a conversa com a equipe.
+            </p>
           )}
-          <ol className="crm-history">
-            {initial.events.map((event: any) => (
-              <li key={event.id}>
-                <p>{event.message}</p>
-                <small>
-                  {event.actor_name ||
-                    people.find((p) => p.actor === event.actor)?.email ||
-                    "Membro da equipe"}{" "}
-                  · {timeLabel(event.created_at)}
-                </small>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
+          {!!item.id && (
+            <>
+              {writable && (
+                <form
+                  className="crm-note"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void action("task-comment", { message: comment });
+                  }}
+                >
+                  <Control label="Novo comentário">
+                    <textarea
+                      required
+                      maxLength={2000}
+                      disabled={busy}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+                  </Control>
+                  <button
+                    className="btn"
+                    disabled={busy || dirty || !comment.trim()}
+                  >
+                    Publicar comentário
+                  </button>
+                  {dirty && (
+                    <small>
+                      Salve a tarefa antes de publicar o comentário.
+                    </small>
+                  )}
+                </form>
+              )}
+              <ol className="crm-history">
+                {(initial.events || []).map((event: any) => (
+                  <li key={event.id}>
+                    <p>{event.message}</p>
+                    <small>
+                      {event.actor_name ||
+                        people.find((p) => p.actor === event.actor)?.email ||
+                        "Membro da equipe"}{" "}
+                      · {timeLabel(event.created_at)}
+                    </small>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+        </aside>
+      </div>
     </Modal>
   );
 }

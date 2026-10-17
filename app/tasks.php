@@ -128,7 +128,8 @@ function tasks_handle(string $action, array $u, array $in): never
         if (function_exists('flow_ready') && flow_ready()) {
             $q=db()->prepare('SELECT id,name FROM bf_flow_projects WHERE workspace_id=? ORDER BY id DESC');$q->execute([$workspace]);$projects=$q->fetchAll();
         }
-        studio_json(['opportunities'=>$opportunities,'projects'=>$projects,'extensions_ready'=>tasks_extensions_ready()]);
+        $q=db()->prepare('SELECT name FROM bf_workspaces WHERE id=?');$q->execute([$workspace]);
+        studio_json(['opportunities'=>$opportunities,'projects'=>$projects,'extensions_ready'=>tasks_extensions_ready(),'workspace_name'=>$q->fetchColumn()]);
     }
     if ($action === 'task-list') {
         $today=tasks_date($_GET['today']??null);

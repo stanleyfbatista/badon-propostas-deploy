@@ -30,6 +30,16 @@ export async function tasksTests({
   run(php, [cli, "tasks:migrate"]);
   assert.equal((await agency.req("boot")).body.tasks_ready, true);
   const actor = (await editor.req("boot")).body.profile.actor;
+  const taskOptions = await editor.req("task-options", undefined, {
+    workspace: wa,
+  });
+  assert.equal(taskOptions.status, 200);
+  assert.equal(typeof taskOptions.body.workspace_name, "string");
+  assert.ok(taskOptions.body.workspace_name.length > 0);
+  assert.equal(
+    (await other.req("task-options", undefined, { workspace: wa })).status,
+    403,
+  );
   const otherActor = (await other.req("boot")).body.profile.actor;
   const opp = (
     await editor.req("crm-create", {

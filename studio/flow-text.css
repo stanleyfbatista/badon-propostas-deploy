@@ -1,0 +1,137 @@
+.flow-rich-editor {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--crm-panel);
+}
+.flow-rich-editor:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 9%, transparent);
+}
+.flow-rich-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--crm-soft);
+}
+.flow-rich-toolbar button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.flow-rich-toolbar button:hover:not(:disabled),
+.flow-rich-toolbar button[aria-pressed="true"] {
+  color: var(--blue);
+  background: var(--crm-panel);
+}
+.flow-rich-toolbar button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.flow-tool-divider {
+  height: 23px;
+  width: 1px;
+  background: var(--line);
+  margin: 0 7px;
+}
+.flow-tools-spacer {
+  flex: 1;
+}
+.flow-rich-editor .tiptap {
+  position: relative;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-weight: 400;
+  min-height: 235px;
+  padding: 22px;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.flow-rich-editor .tiptap p,
+.flow-copy p {
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0 0 12px;
+}
+.flow-rich-editor .tiptap h2,
+.flow-rich-editor .tiptap h3 {
+  margin: 18px 0 12px;
+  font-size: 20px;
+}
+.flow-rich-editor .tiptap ul,
+.flow-rich-editor .tiptap ol {
+  padding-left: 26px;
+  margin: 12px 0;
+}
+.flow-rich-editor .tiptap li p {
+  margin: 3px 0;
+}
+.flow-rich-editor .tiptap a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.flow-rich-editor .tiptap blockquote {
+  border-left: 3px solid var(--blue);
+  padding-left: 16px;
+  margin-left: 0;
+  color: var(--muted);
+}
+.flow-rich-editor .tiptap pre {
+  background: var(--crm-soft);
+  padding: 14px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+.flow-rich-editor .tiptap code {
+  background: var(--crm-soft);
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+.flow-rich-editor .tiptap > p:only-child:has(> br:only-child)::before {
+  content: "Contexto, briefing, copy e entregas…";
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--muted);
+}
+.flow-rich-footer {
+  padding: 9px 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 10px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+.flow-rich-footer .error {
+  color: #c12838;
+}
+.flow-rich-link {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.flow-rich-link input {
+  flex: 1;
+  min-width: 140px;
+}
+.flow-rich-link small {
+  flex-basis: 100%;
+  color: #c12838;
+}
+.flow-rich-editor.readonly .tiptap {
+  background: var(--crm-soft);
+}
