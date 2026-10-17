@@ -6,6 +6,7 @@ require_once BADON_APP . '/mail.php';
 require_once BADON_APP . '/crm.php';
 require_once BADON_APP . '/tasks.php';
 require_once BADON_APP . '/flow-hub.php';
+require_once BADON_APP . '/google.php';
 header('Content-Type: application/json; charset=utf-8');
 if (!studio_ready()) studio_error(503, 'A nova versão precisa da migração studio:migrate no cPanel. O site e os formulários atuais continuam disponíveis.');
 $method = $_SERVER['REQUEST_METHOD'];
@@ -21,9 +22,10 @@ if ($method === 'POST') {
     } else $in = $_POST;
 }
 $action = text_value($_GET['action'] ?? 'boot');
-if ($method !== 'POST' && !in_array($action, ['boot', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item', 'task-list', 'task-item', 'task-options', 'task-day','flow-clients','flow-client-history','flow-projects','flow-sales','flow-sale-item','flow-overview','flow-work'], true)) studio_error(405, 'Esta ação exige POST.');
+if ($method !== 'POST' && !in_array($action, ['boot', 'google-status', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item', 'task-list', 'task-item', 'task-options', 'task-day','flow-clients','flow-client-history','flow-projects','flow-sales','flow-sale-item','flow-overview','flow-work'], true)) studio_error(405, 'Esta ação exige POST.');
 $u = studio_user();
 try {
+    if (str_starts_with($action, 'google-')) flow_google_handle($action,$u,$in);
     if ($action === 'login') {
         $email = strtolower(studio_text($in['email'] ?? '', 190));
         if (!is_string($in['email'] ?? null) || !filter_var($email, FILTER_VALIDATE_EMAIL)) studio_error(422, 'Informe um e-mail válido para continuar.');
@@ -79,7 +81,8 @@ try {
             else { $q = db()->prepare('SELECT w.*, m.role FROM bf_workspaces w JOIN bf_members m ON m.workspace_id = w.id WHERE m.user_id = ? ORDER BY w.name'); $q->execute([$u['id']]); $workspaces = $q->fetchAll(); }
         }
         $crm = crm_ready();
-        studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf'], 'remember_available' => remember_ready(), 'remembered' => $u && isset($_SESSION['remember_hash']), 'crm_ready' => $crm, 'flow_ready'=>$crm && flow_ready(), 'tasks_ready' => $crm && tasks_ready(), 'profile' => $u && $crm ? crm_profile($u) : null]);
+        $googleNotice = $_SESSION['google_notice'] ?? null; unset($_SESSION['google_notice']);
+        studio_json(['user' => $u, 'workspaces' => $workspaces, 'csrf' => $_SESSION['csrf'], 'google_available'=>flow_google_ready(), 'google_notice'=>$googleNotice, 'remember_available' => remember_ready(), 'remembered' => $u && isset($_SESSION['remember_hash']), 'crm_ready' => $crm, 'flow_ready'=>$crm && flow_ready(), 'tasks_ready' => $crm && tasks_ready(), 'profile' => $u && $crm ? crm_profile($u) : null]);
     }
     if ($action === 'logout') { remember_forget(); $_SESSION = []; session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32)); studio_json(['ok' => true]); }
     if (!$u) studio_error(401, 'Entre na sua conta para continuar.', 'session_expired');

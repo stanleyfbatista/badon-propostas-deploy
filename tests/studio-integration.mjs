@@ -946,4 +946,5 @@ export async function studioTests({
     wa,
     messages,
   });
+  console.log(run(php, ["tests/google-integration.php", cli.replace(/\/console\.php$/, "")]));
 }

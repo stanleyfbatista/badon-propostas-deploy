@@ -36,7 +36,7 @@ function studio_login(array $u, bool $agency, bool $remember = false): void
 {
     remember_forget();
     session_regenerate_id(true);
-    $_SESSION = ['csrf' => bin2hex(random_bytes(32))];
+    $_SESSION = ['csrf' => bin2hex(random_bytes(32)), 'auth_confirmed_at'=>time()];
     if ($agency) $_SESSION += ['admin_id' => (int)$u['id'], 'auth_hash' => hash('sha256', $u['password_hash']), 'last_active' => time(), 'login_at' => time()];
     else $_SESSION += ['studio_user' => (int)$u['id'], 'studio_hash' => hash('sha256', $u['password_hash']), 'studio_active' => time(), 'studio_login' => time()];
     if ($remember) remember_issue($u,$agency);

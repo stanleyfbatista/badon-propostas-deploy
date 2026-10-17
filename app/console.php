@@ -3,7 +3,21 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/bootstrap.php';
 $command = $argv[1] ?? 'help';
-if ($command === 'domain:switch') {
+if ($command === 'google:migrate') {
+    db()->exec(file_get_contents(__DIR__ . '/google-schema.sql'));
+    echo "Google preparado. Contas e tarefas preservadas; nenhuma autorização ou sincronização iniciada.\n";
+} elseif ($command === 'google:work') {
+    require __DIR__ . '/google.php';
+    if (!flow_google_ready()) exit("Google ainda não ativado.\n");
+    $actors = db()->query('SELECT actor FROM bf_google_accounts WHERE calendar_enabled=1 AND refresh_cipher IS NOT NULL ORDER BY COALESCE(last_sync,created_at) LIMIT 20')->fetchAll(PDO::FETCH_COLUMN);
+    $count = 0; $failures = 0; $begin = time();
+    foreach ($actors as $actor) {
+        if (time()-$begin > 200) break;
+        try { flow_google_sync($actor); $count++; }
+        catch (Throwable $e) { $failures++; }
+    }
+    echo "Google Agenda: $count conexões processadas; $failures pendências.\n";
+} elseif ($command === 'domain:switch') {
     require __DIR__ . '/config-domain.php';
     echo json_encode(switch_flow_domain($configPath, $argv[2] ?? '', $argv[3] ?? ''), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
 } elseif ($command === 'backup:database') {
@@ -68,5 +82,5 @@ if ($command === 'domain:switch') {
     db()->prepare('DELETE FROM rate_limits WHERE window_start < ?')->execute([time() - 172800]);
     echo "Contadores de proteção com mais de 48 horas removidos. Leads preservados.\n";
 } else {
-    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | flow:migrate | auth:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
+    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | flow:migrate | auth:migrate | google:migrate | google:work | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { GoogleConnection } from "./GoogleConnection";
 import {
   ArrowLeft,
   ArrowRight,
@@ -805,7 +806,7 @@ export function FlowWork(
               Todos os prazos das demandas em um só lugar. Clique em uma entrega
               para abrir seus detalhes.
             </p>
-            <span className="badge">Google ainda não conectado</span>
+            <GoogleConnection api={api} compact />
             <hr />
             <h3>Leve para sua agenda</h3>
             <p className="muted">

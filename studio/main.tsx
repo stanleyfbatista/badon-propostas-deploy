@@ -64,6 +64,7 @@ import { FlowUploadContext } from "./FlowFiles";
 import { FlowWelcome, accessAudience, accessUrl } from "./FlowWelcome";
 import { FlowMemberHome } from "./FlowMemberHome";
 import { validateLoginFields, LoginFieldError } from "./login-validation";
+import { GoogleConnection } from "./GoogleConnection";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -245,6 +246,11 @@ function App() {
   async function load() {
     const b = await api("boot");
     setBoot(b);
+    if (b.google_notice) {
+      if (b.google_notice.ok) setNotice(b.google_notice.message);
+      else setError(b.google_notice.message);
+      if (b.user) setView("settings");
+    }
     setView((v) =>
       v === "overview" && b.user && !b.user.agency ? "portal" : v,
     );
@@ -512,6 +518,18 @@ function App() {
                     Preencha o e-mail acima. Não é necessário informar a senha.
                     O link é de uso único e vale por 15 minutos.
                   </small>
+                </div>
+              )}
+              {!token && boot.google_available && (
+                <div className="auth-passwordless">
+                  <Button type="button" disabled={busy} onClick={(e) => {
+                    const d = new FormData(e.currentTarget.form!);
+                    task(async () => {
+                      const r = await api("google-login", { remember: d.get("remember") === "on" });
+                      window.location.assign(r.url);
+                    });
+                  }}>Entrar com Google</Button>
+                  <small>Para contas já vinculadas em Configurações. No primeiro acesso, use seu convite ou o link por e-mail.</small>
                 </div>
               )}
             </form>
@@ -922,11 +940,11 @@ function App() {
                       </button>
                     )}
                   </div>
+                  <GoogleConnection api={api} />
                   <section className="flow-panel">
                     <h2>Integrações</h2>
                     <p>
-                      Google Agenda e Asaas ainda não conectados. A exportação
-                      de calendário e a confirmação de recebimento são manuais.
+                      Asaas ainda não conectado. A confirmação de recebimento continua manual.
                     </p>
                   </section>
                 </section>

@@ -69,7 +69,7 @@ function remember_restore(): void
     if (!$same) {
         session_regenerate_id(true);
         // Retain public form receipts/tickets; authentication and CSRF are replaced.
-        unset($_SESSION['admin_id'],$_SESSION['auth_hash'],$_SESSION['studio_user'],$_SESSION['studio_hash']);
+        unset($_SESSION['admin_id'],$_SESSION['auth_hash'],$_SESSION['studio_user'],$_SESSION['studio_hash'],$_SESSION['auth_confirmed_at']);
         $_SESSION['csrf']=bin2hex(random_bytes(32));
     }
     $_SESSION['remember_hash']=$hash;

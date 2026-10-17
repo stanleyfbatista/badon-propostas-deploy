@@ -83,6 +83,8 @@ export type Boot = {
   flow_ready?: boolean;
   remember_available?: boolean;
   remembered?: boolean;
+  google_available?: boolean;
+  google_notice?: { message: string; ok: boolean } | null;
   profile?: Profile | null;
 };
 export type Profile = {

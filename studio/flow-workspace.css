@@ -1049,3 +1049,10 @@
     font-size: 12px;
   }
 }
+.google-connection { margin-top: 24px; overflow-wrap: anywhere; }
+.google-connection-heading, .google-connection h3 { display: flex; align-items: center; gap: 10px; }
+.google-connection-heading h2 { margin: 0; }
+.google-connection-block { padding: 20px 0; border-top: 1px solid var(--flow-line, #dce5f0); margin-top: 20px; }
+.google-connection .btn { margin: 6px 8px 6px 0; white-space: normal; }
+.google-connection.compact h2 { font-size: 21px; }
+.google-connection.compact .btn { width: 100%; margin-right: 0; }
