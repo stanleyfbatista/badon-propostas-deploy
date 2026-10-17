@@ -3,7 +3,16 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/bootstrap.php';
 $command = $argv[1] ?? 'help';
-if ($command === 'auth:migrate') {
+if ($command === 'backup:database') {
+    require __DIR__.'/backup.php';
+    echo json_encode(backup_database(),JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
+} elseif ($command === 'flow:migrate') {
+    require __DIR__ . '/flow-hub.php';
+    if (!studio_ready() || !crm_ready()) { fwrite(STDERR, "Execute studio:migrate e crm:migrate primeiro.\n"); exit(1); }
+    tasks_migrate();
+    flow_migrate();
+    echo "Bādon Flow preparado. Clientes, projetos e passagem comercial adicionados. Dados, contas, formulários e configuração preservados. Nenhum e-mail enviado.\n";
+} elseif ($command === 'auth:migrate') {
     db()->exec(file_get_contents(__DIR__ . '/remember-schema.sql'));
     echo "Permanecer conectado preparado. Contas e senhas preservadas. Nenhum e-mail enviado.\n";
 } elseif ($command === 'tasks:migrate') {
@@ -56,5 +65,5 @@ if ($command === 'auth:migrate') {
     db()->prepare('DELETE FROM rate_limits WHERE window_start < ?')->execute([time() - 172800]);
     echo "Contadores de proteção com mais de 48 horas removidos. Leads preservados.\n";
 } else {
-    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | auth:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
+    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | flow:migrate | auth:migrate | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
 }

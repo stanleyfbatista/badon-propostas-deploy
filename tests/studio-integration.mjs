@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { mediaTests } from "./media-integration.mjs";
 import { crmTests } from "./crm-integration.mjs";
 import { tasksTests } from "./tasks-integration.mjs";
+import { flowHubTests } from "./flow-hub-integration.mjs";
 import { rememberTests } from "./remember-integration.mjs";
 const publicDefinition = (html) =>
   JSON.parse(
@@ -817,6 +818,7 @@ export async function studioTests({
     messages,
     Api,
   });
+  await flowHubTests({base,agency,editor,reader,other,wa,wb,run,php,cli,sql,messages});
   const member = (
     await agency.req("members", undefined, { workspace: wa })
   ).body.members.find((m) => m.email === "reader@example.invalid");

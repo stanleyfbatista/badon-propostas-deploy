@@ -31,6 +31,7 @@ import {
   UserRound,
   ListChecks,
   Sun,
+  LayoutDashboard as LayoutDashboardIcon,
 } from "lucide-react";
 import {
   Boot,
@@ -55,6 +56,9 @@ import { createSessionClient } from "./session-client";
 import { Crm, ProfilePanel, Avatar } from "./Crm";
 import { Tasks } from "./Tasks";
 import { RememberChoice } from "./RememberChoice";
+import { FlowOverview, FlowClients, FlowSales, FlowProjects } from "./Flow";
+import "./flow.css";
+import { FlowUploadContext } from "./FlowFiles";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -168,11 +172,11 @@ const Brand = ({
   <a
     className="brand"
     href="/entrar"
-    aria-label="Bādon Forms — voltar ao início"
+    aria-label="Bādon Flow — voltar ao início"
     onClick={onClick}
   >
     Bādon<span>.</span>
-    <small>Forms</small>
+    <small>Flow</small>
   </a>
 );
 function SessionDialog({ children }: { children: React.ReactNode }) {
@@ -201,17 +205,26 @@ function App() {
     [busy, setBusy] = useState(false),
     [workspace, setWorkspace] = useState(0),
     [form, setForm] = useState<FormRecord | null>(null),
-    [view, setView] = useState("forms"),
+    [view, setView] = useState("overview"),
     [refresh, setRefresh] = useState(0);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [project, setProject] = useState(0);
+  function navigate(next: string, target?: number, projectId = 0) {
+    if (target) setWorkspace(target);
+    setProject(projectId);
+    setView(next);
+  }
   const [token, setToken] = useState(
     () => new URLSearchParams(location.hash.slice(1)).get("token") || "",
   );
   async function load() {
     const b = await api("boot");
     setBoot(b);
+    setView((v) =>
+      v === "overview" && b.user && !b.user.agency ? "forms" : v,
+    );
     setWorkspace((w) =>
       b.workspaces.some((x: Workspace) => Number(x.id) === w)
         ? w
@@ -256,7 +269,17 @@ function App() {
     document.documentElement.dataset.appearance =
       boot?.user &&
       !form &&
-      ["crm", "agenda", "profile", "tasks", "day"].includes(view)
+      [
+        "crm",
+        "agenda",
+        "profile",
+        "tasks",
+        "day",
+        "overview",
+        "clients",
+        "sales",
+        "projects",
+      ].includes(view)
         ? boot.profile?.appearance || "light"
         : "light";
   }, [boot?.user, boot?.profile?.appearance, form, view]);
@@ -295,16 +318,16 @@ function App() {
     return (
       <div className="login-page">
         <Brand />
-        <p className="eyebrow">SEU PRÓXIMO CONTATO COMEÇA AQUI</p>
+        <p className="eyebrow">DA PRIMEIRA CONVERSA À ENTREGA</p>
         <h1>
           {token
             ? "Seu espaço está pronto para você."
-            : "Boas perguntas. Novas conexões."}
+            : "Gente de verdade, perto do seu negócio."}
         </h1>
         <p>
           {token
             ? "Confirme o acesso. Se for seu primeiro convite, defina uma senha."
-            : "Entre para transformar perguntas em conversas que importam."}
+            : "Entre no Bādon Flow para conectar funis, clientes, projetos e demandas."}
         </p>
         {sessionExpired && (
           <p role="alert" className="notice error">
@@ -383,346 +406,423 @@ function App() {
       </div>
     );
   return (
-    <div className="app">
-      <header className="app-header">
-        <Brand
-          onClick={(event) => {
-            event.preventDefault();
-            void signOut();
-          }}
-        />
-        <div className="workspace">
-          <span>ESPAÇO DE TRABALHO</span>
-          <select
-            aria-label="Espaço de trabalho"
-            value={workspace}
-            disabled={!!form}
-            onChange={(e) => {
-              setWorkspace(Number(e.target.value));
-              setView("forms");
+    <FlowUploadContext.Provider value={session.request}>
+      <div className="app">
+        <header className="app-header">
+          <Brand
+            onClick={(event) => {
+              event.preventDefault();
+              void signOut();
             }}
-          >
-            {boot.workspaces.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="identity">
-          <button
-            className="identity-profile"
-            title="Meu perfil"
-            aria-label="Meu perfil"
-            onClick={() => {
-              if (
-                form &&
-                !confirm(
-                  "Abrir seu perfil? Alterações não salvas serão descartadas.",
+          />
+          <div className="workspace">
+            <span>ESPAÇO DE TRABALHO</span>
+            <select
+              aria-label="Espaço de trabalho"
+              value={workspace}
+              disabled={!!form}
+              onChange={(e) => {
+                setWorkspace(Number(e.target.value));
+                setProject(0);
+                setView("forms");
+              }}
+            >
+              {boot.workspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="identity">
+            <button
+              className="identity-profile"
+              title="Meu perfil"
+              aria-label="Meu perfil"
+              onClick={() => {
+                if (
+                  form &&
+                  !confirm(
+                    "Abrir seu perfil? Alterações não salvas serão descartadas.",
+                  )
                 )
-              )
-                return;
-              setForm(null);
-              setView("profile");
-            }}
-          >
-            <Avatar person={boot.profile || boot.user} />
-            <span>
-              {boot.profile?.name || boot.user.email}
-              <small>
-                {boot.user.agency
-                  ? "Agência Bādon"
-                  : {
-                      admin: "Administrador",
-                      editor: "Editor",
-                      reader: "Leitor",
-                    }[ws?.role as "admin"] || "Membro"}
-              </small>
-            </span>
-          </button>
-          <Button
-            title="Sair e voltar ao login"
-            aria-label="Sair e voltar ao login"
-            disabled={signingOut}
-            onClick={() => void signOut()}
-          >
-            <LogOut size={18} />
-          </Button>
-        </div>
-      </header>
-      {sessionExpired && (
-        <SessionDialog>
-          <h2 id="session-title">Sua sessão expirou</h2>
-          <p id="session-description">
-            Entre novamente para continuar.{" "}
-            {form
-              ? "Alterações não salvas ainda estão nesta tela e serão descartadas ao voltar ao login."
-              : "Seus formulários e respostas salvos continuam preservados."}
-          </p>
-          <Button
-            kind="primary"
-            autoFocus
-            disabled={signingOut}
-            onClick={() => void signOut()}
-          >
-            {signingOut ? "Saindo…" : "Voltar ao login"}
-          </Button>
-          {form && (
-            <Button onClick={() => setSessionExpired(false)}>
-              Voltar para conferir alterações
+                  return;
+                setForm(null);
+                setView("profile");
+              }}
+            >
+              <Avatar person={boot.profile || boot.user} />
+              <span>
+                {boot.profile?.name || boot.user.email}
+                <small>
+                  {boot.user.agency
+                    ? "Agência Bādon"
+                    : {
+                        admin: "Administrador",
+                        editor: "Editor",
+                        reader: "Leitor",
+                      }[ws?.role as "admin"] || "Membro"}
+                </small>
+              </span>
+            </button>
+            <Button
+              title="Sair e voltar ao login"
+              aria-label="Sair e voltar ao login"
+              disabled={signingOut}
+              onClick={() => void signOut()}
+            >
+              <LogOut size={18} />
             </Button>
-          )}
-          {logoutError && <p role="alert">{logoutError}</p>}
-        </SessionDialog>
-      )}
-      {!sessionExpired && logoutError && (
-        <div className="notice error banner" role="alert">
-          {logoutError} <a href="/entrar">Reabrir a página de acesso</a>
-        </div>
-      )}
-      {error && (
-        <div className="notice error banner" role="alert">
-          {error}
-          <button onClick={() => setError("")} aria-label="Fechar aviso">
-            ×
-          </button>
-        </div>
-      )}
-      {notice && (
-        <div className="notice banner" role="status">
-          {notice}
-          <button onClick={() => setNotice("")} aria-label="Fechar aviso">
-            ×
-          </button>
-        </div>
-      )}
-      {form ? (
-        <Editor
-          key={form.id}
-          initial={form}
-          editable={editable}
-          busy={busy}
-          task={task}
-          notice={setNotice}
-          close={() => {
-            setForm(null);
-            setView("forms");
-            reload();
-          }}
-        />
-      ) : (
-        <div className="workspace-body">
-          <aside className="sidebar">
-            <p className="eyebrow">SEU ESPAÇO</p>
-            <button
-              className={view === "day" ? "selected" : ""}
-              onClick={() => setView("day")}
+          </div>
+        </header>
+        {sessionExpired && (
+          <SessionDialog>
+            <h2 id="session-title">Sua sessão expirou</h2>
+            <p id="session-description">
+              Entre novamente para continuar.{" "}
+              {form
+                ? "Alterações não salvas ainda estão nesta tela e serão descartadas ao voltar ao login."
+                : "Seus formulários e respostas salvos continuam preservados."}
+            </p>
+            <Button
+              kind="primary"
+              autoFocus
+              disabled={signingOut}
+              onClick={() => void signOut()}
             >
-              <Sun size={18} /> Meu dia
-            </button>
-            <button
-              className={view === "tasks" ? "selected" : ""}
-              onClick={() => setView("tasks")}
-            >
-              <ListChecks size={18} /> Tarefas
-            </button>
-            <button
-              className={view === "crm" ? "selected" : ""}
-              onClick={() => setView("crm")}
-            >
-              <BriefcaseBusiness size={18} /> CRM
-            </button>
-            <button
-              className={view === "forms" ? "selected" : ""}
-              onClick={() => setView("forms")}
-            >
-              <FileText size={18} />
-              Formulários
-            </button>
-            <button
-              className={view === "agenda" ? "selected" : ""}
-              onClick={() => setView("agenda")}
-            >
-              <CalendarDays size={18} /> Agendamentos
-            </button>
-            {(boot.user.agency || ws?.role === "admin") && (
-              <button
-                className={view === "members" ? "selected" : ""}
-                onClick={() => setView("members")}
-              >
-                <Users size={18} />
-                Equipe e acessos
-              </button>
+              {signingOut ? "Saindo…" : "Voltar ao login"}
+            </Button>
+            {form && (
+              <Button onClick={() => setSessionExpired(false)}>
+                Voltar para conferir alterações
+              </Button>
             )}
-            {boot.user.agency && (
-              <button
-                onClick={() => setView("agency")}
-                className={view === "agency" ? "selected" : ""}
-              >
-                <Folder size={18} />
-                Clientes
-              </button>
-            )}
-            <button
-              className={view === "profile" ? "selected" : ""}
-              onClick={() => setView("profile")}
-            >
-              <UserRound size={18} /> Meu perfil
+            {logoutError && <p role="alert">{logoutError}</p>}
+          </SessionDialog>
+        )}
+        {!sessionExpired && logoutError && (
+          <div className="notice error banner" role="alert">
+            {logoutError} <a href="/entrar">Reabrir a página de acesso</a>
+          </div>
+        )}
+        {error && (
+          <div className="notice error banner" role="alert">
+            {error}
+            <button onClick={() => setError("")} aria-label="Fechar aviso">
+              ×
             </button>
-            <div className="sidebar-note">
-              <span className="dot" /> Tudo no seu domínio
-              <small>Formulários, respostas e conexões em um só lugar.</small>
-            </div>
-          </aside>
-          <main
-            className={
-              "content" +
-              (["crm", "agenda", "profile", "tasks", "day"].includes(view)
-                ? " crm-content"
-                : "")
-            }
-          >
-            {["tasks", "day"].includes(view) && !boot.tasks_ready && (
-              <section className="box">
-                <h1>Sua rotina em um só lugar.</h1>
-                <p>
-                  Para ativar Tarefas e Meu dia, execute{" "}
-                  <code>tasks:migrate</code> no Terminal do cPanel e recarregue
-                  a página. O CRM e os formulários continuam funcionando.
-                </p>
-              </section>
-            )}
-            {boot.tasks_ready &&
-              boot.profile &&
-              ["tasks", "day"].includes(view) &&
-              workspace > 0 && (
-                <Tasks
-                  key={workspace + ":" + view}
-                  api={api}
-                  workspace={workspace}
-                  actor={boot.profile.actor}
-                  editable={editable}
-                  day={view === "day"}
-                />
+          </div>
+        )}
+        {notice && (
+          <div className="notice banner" role="status">
+            {notice}
+            <button onClick={() => setNotice("")} aria-label="Fechar aviso">
+              ×
+            </button>
+          </div>
+        )}
+        {form ? (
+          <Editor
+            key={form.id}
+            initial={form}
+            editable={editable}
+            busy={busy}
+            task={task}
+            notice={setNotice}
+            close={() => {
+              setForm(null);
+              setView("forms");
+              reload();
+            }}
+          />
+        ) : (
+          <div className="workspace-body">
+            <aside className="sidebar">
+              <p className="eyebrow">SEU ESPAÇO</p>
+              {boot.user.agency && (
+                <>
+                  <button
+                    className={view === "overview" ? "selected" : ""}
+                    onClick={() => navigate("overview")}
+                  >
+                    <LayoutDashboardIcon /> Visão geral
+                  </button>
+                  <button
+                    className={view === "clients" ? "selected" : ""}
+                    onClick={() => navigate("clients")}
+                  >
+                    <Users size={18} /> Clientes
+                  </button>
+                  <button
+                    className={view === "projects" ? "selected" : ""}
+                    onClick={() => navigate("projects")}
+                  >
+                    <Folder size={18} /> Projetos
+                  </button>
+                </>
               )}
-            {["crm", "agenda", "profile"].includes(view) && !boot.crm_ready && (
-              <section className="box">
-                <h1>Uma nova área para suas conexões.</h1>
-                <p>
-                  CRM e perfis estão prontos para ativar. Execute a atualização{" "}
-                  <code>crm:migrate</code> no cPanel. Os formulários e respostas
-                  atuais continuam preservados.
-                </p>
-              </section>
-            )}
-            {boot.crm_ready &&
-              ["crm", "agenda"].includes(view) &&
-              workspace > 0 && (
-                <Crm
-                  key={workspace + ":" + view}
-                  api={api}
-                  workspace={workspace}
-                  editable={editable}
-                  agenda={view === "agenda"}
-                />
-              )}
-            {boot.crm_ready && view === "profile" && boot.profile && (
-              <ProfilePanel
-                api={api}
-                request={session.request}
-                profile={boot.profile}
-                onSaved={(profile) => setBoot({ ...boot, profile })}
-              />
-            )}
-            {view === "forms" && workspace > 0 && (
-              <FormList
-                key={workspace + ":" + refresh}
-                workspace={workspace}
-                editable={editable}
-                task={task}
-                busy={busy}
-                open={open}
-                reload={reload}
-              />
-            )}
-            {view === "members" && (
-              <Members
-                key={workspace + ":" + refresh}
-                workspace={workspace}
-                task={task}
-                busy={busy}
-                reload={reload}
-                notice={setNotice}
-              />
-            )}
-            {view === "agency" && (
-              <section>
-                <p className="eyebrow">AGÊNCIA BĀDON</p>
-                <h1>Um espaço para cada cliente.</h1>
-                <p className="muted">
-                  Cada equipe acessa somente os seus formulários e respostas.
-                </p>
-                <form
-                  className="box compact"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const d = new FormData(e.currentTarget);
-                    task(async () => {
-                      const r = await api("workspace-create", {
-                        name: d.get("name"),
-                        slug: d.get("slug"),
-                      });
-                      await load();
-                      setWorkspace(r.id);
-                      setView("forms");
-                    });
-                  }}
+              <button
+                className={view === "day" ? "selected" : ""}
+                onClick={() => setView("day")}
+              >
+                <Sun size={18} /> Meu dia
+              </button>
+              <button
+                className={view === "tasks" ? "selected" : ""}
+                onClick={() => navigate("tasks")}
+              >
+                <ListChecks size={18} /> Tarefas
+              </button>
+              <button
+                className={view === "crm" ? "selected" : ""}
+                onClick={() => setView("crm")}
+              >
+                <BriefcaseBusiness size={18} /> CRM e follow-up
+              </button>
+              {boot.user.agency && (
+                <button
+                  className={view === "sales" ? "selected" : ""}
+                  onClick={() => navigate("sales")}
                 >
-                  <Input
-                    label="Nome do cliente"
-                    name="name"
-                    required
-                    maxLength={150}
-                  />
-                  <Input
-                    label="Identificador do espaço"
-                    name="slug"
-                    required
-                    pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                    placeholder="nome-do-cliente"
-                  />
-                  <Button kind="primary" disabled={busy}>
-                    <Plus size={16} />
-                    Criar espaço
-                  </Button>
-                </form>
-                <div className="client-grid">
-                  {boot.workspaces.map((w) => (
+                  <Check size={18} /> Aprovações e pagamentos
+                </button>
+              )}
+              <button
+                className={view === "forms" ? "selected" : ""}
+                onClick={() => setView("forms")}
+              >
+                <FileText size={18} />
+                Funis e formulários
+              </button>
+              <button
+                className={view === "agenda" ? "selected" : ""}
+                onClick={() => setView("agenda")}
+              >
+                <CalendarDays size={18} /> Agendamentos
+              </button>
+              {(boot.user.agency || ws?.role === "admin") && (
+                <button
+                  className={view === "members" ? "selected" : ""}
+                  onClick={() => setView("members")}
+                >
+                  <Users size={18} />
+                  Equipe e acessos
+                </button>
+              )}
+              {boot.user.agency && (
+                <button
+                  onClick={() => setView("agency")}
+                  className={view === "agency" ? "selected" : ""}
+                >
+                  <Folder size={18} />
+                  Espaços e acessos
+                </button>
+              )}
+              <button
+                className={view === "profile" ? "selected" : ""}
+                onClick={() => setView("profile")}
+              >
+                <UserRound size={18} /> Meu perfil
+              </button>
+              <div className="sidebar-note">
+                <span className="dot" /> Tudo no seu domínio
+                <small>Da primeira conversa à entrega. Bādon Flow.</small>
+              </div>
+            </aside>
+            <main
+              className={
+                "content" +
+                (["crm", "agenda", "profile", "tasks", "day"].includes(view)
+                  ? " crm-content"
+                  : "")
+              }
+            >
+              {boot.user.agency &&
+                ["overview", "clients", "sales", "projects"].includes(view) &&
+                !boot.flow_ready && (
+                  <section className="flow-panel">
+                    <p className="eyebrow">/ BĀDON FLOW /</p>
+                    <h1>Seu negócio, conectado.</h1>
+                    <p>
+                      Para ativar clientes, projetos e a passagem comercial,
+                      execute <code>flow:migrate</code> no Terminal da
+                      hospedagem após o backup e a atualização. Formulários, CRM
+                      e tarefas existentes continuam disponíveis.
+                    </p>
                     <button
-                      className="box client"
-                      key={w.id}
-                      onClick={() => {
-                        setWorkspace(Number(w.id));
-                        setView("forms");
-                      }}
+                      className="btn primary"
+                      onClick={() => navigate("forms")}
                     >
-                      <Folder size={25} />
-                      <strong>{w.name}</strong>
-                      <ArrowRight size={18} />
+                      Abrir funis e formulários <ArrowRight size={16} />
                     </button>
-                  ))}
-                </div>
-              </section>
-            )}
-            {!workspace && (
-              <p>
-                Você ainda não pertence a um espaço. Peça um convite à Bādon.
-              </p>
-            )}
-          </main>
-        </div>
-      )}
-    </div>
+                  </section>
+                )}
+              {boot.user.agency && boot.flow_ready && view === "overview" && (
+                <FlowOverview api={api} navigate={navigate} />
+              )}
+              {boot.user.agency && boot.flow_ready && view === "clients" && (
+                <FlowClients api={api} navigate={navigate} reload={load} />
+              )}
+              {boot.user.agency && boot.flow_ready && view === "sales" && (
+                <FlowSales api={api} />
+              )}
+              {boot.user.agency &&
+                boot.flow_ready &&
+                view === "projects" &&
+                workspace > 0 && (
+                  <FlowProjects
+                    key={workspace}
+                    api={api}
+                    workspace={workspace}
+                    navigate={navigate}
+                  />
+                )}
+              {["tasks", "day"].includes(view) && !boot.tasks_ready && (
+                <section className="box">
+                  <h1>Sua rotina em um só lugar.</h1>
+                  <p>
+                    Para ativar Tarefas e Meu dia, execute{" "}
+                    <code>tasks:migrate</code> no Terminal do cPanel e
+                    recarregue a página. O CRM e os formulários continuam
+                    funcionando.
+                  </p>
+                </section>
+              )}
+              {boot.tasks_ready &&
+                boot.profile &&
+                ["tasks", "day"].includes(view) &&
+                workspace > 0 && (
+                  <Tasks
+                    key={workspace + ":" + view}
+                    api={api}
+                    workspace={workspace}
+                    actor={boot.profile.actor}
+                    editable={editable}
+                    day={view === "day"}
+                    project={project}
+                  />
+                )}
+              {["crm", "agenda", "profile"].includes(view) &&
+                !boot.crm_ready && (
+                  <section className="box">
+                    <h1>Uma nova área para suas conexões.</h1>
+                    <p>
+                      CRM e perfis estão prontos para ativar. Execute a
+                      atualização <code>crm:migrate</code> no cPanel. Os
+                      formulários e respostas atuais continuam preservados.
+                    </p>
+                  </section>
+                )}
+              {boot.crm_ready &&
+                ["crm", "agenda"].includes(view) &&
+                workspace > 0 && (
+                  <Crm
+                    key={workspace + ":" + view}
+                    api={api}
+                    workspace={workspace}
+                    editable={editable}
+                    agenda={view === "agenda"}
+                    commercial={!!boot.user.agency && !!boot.flow_ready}
+                  />
+                )}
+              {boot.crm_ready && view === "profile" && boot.profile && (
+                <ProfilePanel
+                  api={api}
+                  request={session.request}
+                  profile={boot.profile}
+                  onSaved={(profile) => setBoot({ ...boot, profile })}
+                />
+              )}
+              {view === "forms" && workspace > 0 && (
+                <FormList
+                  key={workspace + ":" + refresh}
+                  workspace={workspace}
+                  editable={editable}
+                  task={task}
+                  busy={busy}
+                  open={open}
+                  reload={reload}
+                />
+              )}
+              {view === "members" && (
+                <Members
+                  key={workspace + ":" + refresh}
+                  workspace={workspace}
+                  task={task}
+                  busy={busy}
+                  reload={reload}
+                  notice={setNotice}
+                />
+              )}
+              {view === "agency" && (
+                <section>
+                  <p className="eyebrow">AGÊNCIA BĀDON</p>
+                  <h1>Um espaço para cada cliente.</h1>
+                  <p className="muted">
+                    Cada equipe acessa somente os seus formulários e respostas.
+                  </p>
+                  <form
+                    className="box compact"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const d = new FormData(e.currentTarget);
+                      task(async () => {
+                        const r = await api("workspace-create", {
+                          name: d.get("name"),
+                          slug: d.get("slug"),
+                        });
+                        await load();
+                        setWorkspace(r.id);
+                        setView("forms");
+                      });
+                    }}
+                  >
+                    <Input
+                      label="Nome do cliente"
+                      name="name"
+                      required
+                      maxLength={150}
+                    />
+                    <Input
+                      label="Identificador do espaço"
+                      name="slug"
+                      required
+                      pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                      placeholder="nome-do-cliente"
+                    />
+                    <Button kind="primary" disabled={busy}>
+                      <Plus size={16} />
+                      Criar espaço
+                    </Button>
+                  </form>
+                  <div className="client-grid">
+                    {boot.workspaces.map((w) => (
+                      <button
+                        className="box client"
+                        key={w.id}
+                        onClick={() => {
+                          setWorkspace(Number(w.id));
+                          setView("forms");
+                        }}
+                      >
+                        <Folder size={25} />
+                        <strong>{w.name}</strong>
+                        <ArrowRight size={18} />
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {!workspace && (
+                <p>
+                  Você ainda não pertence a um espaço. Peça um convite à Bādon.
+                </p>
+              )}
+            </main>
+          </div>
+        )}
+      </div>
+    </FlowUploadContext.Provider>
   );
 }
 type Task = (fn: () => Promise<void>) => Promise<void>;

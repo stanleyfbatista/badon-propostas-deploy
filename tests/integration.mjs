@@ -8,6 +8,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { studioTests } from './studio-integration.mjs';
 import { requestHost } from './host-request.mjs';
+import {gunzipSync} from 'node:zlib';
 
 const repo = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const php = process.env.PHP_BIN || '/opt/homebrew/opt/php@8.4/bin/php';
@@ -110,7 +111,7 @@ try {
   for (const path of ['/entrar', '/painel', '/entrar/', '/painel/']) {
     const page = await guest.req(path);
     assert.equal(page.status, 200);
-    assert.ok(page.body.includes('Carregando Bādon Forms'));
+    assert.ok(page.body.includes('Carregando Bādon Flow'));
   }
   const legacyStudio = await guest.req('/admin/studio/');
   assert.equal(legacyStudio.status, 302);
@@ -291,6 +292,22 @@ try {
   assert.ok((await admin.req('/admin/')).body.includes('type="password"'));
   log('troca de senha invalida sessões anteriores');
   await studioTests({base,sql,run,php,cli,messages,recipients,Client,token,worker,setRejectMail: value => { rejectMail=value; }});
+  const backup=JSON.parse(run(php,[cli,'backup:database']));
+  assert.ok(backup.path.startsWith(fs.realpathSync(path.join(account,'badon-config/backups'))+path.sep));
+  assert.equal(fs.statSync(backup.path).mode & 0o777,0o600);
+  const dump=gunzipSync(fs.readFileSync(backup.path)).toString('utf8');
+  sql('CREATE DATABASE badon_restore CHARACTER SET utf8mb4');
+  run(path.join(mysqlBin,'mariadb'),['--no-defaults','--socket='+socket,'-u','root','badon_restore'],{input:dump});
+  for (const [table,count] of Object.entries(backup.rows)) assert.equal(Number(sql('SELECT COUNT(*) FROM badon_restore.`'+table+'`').trim()),count);
+  assert.equal(sql('SELECT HEX(content) FROM badon_restore.bf_flow_files ORDER BY id'),sql('SELECT HEX(content) FROM badon_test.bf_flow_files ORDER BY id'));
+  log('backup privado consistente, permissões 0600, restauração em banco vazio e anexos binários preservados');
+  if (process.env.BADON_FLOW_PREVIEW === '1') {
+    // Local synthetic fixture only. Never accepts a production account path.
+    run(php,[cli,'admin:password','admin@example.invalid'],{input:'Flow-local-QA-only-2026!\n',stdio:['pipe','pipe','ignore']});
+    sql('DELETE FROM badon_test.rate_limits');
+    console.log('Prévia local isolada: '+base+'/entrar');
+    await new Promise(resolve=>process.once('SIGINT',resolve));
+  }
   // Validar configuração de produção sem qualquer conexão SMTP externa.
   const productionConfig = config.replace("'environment'=>'development'", "'environment'=>'production'").replace("'base_url'=>'http:", "'base_url'=>'https:").replace("'encryption'=>'none','username'=>'','password'=>''", "'encryption'=>'tls','username'=>'test','password'=>'test'");
   fs.writeFileSync(path.join(account, 'badon-config/config.php'), productionConfig, { mode: 0o600 });

@@ -26,12 +26,14 @@ export function QuickTask({
   disabled,
   created,
   day = false,
+  project = 0,
 }: {
   api: Api;
   workspace: number;
   actor: string;
   disabled: boolean;
   day?: boolean;
+  project?: number;
   created: (id: number) => void;
 }) {
   const [draft, setDraft] = useState(() => blankTask(actor));
@@ -46,7 +48,11 @@ export function QuickTask({
     setBusy(true);
     setError("");
     try {
-      const result = await api("task-create", { ...draft, workspace });
+      const result = await api("task-create", {
+        ...draft,
+        workspace,
+        project_id: project || null,
+      });
       setDraft(blankTask(actor));
       created(Number(result.id));
       title.current?.focus();

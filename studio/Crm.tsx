@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Profile } from "./types";
 import "./crm.css";
+import { SalesControl } from "./Flow";
 
 export type Api = (
   action: string,
@@ -182,11 +183,13 @@ export function Crm({
   workspace,
   editable,
   agenda = false,
+  commercial = false,
 }: {
   api: Api;
   workspace: number;
   editable: boolean;
   agenda?: boolean;
+  commercial?: boolean;
 }) {
   const [mode, setMode] = useState(agenda ? "agenda" : "kanban");
   const [search, setSearch] = useState("");
@@ -627,6 +630,7 @@ export function Crm({
         <OpportunityDialog
           key={selected.item.id}
           initial={selected}
+          commercial={commercial}
           api={api}
           workspace={workspace}
           editable={editable}
@@ -652,6 +656,7 @@ export function OpportunityDialog({
   people,
   close,
   saved,
+  commercial = false,
 }: {
   initial: any;
   api: Api;
@@ -661,6 +666,7 @@ export function OpportunityDialog({
   people: Person[];
   close: () => void;
   saved: () => void;
+  commercial?: boolean;
 }) {
   const [item, setItem] = useState<Opportunity & { create_key?: string }>(
     initial.item,
@@ -931,6 +937,9 @@ export function OpportunityDialog({
             ))}
           </ol>
         </>
+      )}
+      {commercial && item.id > 0 && (
+        <SalesControl api={api} id={Number(item.id)} disabled={dirty || busy} />
       )}
     </Modal>
   );

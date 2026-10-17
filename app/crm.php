@@ -48,7 +48,12 @@ function crm_capture(int $leadId): void
     $q = db()->prepare("INSERT INTO bf_opportunities (workspace_id, lead_id, name, email, phone, source, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, '', ?, ?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)");
     $q->execute([$lead['workspace_id'], $leadId, $name ?: 'Contato #' . $leadId, $lead['reply_email'] ?? '', $phone, mb_substr($lead['form_title'], 0, 150), $lead['created_at'], $lead['created_at']]);
     // Idempotency: one opportunity per confirmed response, never reset an existing stage.
-    if ($q->rowCount() === 1) crm_event((int)db()->lastInsertId(), null, 'Resposta recebida pelo formulário.');
+    if ($q->rowCount() === 1) {
+        $opportunity=(int)db()->lastInsertId();
+        $flow=(bool)db()->query("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='bf_flow_sales'")->fetchColumn();
+        if ($flow) db()->prepare("UPDATE bf_opportunities SET stage='follow_up' WHERE id=?")->execute([$opportunity]);
+        crm_event($opportunity, null, $flow ? 'Resposta recebida pelo funil. Entrada automática no CRM de follow-up.' : 'Resposta recebida pelo formulário.');
+    }
 }
 function crm_migrate(): void
 {

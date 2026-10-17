@@ -465,6 +465,59 @@ São testados deploy repetido, preservação de configuração e páginas estát
 
 ## Referências técnicas
 
+### Bādon Flow — unificação de funis, CRM e clientes (17/10/2026)
+
+O painel React passa a se chamar **Bādon Flow**. O motor de formulários, URLs públicas,
+contas, permissões, CRM, agenda e dados anteriores continuam na mesma aplicação PHP/MySQL.
+O protótipo separado não é uma fonte de dados de produção e não é sobrescrito nem importado.
+
+Fluxo novo: resposta confirmada → CRM em follow-up → aprovação comercial interna →
+recebimento conferido manualmente → cliente novo ou vínculo explícito com cliente existente.
+Cadastros diretos continuam disponíveis em **Clientes → Novo cliente**, inclusive vinculando
+um espaço anterior sem mover seus dados. Documento/e-mail normalizados impedem duplicidade;
+reenvios de criação e de confirmação de pagamento são idempotentes.
+
+Inclui visão geral, clientes em cards/lista com busca e filtros, briefing, diretrizes de marca,
+contrato e vigência, materiais, histórico comercial, projetos identificados por código,
+tarefas/subtarefas, etiquetas, capas, links e formatação básica de texto.
+Prazos de hoje até 3 dias recebem destaque âmbar; vencidos, vermelho.
+Contratos avisam conforme a antecedência configurada no perfil (30 dias por padrão).
+
+Documentos do cadastro e histórico comercial são exclusivos da agência. Membros mantêm
+o acesso aos espaços autorizados; tarefas particulares continuam visíveis somente ao criador.
+Uploads JPG/PNG/WebP/PDF: 2 MB por arquivo e 100 MB por espaço, armazenados no banco,
+servidos com autenticação. Anexos de tarefas seguem a permissão atual da tarefa.
+Remover um link não apaga o arquivo do banco; retenção/exclusão administrativa é etapa posterior.
+
+**Limites explícitos:** Asaas, Google Calendar e notificações push não estão conectados.
+Registrar recebimento não cobra, não verifica banco e não assina contrato. Aprovação
+comercial não é assinatura digital. Menções com notificação e aprovação versionada de
+criativos do protótipo ainda precisam de implementação no backend. Não há importação
+automática de dados locais do protótipo. O envio de e-mail continua sujeito à pausa
+operacional descrita acima; esta atualização não muda SMTP, DNS ou Cron.
+
+Publicação:
+
+1. Fazer backup privado do banco e do código atual, fora de public_html.
+   O novo utilitário CLI `backup:database` gera SQL gzip privado em
+   `badon-config/backups/`, com checksum e contagens. Só lê tabelas InnoDB;
+   restaurar exclusivamente em banco vazio e verificar antes de qualquer troca.
+2. Executar build/testes localmente, enviar o commit e atualizar o repositório no cPanel.
+3. Publicar o HEAD usando o deploy existente (a configuração privada não é sobrescrita).
+4. No Terminal da hospedagem: `php /home/produ7943464/badon-app/console.php flow:migrate`.
+   A migração é aditiva/repetível e não envia e-mails. Exige studio:migrate e crm:migrate
+   já aplicados; prepara também a extensão de tarefas.
+5. Verificar /entrar, /painel, formulários existentes, clientes e permissões. Não inserir
+   clientes ou pagamentos fictícios em produção.
+
+Antes da migração, as novas áreas mostram instruções de ativação e as antigas continuam
+acessíveis. Para rollback de interface, publicar o commit anterior sem remover as novas
+tabelas/colunas. Não restaurar banco cegamente após novas entradas: conciliar os dados antes.
+
+QA isolado: `BADON_FLOW_PREVIEW=1 npm test` pausa após os testes com dados fictícios.
+A senha exibida no código do teste só existe no banco temporário; nunca é usada na hospedagem.
+Interromper com SIGINT continua as verificações finais e encerra os processos locais.
+
 - [PHPMailer oficial](https://github.com/PHPMailer/PHPMailer/tree/v7.1.1)
 - [Segurança de sessões PHP](https://www.php.net/manual/en/session.security.ini.php)
 - [PDO prepared statements](https://www.php.net/manual/en/pdo.prepared-statements.php)

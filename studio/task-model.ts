@@ -30,6 +30,13 @@ export type TaskItem = {
   checklist: { id: string; text: string; done: boolean }[];
   archived: number;
   create_key?: string;
+  project_id?: number | null;
+  parent_id?: number | null;
+  extras?: {
+    tags: string[];
+    links: { name: string; url: string }[];
+    cover: string;
+  };
 };
 export function todayLocal() {
   const d = new Date();

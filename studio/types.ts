@@ -80,6 +80,7 @@ export type Boot = {
   workspaces: Workspace[];
   crm_ready?: boolean;
   tasks_ready?: boolean;
+  flow_ready?: boolean;
   remember_available?: boolean;
   remembered?: boolean;
   profile?: Profile | null;

@@ -22,6 +22,8 @@ import {
   isoDate,
 } from "./Crm";
 import "./tasks.css";
+import { FlowTextEditor } from "./FlowText";
+import { FlowUpload } from "./FlowFiles";
 import { TaskList, QuickTask } from "./TaskList";
 import {
   taskStatuses,
@@ -69,6 +71,14 @@ export function TaskCard({
     item.status !== "done" && !!item.due_date && item.due_date < today;
   return (
     <article className={"task-card task-" + item.status}>
+      {item.extras?.cover && (
+        <img
+          className="flow-task-cover"
+          src={item.extras.cover}
+          alt=""
+          referrerPolicy="no-referrer"
+        />
+      )}
       <div className="task-card-top">
         <button
           className={"task-check " + (item.status === "done" ? "checked" : "")}
@@ -96,6 +106,10 @@ export function TaskCard({
           {taskPriorities[item.priority]}
         </span>
         <span>{taskStatuses[item.status]}</span>
+        {item.parent_id && <span>Subtarefa</span>}
+        {item.extras?.tags.map((tag) => (
+          <span key={tag}>{tag}</span>
+        ))}
       </div>
       {item.opportunity_id && (
         <button className="task-link" disabled={busy} onClick={openOpportunity}>
@@ -137,12 +151,14 @@ export function Tasks({
   actor,
   editable,
   day = false,
+  project = 0,
 }: {
   api: Api;
   workspace: number;
   actor: string;
   editable: boolean;
   day?: boolean;
+  project?: number;
 }) {
   const [today, setToday] = useState(todayLocal);
   const [mode, setMode] = useState("list");
@@ -185,6 +201,7 @@ export function Tasks({
         day: day ? 1 : 0,
         archived: archived ? 1 : 0,
         page,
+        project,
       })
         .then((r) => {
           if (alive) setData(r);
@@ -211,6 +228,7 @@ export function Tasks({
     archived,
     page,
     refresh,
+    project,
   ]);
   useEffect(() => {
     if (!day) return;
@@ -263,9 +281,15 @@ export function Tasks({
   };
   const addTask = (status = "todo", due: string | null = null) =>
     setSelected({
-      item: { ...blankTask(actor), status, due_date: due },
+      item: {
+        ...blankTask(actor),
+        status,
+        due_date: due,
+        project_id: project || null,
+      },
       events: [],
       dates_ready: !!data?.dates_ready,
+      extensions_ready: !!data?.extensions_ready,
     });
   const updateTask = (item: TaskItem, changes: Partial<TaskItem>) =>
     void run(async () => {
@@ -319,9 +343,16 @@ export function Tasks({
           · horário e dia deste dispositivo
         </p>
       )}
+      {!!project && (
+        <p className="notice">
+          Projeto BD-{String(project).padStart(4, "0")} · As novas demandas
+          serão vinculadas a este projeto. Use Tarefas no menu para ver todas.
+        </p>
+      )}
       {editable && !archived && (
         <QuickTask
           api={api}
+          project={project}
           workspace={workspace}
           actor={actor}
           day={day}
@@ -630,6 +661,7 @@ export function Tasks({
       </p>
       {selected && (
         <TaskDialog
+          key={selected.item.id}
           initial={selected}
           people={people}
           actor={actor}
@@ -638,6 +670,7 @@ export function Tasks({
           editable={editable}
           close={() => setSelected(null)}
           saved={reload}
+          openChild={setSelected}
         />
       )}
       {crm && (
@@ -665,6 +698,7 @@ export function TaskDialog({
   editable,
   close,
   saved,
+  openChild,
 }: {
   initial: any;
   people: Person[];
@@ -674,6 +708,7 @@ export function TaskDialog({
   editable: boolean;
   close: () => void;
   saved: () => void;
+  openChild?: (item: any) => void;
 }) {
   const [item, setItem] = useState<TaskItem>(initial.item);
   const [dirty, setDirty] = useState(false);
@@ -683,6 +718,8 @@ export function TaskDialog({
   const [search, setSearch] = useState("");
   const [options, setOptions] = useState<any[]>([]);
   const [optionsError, setOptionsError] = useState("");
+  const [projects, setProjects] = useState<any[]>([]);
+  const [extensions, setExtensions] = useState(!!initial.extensions_ready);
   useEffect(() => {
     if (!editable || item.archived) return;
     let alive = true;
@@ -690,7 +727,11 @@ export function TaskDialog({
     const timer = setTimeout(() => {
       api("task-options", undefined, { workspace, search })
         .then((r) => {
-          if (alive) setOptions(r.opportunities);
+          if (alive) {
+            setOptions(r.opportunities);
+            setProjects(r.projects || []);
+            setExtensions(!!r.extensions_ready);
+          }
         })
         .catch((e) => {
           if (alive) setOptionsError(e.message);
@@ -753,15 +794,171 @@ export function TaskDialog({
               onChange={(e) => change("title", e.target.value)}
             />
           </Control>
-          <Control label="Descrição e informações da tarefa">
-            <textarea
-              rows={6}
-              placeholder="Contexto, briefing, links de referência e o que precisa ser entregue…"
-              maxLength={10000}
+          <div className="control">
+            <span>Descrição e informações da tarefa</span>
+            <FlowTextEditor
               value={item.description}
-              onChange={(e) => change("description", e.target.value)}
+              onChange={(v) => change("description", v)}
+              disabled={!writable || busy}
             />
-          </Control>
+          </div>
+          {extensions && (
+            <div className="flow-task-extras">
+              <Control
+                label={
+                  item.parent_id ? "Projeto herdado da tarefa-mãe" : "Projeto"
+                }
+              >
+                <select
+                  disabled={!!item.parent_id}
+                  value={item.project_id || ""}
+                  onChange={(e) =>
+                    change("project_id", Number(e.target.value) || null)
+                  }
+                >
+                  <option value="">Sem projeto</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      BD-{String(p.id).padStart(4, "0")} · {p.name}
+                    </option>
+                  ))}
+                </select>
+              </Control>
+              <Control label="Etiquetas (separadas por vírgula)">
+                <input
+                  value={(item.extras?.tags || []).join(",")}
+                  maxLength={820}
+                  onChange={(e) =>
+                    change("extras", {
+                      links: [],
+                      cover: "",
+                      ...item.extras,
+                      tags: e.target.value.split(","),
+                    })
+                  }
+                />
+              </Control>
+              <Control label="Capa · URL HTTPS">
+                <input
+                  type="text"
+                  value={item.extras?.cover || ""}
+                  onChange={(e) =>
+                    change("extras", {
+                      tags: [],
+                      links: [],
+                      ...item.extras,
+                      cover: e.target.value,
+                    })
+                  }
+                />
+              </Control>
+              {!!item.id && (
+                <FlowUpload
+                  workspace={workspace}
+                  task={item.id}
+                  images
+                  label="Enviar capa da tarefa"
+                  done={(f) =>
+                    change("extras", {
+                      tags: [],
+                      links: [],
+                      ...item.extras,
+                      cover: f.url,
+                    })
+                  }
+                />
+              )}
+              <p className="muted">Links de arquivos e referências</p>
+              {(item.extras?.links || []).map((link, i) => (
+                <div className="flow-resource" key={i}>
+                  <input
+                    aria-label={"Nome do link " + (i + 1)}
+                    required
+                    value={link.name}
+                    onChange={(e) =>
+                      change("extras", {
+                        tags: [],
+                        cover: "",
+                        ...item.extras,
+                        links: item.extras!.links.map((l, j) =>
+                          i === j ? { ...l, name: e.target.value } : l,
+                        ),
+                      })
+                    }
+                  />
+                  <input
+                    type="text"
+                    aria-label={"Endereço do link " + (i + 1)}
+                    required
+                    value={link.url}
+                    onChange={(e) =>
+                      change("extras", {
+                        tags: [],
+                        cover: "",
+                        ...item.extras,
+                        links: item.extras!.links.map((l, j) =>
+                          i === j ? { ...l, url: e.target.value } : l,
+                        ),
+                      })
+                    }
+                  />
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    Abrir
+                  </a>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() =>
+                      change("extras", {
+                        tags: [],
+                        cover: "",
+                        ...item.extras,
+                        links: item.extras!.links.filter((_, j) => i !== j),
+                      })
+                    }
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn"
+                onClick={() =>
+                  change("extras", {
+                    tags: [],
+                    cover: "",
+                    ...item.extras,
+                    links: [
+                      ...(item.extras?.links || []),
+                      { name: "", url: "" },
+                    ],
+                  })
+                }
+              >
+                Adicionar link
+              </button>
+              {!!item.id ? (
+                <FlowUpload
+                  workspace={workspace}
+                  task={item.id}
+                  done={(f) =>
+                    change("extras", {
+                      tags: [],
+                      cover: "",
+                      ...item.extras,
+                      links: [
+                        ...(item.extras?.links || []),
+                        { name: f.name, url: f.url },
+                      ],
+                    })
+                  }
+                />
+              ) : (
+                <small>Salve a tarefa para enviar anexos privados.</small>
+              )}
+            </div>
+          )}
           <div className="task-fields-grid">
             <Control label="Status">
               <select
@@ -976,6 +1173,72 @@ export function TaskDialog({
           )}
         </div>
       </form>
+      {extensions && !!item.id && openChild && (
+        <section className="flow-sale-control">
+          <h3>{item.parent_id ? "Tarefa-mãe" : "Subtarefas"}</h3>
+          {item.parent_id ? (
+            <button
+              className="btn"
+              disabled={busy || dirty}
+              onClick={() =>
+                void api("task-item", undefined, {
+                  workspace,
+                  id: item.parent_id!,
+                })
+                  .then(openChild)
+                  .catch((e) => setError(e.message))
+              }
+            >
+              Abrir tarefa-mãe
+            </button>
+          ) : (
+            <>
+              {(initial.children || []).map((child: any) => (
+                <button
+                  className="flow-row"
+                  key={child.id}
+                  disabled={busy || dirty}
+                  onClick={() =>
+                    void api("task-item", undefined, {
+                      workspace,
+                      id: child.id,
+                    })
+                      .then(openChild)
+                      .catch((e) => setError(e.message))
+                  }
+                >
+                  <span>
+                    <strong>{child.title}</strong>
+                    <small>{taskStatuses[child.status]}</small>
+                  </span>
+                </button>
+              ))}
+              {writable && (
+                <button
+                  className="btn"
+                  disabled={busy || dirty}
+                  onClick={() =>
+                    openChild({
+                      item: {
+                        ...blankTask(actor),
+                        parent_id: item.id,
+                        project_id: item.project_id,
+                        visibility: item.visibility,
+                      },
+                      events: [],
+                      children: [],
+                      dates_ready: initial.dates_ready,
+                      extensions_ready: true,
+                    })
+                  }
+                >
+                  <Plus size={16} /> Nova subtarefa
+                </button>
+              )}
+            </>
+          )}
+        </section>
+      )}
       {!!item.id && (
         <>
           {editable && (

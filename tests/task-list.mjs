@@ -145,6 +145,7 @@ let resolve;
 let fail = true;
 const props = {
   workspace: 17,
+  project: 23,
   actor: "u:4",
   disabled: false,
   created: (id) => created.push(id),
@@ -202,6 +203,7 @@ assert.equal(
   "Retries keep the same idempotency key",
 );
 assert.equal(calls[1].data.workspace, 17);
+assert.equal(calls[1].data.project_id, 23);
 assert.equal(calls[1].data.assignee, "u:4");
 assert.equal(calls[1].data.status, "review");
 assert.equal(calls[1].data.due_date, "2027-02-01");
