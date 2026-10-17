@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import "./flow-welcome.css";
+import "./flow-portal.css";
 
 export function FlowPreview() {
   return (
@@ -168,16 +169,34 @@ function PreviewCard({
   );
 }
 
+export type AccessAudience = "client" | "team";
+export function accessAudience(search: string): AccessAudience {
+  return new URLSearchParams(search).get("acesso") === "equipe"
+    ? "team"
+    : "client";
+}
+export function accessUrl(audience: AccessAudience, login = false) {
+  return (
+    (login ? "/entrar" : "/") +
+    "?acesso=" +
+    (audience === "team" ? "equipe" : "cliente")
+  );
+}
+
 export function FlowWelcome({
   children,
   initialOpen = false,
   sessionExpired = false,
+  initialAudience = "client",
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode | ((audience: AccessAudience) => React.ReactNode);
   initialOpen?: boolean;
   sessionExpired?: boolean;
+  initialAudience?: AccessAudience;
 }) {
+  const [audience, setAudience] = useState<AccessAudience>(initialAudience);
   const [loginOpen, setLoginOpen] = useState(initialOpen || sessionExpired);
+  const team = audience === "team";
   const dialog = useRef<HTMLDialogElement>(null);
   const primaryLogin = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -207,16 +226,25 @@ export function FlowWelcome({
       else primaryLogin.current?.focus();
     };
   }, [loginOpen]);
+  function choose(next: AccessAudience) {
+    setAudience(next);
+    history.replaceState(null, "", accessUrl(next));
+  }
   function openLogin() {
-    history.replaceState(null, "", "/entrar");
+    history.replaceState(null, "", accessUrl(audience, true));
     setLoginOpen(true);
   }
   function closeLogin() {
-    history.replaceState(null, "", "/");
+    history.replaceState(null, "", accessUrl(audience));
     setLoginOpen(false);
   }
   return (
-    <div className="flow-welcome">
+    <div
+      className={
+        "flow-welcome welcome-private " +
+        (team ? "welcome-for-team" : "welcome-for-client")
+      }
+    >
       <a className="welcome-skip" href="#welcome-main">
         Pular para o conteúdo
       </a>
@@ -225,13 +253,20 @@ export function FlowWelcome({
           Bādon<span>.</span>
           <em>flow</em>
         </a>
-        <nav aria-label="Navegação principal">
-          <a href="#como-funciona">A plataforma</a>
-          <a href="https://produtorabadon.com/">
-            Conheça a Bādon <ArrowUpRight size={15} />
-          </a>
-          <button ref={primaryLogin} onClick={openLogin}>
-            Entrar <ArrowUpRight size={16} />
+        <nav aria-label="Escolha seu acesso">
+          <button
+            className={"welcome-access-choice " + (!team ? "is-active" : "")}
+            aria-pressed={!team}
+            onClick={() => choose("client")}
+          >
+            Cliente ou parceiro
+          </button>
+          <button
+            className={"welcome-access-choice " + (team ? "is-active" : "")}
+            aria-pressed={team}
+            onClick={() => choose("team")}
+          >
+            Equipe Bādon
           </button>
         </nav>
       </header>
@@ -239,150 +274,165 @@ export function FlowWelcome({
         <section className="welcome-hero" aria-labelledby="welcome-title">
           <div className="welcome-intro">
             <p className="welcome-kicker">
-              <span /> GESTÃO COM A PROXIMIDADE DA BĀDON
+              <span />{" "}
+              {team
+                ? "ESPAÇO DE TRABALHO · EQUIPE BĀDON"
+                : "SEU ESPAÇO COM A BĀDON · CLIENTES E PARCEIROS"}
             </p>
             <h1 id="welcome-title">
-              Seu próximo nível
-              <br />
-              começa com <span>clareza.</span>
+              {team ? (
+                <>
+                  Bom trabalho
+                  <br />
+                  começa com <span>clareza.</span>
+                </>
+              ) : (
+                <>
+                  Seu negócio
+                  <br />
+                  em movimento.
+                  <br />
+                  <span>A gente, com você.</span>
+                </>
+              )}
             </h1>
             <p className="welcome-lead">
-              Menos informação espalhada.
-              <br />
-              Mais espaço para fazer acontecer.
+              {team ? (
+                <>
+                  Um time. Um lugar.
+                  <br />
+                  Vamos fazer acontecer.
+                </>
+              ) : (
+                <>
+                  Cada ideia, um próximo passo.
+                  <br />
+                  Cada entrega, uma construção juntos.
+                </>
+              )}
             </p>
             <p className="welcome-description">
-              Clientes, projetos, campanhas e entregas em um só lugar. Um fluxo
-              simples para conectar sua equipe e acompanhar cada próximo passo.
+              {team
+                ? "Este é o nosso espaço de trabalho. Entre para organizar a rotina, acompanhar as demandas e cuidar de cada projeto com a proximidade da Bādon."
+                : "Este espaço é seu. Acompanhe seus projetos, veja o andamento das demandas e encontre os arquivos e referências das entregas. Tudo mais perto de você."}
             </p>
             <div className="welcome-actions">
-              <button className="welcome-primary" onClick={openLogin}>
-                Entrar no Bādon Flow <ArrowUpRight size={20} />
+              <button
+                ref={primaryLogin}
+                className="welcome-primary"
+                onClick={openLogin}
+              >
+                {team ? "Acessar espaço da equipe" : "Acessar meu espaço"}{" "}
+                <ArrowUpRight size={20} />
               </button>
-              <a href="#como-funciona">
-                Conhecer a plataforma <ArrowDown size={16} />
-              </a>
             </div>
-            <div className="welcome-people">
-              <div>
-                <img
-                  src="/assets/img/hero-stanley.webp"
-                  alt="Stanley Batista"
-                  width="44"
-                  height="44"
-                />
-                <img
-                  src="/assets/img/guilherme-domerio.jpg"
-                  alt="Guilherme Domério"
-                  width="44"
-                  height="44"
-                />
-              </div>
-              <p>
-                Estratégia, criação e execução.
-                <br />
-                <strong>Com gente de verdade ao seu lado.</strong>
-              </p>
-            </div>
+            <p className="welcome-access-note">
+              <CheckCheck size={16} />{" "}
+              {team
+                ? "Acesso exclusivo para a equipe e membros autorizados."
+                : "Acesso exclusivo para clientes e parceiros convidados."}
+            </p>
+            <p className="welcome-access-help">
+              Primeiro acesso? Use o convite enviado pela Bādon.
+              <br />
+              Ainda não recebeu? Fale com a pessoa que acompanha seu projeto.
+            </p>
           </div>
-          <div className="welcome-visual">
-            <div className="welcome-orbit" aria-hidden="true" />
-            <FlowPreview />
-            <div className="welcome-floating-note">
-              <span>
-                <CheckCheck size={22} />
-              </span>
-              <div>
-                <strong>Clareza para o próximo passo.</strong>
-                <small>Sua equipe e seu cliente, mais próximos.</small>
+          {team ? (
+            <div className="welcome-visual">
+              <div className="welcome-orbit" aria-hidden="true" />
+              <FlowPreview />
+              <div className="welcome-floating-note">
+                <span>
+                  <CheckCheck size={22} />
+                </span>
+                <div>
+                  <strong>Da ideia à entrega, juntos.</strong>
+                  <small>Nosso time, nossos próximos passos.</small>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="welcome-client-photo">
+              <div className="welcome-portraits">
+                <figure>
+                  <img
+                    src="/assets/img/hero-stanley.webp"
+                    alt="Stanley Batista, gestor de marketing da Bādon"
+                    width="900"
+                    height="900"
+                    fetchPriority="high"
+                  />
+                  <figcaption>
+                    Stanley Batista<small>Gestão de marketing</small>
+                  </figcaption>
+                </figure>
+                <figure>
+                  <img
+                    src="/assets/img/guilherme-domerio.jpg"
+                    alt="Guilherme Domério, gestor comercial da Bādon"
+                    width="1170"
+                    height="1157"
+                  />
+                  <figcaption>
+                    Guilherme Domério<small>Gestão comercial</small>
+                  </figcaption>
+                </figure>
+              </div>
+              <div className="welcome-client-signature">
+                <span>/ BĀDON + VOCÊ /</span>
+                <h2>
+                  Gente de verdade,
+                  <br />
+                  perto do seu negócio.
+                </h2>
+                <ArrowUpRight size={28} />
+              </div>
+            </div>
+          )}
         </section>
         <section
-          className="welcome-workflow"
-          id="como-funciona"
-          aria-labelledby="workflow-title"
+          className="welcome-access-details"
+          aria-labelledby="access-details-title"
         >
           <div>
-            <p className="welcome-kicker">/ DA PRIMEIRA CONVERSA À ENTREGA /</p>
-            <h2 id="workflow-title">Cada etapa encontra seu lugar.</h2>
-          </div>
-          <ol>
-            {[
-              {
-                icon: FileText,
-                title: "Formulários",
-                text: "A conversa começa com as informações certas.",
-              },
-              {
-                icon: MessageSquare,
-                title: "CRM",
-                text: "Contatos e próximos passos sempre à vista.",
-              },
-              {
-                icon: Users,
-                title: "Clientes",
-                text: "Um espaço para cada relação e cada projeto.",
-              },
-              {
-                icon: CheckCheck,
-                title: "Demandas e entregas",
-                text: "Responsáveis, prazos e aprovações conectados.",
-              },
-            ].map((step, index) => (
-              <li key={step.title}>
-                <span className="workflow-number">
-                  0{index + 1} <step.icon size={20} />
-                </span>
-                <h3>{step.title}</h3>
-                <p>{step.text}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-        <section className="welcome-team" aria-labelledby="welcome-team-title">
-          <div className="welcome-team-copy">
-            <p className="welcome-kicker">/ TECNOLOGIA QUE APROXIMA /</p>
-            <h2 id="welcome-team-title">
-              Gente de verdade,
-              <br />
-              perto do seu negócio.
+            <p className="welcome-kicker">/ CADA PASSO, MAIS PRÓXIMO /</p>
+            <h2 id="access-details-title">
+              {team
+                ? "Clareza para fazer acontecer."
+                : "Seu projeto tem um lugar aqui."}
             </h2>
-            <p>
-              Por trás de cada projeto, tem gente. O Flow é o nosso espaço para
-              trocar ideias, organizar o trabalho e construir os próximos passos
-              com você.
-            </p>
-            <a href="https://produtorabadon.com/">
-              Conheça a Produtora Bādon <ArrowUpRight size={20} />
-            </a>
           </div>
-          <div className="welcome-portraits">
-            <figure>
-              <img
-                src="/assets/img/hero-stanley.webp"
-                alt="Stanley Batista, gestor de marketing da Bādon"
-                width="900"
-                height="900"
-                loading="lazy"
-              />
-              <figcaption>
-                Stanley Batista<small>Gestão de marketing</small>
-              </figcaption>
-            </figure>
-            <figure>
-              <img
-                src="/assets/img/guilherme-domerio.jpg"
-                alt="Guilherme Domério, gestor comercial da Bādon"
-                width="1170"
-                height="1157"
-                loading="lazy"
-              />
-              <figcaption>
-                Guilherme Domério<small>Gestão comercial</small>
-              </figcaption>
-            </figure>
+          <div>
+            <FileText />
+            <h3>{team ? "Projetos organizados" : "Seus projetos"}</h3>
+            <p>
+              {team
+                ? "Clientes e entregas no mesmo fluxo de trabalho."
+                : "Acompanhe o que estamos construindo juntos."}
+            </p>
+          </div>
+          <div>
+            <CheckCheck />
+            <h3>
+              {team ? "Rotina em movimento" : "Demandas e próximos passos"}
+            </h3>
+            <p>
+              {team
+                ? "Responsáveis, prioridades e prazos à vista."
+                : "Veja o andamento e converse sobre cada entrega."}
+            </p>
+          </div>
+          <div>
+            <MessageSquare />
+            <h3>
+              {team ? "Informações conectadas" : "Arquivos e referências"}
+            </h3>
+            <p>
+              {team
+                ? "Contexto e materiais junto de cada demanda."
+                : "Encontre os materiais e links dentro das demandas."}
+            </p>
           </div>
         </section>
       </main>
@@ -391,7 +441,7 @@ export function FlowWelcome({
           Bādon<span>.</span>
           <em>flow</em>
         </a>
-        <p>Um lugar para fazer acontecer.</p>
+        <p>Um espaço de trabalho e relacionamento da Produtora Bādon.</p>
         <a href="https://produtorabadon.com/privacidade/">
           Privacidade <ArrowUpRight size={14} />
         </a>
@@ -426,7 +476,7 @@ export function FlowWelcome({
           >
             <X size={22} />
           </button>
-          {children}
+          {typeof children === "function" ? children(audience) : children}
         </dialog>
       )}
     </div>

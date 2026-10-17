@@ -521,6 +521,20 @@ export async function flowHubTests({
     ).trim(),
     "follow_up",
   );
+  // Member home uses only membership-scoped APIs; choosing an entrance is not authorization.
+  const portalProject = await agency.req('flow-project-create', {workspace: wa, name: 'Projeto do portal', description: 'Detalhe interno não exposto pelo resumo', create_key: randomUUID()});
+  assert.equal(portalProject.status, 200, JSON.stringify(portalProject.body));
+  const portalOptions = await reader.req('task-options', undefined, {workspace: wa});
+  assert.equal(portalOptions.status, 200);
+  const visibleProject = portalOptions.body.projects.find(p => Number(p.id) === Number(portalProject.body.id));
+  assert.deepEqual(Object.keys(visibleProject).sort(), ['id', 'name']);
+  assert.equal((await reader.req('task-options', undefined, {workspace: wb, acesso: 'equipe'})).status, 403);
+  assert.equal((await reader.req('task-list', undefined, {workspace: wb, today: '2027-01-05', acesso: 'equipe'})).status, 403);
+  assert.equal((await reader.req('flow-clients', undefined, {acesso: 'equipe'})).status, 403);
+  const portalTasks = await reader.req('task-list', undefined, {workspace: wa, today: '2027-01-05'});
+  assert.equal(portalTasks.status, 200);
+  const portalReader = (await reader.req('boot')).body.user;
+  assert.ok(portalTasks.body.items.every(t => t.visibility === 'team' || t.creator === 'u:' + portalReader.id));
   assert.equal(messages.length, mails);
   console.log(
     "OK: Bādon Flow, migração repetível sem perdas, clientes diretos/vinculados, projetos, subtarefas, isolamento, aprovação, pagamento manual idempotente e captura no follow-up.",

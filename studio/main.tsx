@@ -61,7 +61,8 @@ import { FlowHome, FlowWork, FlowClientSpace } from "./FlowWorkspace";
 import "./flow.css";
 import "./flow-workspace.css";
 import { FlowUploadContext } from "./FlowFiles";
-import { FlowWelcome } from "./FlowWelcome";
+import { FlowWelcome, accessAudience, accessUrl } from "./FlowWelcome";
+import { FlowMemberHome } from "./FlowMemberHome";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -227,7 +228,7 @@ function App() {
     const b = await api("boot");
     setBoot(b);
     setView((v) =>
-      v === "overview" && b.user && !b.user.agency ? "forms" : v,
+      v === "overview" && b.user && !b.user.agency ? "portal" : v,
     );
     setWorkspace((w) =>
       b.workspaces.some((x: Workspace) => Number(x.id) === w)
@@ -239,7 +240,12 @@ function App() {
     const expired = () => setSessionExpired(true);
     window.addEventListener("badon-session-expired", expired);
     load().catch((e) => setError(e.message));
-    if (token) history.replaceState(null, "", location.pathname);
+    if (token)
+      history.replaceState(
+        null,
+        "",
+        accessUrl(accessAudience(location.search), true),
+      );
     return () => window.removeEventListener("badon-session-expired", expired);
   }, []);
   async function signOut() {
@@ -269,9 +275,9 @@ function App() {
       boot.user && !token
         ? "/painel"
         : !token && location.pathname === "/"
-          ? "/"
-          : "/entrar";
-    if (location.pathname !== path || location.hash)
+          ? accessUrl(accessAudience(location.search))
+          : accessUrl(accessAudience(location.search), true);
+    if (location.pathname + location.search !== path || location.hash)
       history.replaceState(null, "", path);
   }, [boot?.user, token]);
   useEffect(() => {
@@ -328,97 +334,113 @@ function App() {
       <FlowWelcome
         initialOpen={!!token || location.pathname !== "/"}
         sessionExpired={sessionExpired}
+        initialAudience={accessAudience(location.search)}
       >
-        <div className="login-page">
-          <Brand />
-          <p className="eyebrow">DA PRIMEIRA CONVERSA À ENTREGA</p>
-          <h1 id="welcome-login-title">
-            {token
-              ? "Seu espaço está pronto para você."
-              : "Bom ter você por aqui."}
-          </h1>
-          <p>
-            {token
-              ? "Confirme o acesso. Se for seu primeiro convite, defina uma senha."
-              : "Entre no Bādon Flow para conectar funis, clientes, projetos e demandas."}
-          </p>
-          {sessionExpired && (
-            <p role="alert" className="notice error">
-              Sua sessão expirou. <a href="/entrar">Voltar ao login</a> para
-              tentar novamente.
+        {(audience) => (
+          <div className="login-page">
+            <Brand />
+            <p className="eyebrow">
+              {audience === "team"
+                ? "ACESSO DA EQUIPE BĀDON"
+                : "ÁREA DO CLIENTE E PARCEIRO"}
             </p>
-          )}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const d = new FormData(e.currentTarget);
-              task(async () => {
-                await api(
-                  token ? "accept" : "login",
-                  token
-                    ? { token, password: d.get("password") }
-                    : {
-                        email: d.get("email"),
-                        password: d.get("password"),
-                        remember: d.get("remember") === "on",
-                      },
-                );
-                setToken("");
-                await load();
-              });
-            }}
-          >
-            {!token && (
+            <h1 id="welcome-login-title">
+              {token
+                ? "Seu espaço está pronto para você."
+                : audience === "team"
+                  ? "Vamos fazer acontecer."
+                  : "Seu próximo passo é aqui."}
+            </h1>
+            <p>
+              {token
+                ? "Confirme o acesso. Se for seu primeiro convite, defina uma senha."
+                : audience === "team"
+                  ? "Entre com seu acesso autorizado para continuar o trabalho com a equipe."
+                  : "Entre com o e-mail do seu convite para acompanhar seus projetos e entregas com a Bādon."}
+            </p>
+            {sessionExpired && (
+              <p role="alert" className="notice error">
+                Sua sessão expirou. <a href="/entrar">Voltar ao login</a> para
+                tentar novamente.
+              </p>
+            )}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const d = new FormData(e.currentTarget);
+                task(async () => {
+                  await api(
+                    token ? "accept" : "login",
+                    token
+                      ? { token, password: d.get("password") }
+                      : {
+                          email: d.get("email"),
+                          password: d.get("password"),
+                          remember: d.get("remember") === "on",
+                        },
+                  );
+                  setToken("");
+                  await load();
+                });
+              }}
+            >
+              {!token && (
+                <Input
+                  label="E-mail"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="username"
+                />
+              )}
               <Input
-                label="E-mail"
-                name="email"
-                type="email"
-                required
-                autoComplete="username"
+                label={
+                  token ? "Senha para novo cadastro (12 a 72 bytes)" : "Senha"
+                }
+                name="password"
+                type="password"
+                required={!token}
+                autoComplete={token ? "new-password" : "current-password"}
               />
-            )}
-            <Input
-              label={
-                token ? "Senha para novo cadastro (12 a 72 bytes)" : "Senha"
-              }
-              name="password"
-              type="password"
-              required={!token}
-              autoComplete={token ? "new-password" : "current-password"}
-            />
-            {!token && <RememberChoice available={!!boot.remember_available} />}
-            <Button kind="primary" disabled={busy}>
-              {token ? "Confirmar acesso" : "Entrar"}
-              <ArrowRight size={17} />
-            </Button>
-            {!token && (
-              <Button
-                type="button"
-                disabled={busy}
-                onClick={(e) => {
-                  const d = new FormData(e.currentTarget.form!);
-                  task(async () => {
-                    const r = await api("magic", { email: d.get("email") });
-                    setNotice(r.message);
-                  });
-                }}
-              >
-                Receber link de acesso por e-mail
+              {!token && (
+                <RememberChoice available={!!boot.remember_available} />
+              )}
+              <Button kind="primary" disabled={busy}>
+                {token ? "Confirmar acesso" : "Entrar"}
+                <ArrowRight size={17} />
               </Button>
+              {!token && (
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={(e) => {
+                    const d = new FormData(e.currentTarget.form!);
+                    task(async () => {
+                      const r = await api("magic", { email: d.get("email") });
+                      setNotice(r.message);
+                    });
+                  }}
+                >
+                  Receber link de acesso por e-mail
+                </Button>
+              )}
+            </form>
+            {error && (
+              <p role="alert" className="notice error">
+                {error}
+              </p>
             )}
-          </form>
-          {error && (
-            <p role="alert" className="notice error">
-              {error}
-            </p>
-          )}
-          {notice && (
-            <p role="status" className="notice">
-              {notice}
-            </p>
-          )}
-          <small>Uma ferramenta da Produtora Bādon.</small>
-        </div>
+            {notice && (
+              <p role="status" className="notice">
+                {notice}
+              </p>
+            )}
+            <small>
+              Acesso por convite. Esta entrada não cria uma conta nem altera
+              suas permissões.
+            </small>
+          </div>
+        )}
       </FlowWelcome>
     );
   return (
@@ -438,6 +460,7 @@ function App() {
                 {(
                   {
                     overview: "Visão geral",
+                    portal: "Meu espaço",
                     clients: "Clientes",
                     client: ws?.name,
                     tasks: "Demandas",
@@ -470,7 +493,7 @@ function App() {
               onChange={(e) => {
                 setWorkspace(Number(e.target.value));
                 setProject(0);
-                setView("forms");
+                setView(boot.user?.agency ? "forms" : "portal");
               }}
             >
               {boot.workspaces.map((w) => (
@@ -595,6 +618,14 @@ function App() {
                 </div>
               </div>
               <p className="eyebrow">WORKSPACE</p>
+              {!boot.user.agency && (
+                <button
+                  className={view === "portal" ? "selected" : ""}
+                  onClick={() => navigate("portal")}
+                >
+                  <LayoutDashboardIcon /> Meu espaço
+                </button>
+              )}
               {boot.user.agency && (
                 <>
                   <button
@@ -685,6 +716,18 @@ function App() {
                   : "")
               }
             >
+              {!boot.user.agency && view === "portal" && (
+                <FlowMemberHome
+                  key={workspace}
+                  api={api}
+                  actor={boot.profile?.actor || ""}
+                  spaces={boot.workspaces}
+                  workspace={workspace}
+                  ready={!!boot.tasks_ready}
+                  editable={editable}
+                  navigate={navigate}
+                />
+              )}
               {boot.user.agency &&
                 [
                   "overview",
