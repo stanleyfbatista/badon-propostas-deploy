@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 const compiled = await build({
   stdin: {
     contents:
-      'export * from "./studio/FlowWorkspace"; export * from "./studio/flow-calendar"; export * from "./studio/FlowTaskTable"; export * from "./studio/TaskControls"; export * from "./studio/TaskAttachments";',
+      'export * from "./studio/FlowWorkspace"; export { ClientDialog } from "./studio/Flow"; export * from "./studio/flow-calendar"; export * from "./studio/FlowTaskTable"; export * from "./studio/TaskControls"; export * from "./studio/TaskAttachments";',
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -131,6 +131,34 @@ assert.match(
 );
 assert.match(render(ClientCover, { client }), /BĀDON \+ CLIENTE/);
 assert.match(render(ClientMark, { client }), /CJ/);
+assert.match(
+  render(ClientMark, { client, onEdit() {} }),
+  /aria-label="Alterar foto do cliente"/,
+);
+assert.match(render(ClientCover, { client, onEdit() {} }), /Alterar capa/);
+assert.ok(!render(ClientMark, { client }).includes("<button"));
+assert.ok(!render(ClientCover, { client }).includes("<button"));
+const clientEditor = render(module.exports.ClientDialog, {
+  initial: { ...client, workspace_id: 2, active: true, revision: 1 },
+  spaces: [],
+  api() {},
+  navigate() {},
+  close() {},
+  saved() {},
+  initialMedia: "cover",
+});
+assert.ok(
+  clientEditor.indexOf("Foto do perfil") <
+    clientEditor.indexOf("Imagem de capa"),
+);
+assert.ok(
+  clientEditor.indexOf("Imagem de capa") <
+    clientEditor.indexOf("Nome da empresa"),
+);
+assert.match(
+  clientEditor,
+  /type="file" autoFocus="" aria-label="Alterar capa"/i,
+);
 for (const mode of ["board", "calendar", "review"]) {
   const html = render(FlowWork, {
     api() {

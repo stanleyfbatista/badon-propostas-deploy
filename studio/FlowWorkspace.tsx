@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Camera,
   Plus,
   Search,
   Users,
@@ -86,9 +87,11 @@ export function Deadline({ item }: { item: any }) {
 export function ClientCover({
   client,
   small = false,
+  onEdit,
 }: {
   client: any;
   small?: boolean;
+  onEdit?: () => void;
 }) {
   return (
     <div
@@ -103,10 +106,25 @@ export function ClientCover({
         <img src={client.details.cover} alt="" referrerPolicy="no-referrer" />
       )}
       <span>/ BĀDON + CLIENTE /</span>
+      {onEdit && (
+        <button
+          type="button"
+          className="flow-media-edit flow-cover-edit"
+          onClick={onEdit}
+        >
+          <Camera size={16} /> Alterar capa
+        </button>
+      )}
     </div>
   );
 }
-export function ClientMark({ client }: { client: any }) {
+export function ClientMark({
+  client,
+  onEdit,
+}: {
+  client: any;
+  onEdit?: () => void;
+}) {
   return (
     <span
       className="flow-client-mark"
@@ -121,6 +139,17 @@ export function ClientMark({ client }: { client: any }) {
           .map((s: string) => s[0])
           .join("")
           .toUpperCase()
+      )}
+      {onEdit && (
+        <button
+          type="button"
+          className="flow-media-edit flow-photo-edit"
+          onClick={onEdit}
+          aria-label="Alterar foto do cliente"
+        >
+          <Camera size={20} />
+          <span>Alterar foto</span>
+        </button>
       )}
     </span>
   );
@@ -466,7 +495,7 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
           )}
           <hr />
           <button className="flow-text-button" onClick={() => navigate("crm")}>
-            CRM follow-up <ArrowRight size={16} />
+            CRM <ArrowRight size={16} />
           </button>
         </section>
       </div>
@@ -870,6 +899,7 @@ export function FlowClientSpace(
   const [client, setClient] = useState<any>(null),
     [tab, setTab] = useState("projects"),
     [editing, setEditing] = useState(false),
+    [editingMedia, setEditingMedia] = useState<"photo" | "cover" | undefined>(),
     [revision, setRevision] = useState(0),
     [error, setError] = useState("");
   const editor = useDeliveryDialog(props, () => setRevision((v) => v + 1));
@@ -921,9 +951,21 @@ export function FlowClientSpace(
         <ArrowLeft size={17} /> Voltar
       </button>
       <div className="flow-client-profile">
-        <ClientCover client={c} />
+        <ClientCover
+          client={c}
+          onEdit={() => {
+            setEditingMedia("cover");
+            setEditing(true);
+          }}
+        />
         <div className="flow-client-profile-main">
-          <ClientMark client={c} />
+          <ClientMark
+            client={c}
+            onEdit={() => {
+              setEditingMedia("photo");
+              setEditing(true);
+            }}
+          />
           <div>
             <p className="eyebrow">/ ESPAÇO DO CLIENTE /</p>
             <h1>{c.name}</h1>
@@ -935,7 +977,13 @@ export function FlowClientSpace(
               <span>{contractState(d)}</span>
             </div>
           </div>
-          <button className="btn" onClick={() => setEditing(true)}>
+          <button
+            className="btn"
+            onClick={() => {
+              setEditingMedia(undefined);
+              setEditing(true);
+            }}
+          >
             Editar perfil
           </button>
           <button className="btn primary" onClick={editor.create}>
@@ -1095,12 +1143,15 @@ export function FlowClientSpace(
       {editing && (
         <ClientDialog
           initial={c}
+          initialMedia={editingMedia}
           initialTab={
-            tab === "documents"
-              ? "resources"
-              : ["briefing", "brand", "contract"].includes(tab)
-                ? tab
-                : "general"
+            editingMedia
+              ? "general"
+              : tab === "documents"
+                ? "resources"
+                : ["briefing", "brand", "contract"].includes(tab)
+                  ? tab
+                  : "general"
           }
           spaces={[]}
           api={api}

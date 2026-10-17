@@ -100,6 +100,7 @@ for (const editable of [false, true]) {
   assert.match(html, /Checklist/);
   assert.match(html, /Comentários e histórico/);
   assert.match(html, /task-dialog-layout/);
+  assert.match(html, /placeholder="Nova tarefa — escreva o nome aqui"/);
   assert.match(html, /task-dialog-activity/);
   assert.match(html, /aria-label="Formatar descrição"/);
   for (const label of [

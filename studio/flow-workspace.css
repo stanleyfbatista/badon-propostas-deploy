@@ -300,6 +300,7 @@
   z-index: 1;
 }
 .flow-client-mark {
+  position: relative;
   width: 60px;
   height: 60px;
   border: 4px solid #fff;
@@ -311,6 +312,104 @@
   font-size: 18px;
   flex-shrink: 0;
   overflow: hidden;
+}
+.flow-media-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  background: #111827d9;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  z-index: 2;
+}
+.flow-cover-edit {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 11px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.flow-photo-edit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  flex-direction: column;
+  font-size: 10px;
+}
+.flow-cover-art:hover > .flow-media-edit,
+.flow-client-mark:hover > .flow-media-edit,
+.flow-media-edit:focus-visible {
+  opacity: 1;
+}
+.flow-media-edit:focus-visible {
+  outline: 3px solid #77b4ff;
+  outline-offset: -3px;
+}
+.flow-client-media {
+  padding: 4px 0 22px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+.flow-client-media-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 16px 0;
+}
+.flow-client-media-row > .flow-client-mark {
+  width: 96px;
+  height: 96px;
+  font-size: 28px;
+  border-radius: 26px;
+  justify-self: center;
+}
+.flow-client-media-row h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+.flow-client-media-row p {
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+.flow-client-cover-preview {
+  overflow: hidden;
+  border-radius: 12px;
+}
+.flow-client-cover-preview .flow-cover-art > span {
+  display: none;
+}
+.flow-media-links {
+  font-size: 12px;
+  margin-top: 12px;
+}
+.flow-media-links summary {
+  cursor: pointer;
+  color: var(--muted);
+  padding: 10px 0;
+}
+.flow-media-links .control {
+  margin-top: 10px;
+}
+@media (hover: none), (pointer: coarse) {
+  .flow-media-edit {
+    opacity: 1;
+  }
+}
+@media (max-width: 540px) {
+  .flow-client-media-row {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .flow-client-media-row > .flow-client-mark {
+    width: 76px;
+    height: 76px;
+  }
 }
 .flow-client-mark img {
   width: 100%;

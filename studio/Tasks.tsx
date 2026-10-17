@@ -827,6 +827,7 @@ export function TaskDialog({
                   autoFocus
                   required
                   maxLength={200}
+                  placeholder="Nova tarefa — escreva o nome aqui"
                   value={item.title}
                   onChange={(e) => change("title", e.target.value)}
                 />

@@ -101,6 +101,15 @@
   border-color: var(--blue);
   padding-left: 8px;
 }
+.task-detail-dialog .task-title-control input::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+.task-detail-dialog .task-title-control input:placeholder-shown {
+  background: var(--crm-soft);
+  border-color: var(--line);
+  padding-left: 12px;
+}
 .task-properties {
   padding: 16px 0 25px;
   border-bottom: 1px solid var(--line);

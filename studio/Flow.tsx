@@ -592,6 +592,7 @@ export function ClientDialog({
   close,
   saved,
   initialTab = "general",
+  initialMedia,
 }: {
   initial: Client;
   spaces: any[];
@@ -600,6 +601,7 @@ export function ClientDialog({
   close: () => void;
   saved: () => Promise<void>;
   initialTab?: string;
+  initialMedia?: "photo" | "cover";
 }) {
   const [c, setC] = useState(initial),
     [tab, setTab] = useState(initialTab),
@@ -699,6 +701,70 @@ export function ClientDialog({
         <fieldset disabled={busy} className="crm-fields">
           {tab === "general" && (
             <>
+              <section
+                className="flow-client-media flow-full"
+                aria-label="Foto e capa do cliente"
+              >
+                <div className="flow-client-media-row">
+                  <ClientMark client={c} />
+                  <div>
+                    <h3>Foto do perfil</h3>
+                    <p className="muted">
+                      A foto ou o logotipo que identifica este cliente.
+                    </p>
+                    <FlowUpload
+                      workspace={Number(c.workspace_id)}
+                      images
+                      label="Alterar foto / logo"
+                      autoFocus={initialMedia === "photo"}
+                      onBusy={setBusy}
+                      done={(f) => detail("photo", f.url)}
+                    />
+                    {c.details.photo && (
+                      <button
+                        type="button"
+                        className="flow-text-button"
+                        onClick={() => detail("photo", "")}
+                      >
+                        Remover foto
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flow-client-media-row">
+                  <div className="flow-client-cover-preview">
+                    <ClientCover client={c} small />
+                  </div>
+                  <div>
+                    <h3>Imagem de capa</h3>
+                    <p className="muted">
+                      Uma imagem horizontal para o espaço do cliente.
+                    </p>
+                    <FlowUpload
+                      workspace={Number(c.workspace_id)}
+                      images
+                      label="Alterar capa"
+                      autoFocus={initialMedia === "cover"}
+                      onBusy={setBusy}
+                      done={(f) => detail("cover", f.url)}
+                    />
+                    {c.details.cover && (
+                      <button
+                        type="button"
+                        className="flow-text-button"
+                        onClick={() => detail("cover", "")}
+                      >
+                        Remover capa
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <details className="flow-media-links">
+                  <summary>Usar uma imagem por link</summary>
+                  {field("photo", "Link da foto / logo", "url", true)}
+                  {field("cover", "Link da capa", "url", true)}
+                </details>
+              </section>
               {!c.workspace_id && (
                 <Control label="Usar um espaço já existente (opcional)">
                   <select
@@ -741,20 +807,6 @@ export function ClientDialog({
                   maxLength={4000}
                 />
               </Control>
-              {field("photo", "Foto / logo · URL HTTPS", "url", true)}
-              {field("cover", "Capa · URL HTTPS", "url", true)}
-              <FlowUpload
-                workspace={Number(c.workspace_id)}
-                images
-                label="Enviar foto / logo"
-                done={(f) => detail("photo", f.url)}
-              />
-              <FlowUpload
-                workspace={Number(c.workspace_id)}
-                images
-                label="Enviar capa"
-                done={(f) => detail("cover", f.url)}
-              />
               <Control label="Cor do perfil">
                 <input
                   type="color"

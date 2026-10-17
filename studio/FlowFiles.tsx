@@ -8,6 +8,7 @@ export function FlowUpload({
   label = "Enviar arquivo",
   done,
   onBusy,
+  autoFocus = false,
 }: {
   workspace: number;
   task?: number;
@@ -15,6 +16,7 @@ export function FlowUpload({
   label?: string;
   done: (file: { url: string; name: string; mime: string }) => void;
   onBusy?: (busy: boolean) => void;
+  autoFocus?: boolean;
 }) {
   const request = useContext(FlowUploadContext),
     [busy, setBusy] = useState(false),
@@ -25,6 +27,7 @@ export function FlowUpload({
         {busy ? "Enviando…" : label}
         <input
           type="file"
+          autoFocus={autoFocus}
           aria-label={label}
           disabled={busy || !workspace}
           accept={

@@ -430,8 +430,8 @@ function App() {
                     tasks: "Demandas",
                     approvals: "Aprovações",
                     agenda: "Agenda",
-                    crm: "CRM follow-up",
-                    forms: "Funis e formulários",
+                    crm: "CRM",
+                    forms: "Formulários",
                     profile: "Meu perfil",
                     settings: "Configurações",
                     members: "Equipe e acessos",
@@ -625,14 +625,14 @@ function App() {
                 className={view === "crm" ? "selected" : ""}
                 onClick={() => setView("crm")}
               >
-                <BriefcaseBusiness size={18} /> CRM follow-up
+                <BriefcaseBusiness size={18} /> CRM
               </button>
               <button
                 className={view === "forms" ? "selected" : ""}
                 onClick={() => setView("forms")}
               >
                 <FileText size={18} />
-                Funis e formulários
+                Formulários
               </button>
               <button
                 className={
@@ -842,7 +842,7 @@ function App() {
                     className={crmSection === "followup" ? "selected" : ""}
                     onClick={() => setCrmSection("followup")}
                   >
-                    CRM follow-up
+                    CRM
                   </button>
                   <button
                     className={crmSection === "commercial" ? "selected" : ""}
@@ -1010,7 +1010,7 @@ function FormList({
         <div>
           <p className="eyebrow">DE PERGUNTAS A OPORTUNIDADES</p>
           <h1>
-            Funis e formulários
+            Formulários
             <span className="count">{data?.forms.length || 0}</span>
           </h1>
           <p className="muted">
