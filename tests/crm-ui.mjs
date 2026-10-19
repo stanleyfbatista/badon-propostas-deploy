@@ -129,3 +129,41 @@ for (const editable of [true, false]) {
 console.log(
   "OK: CRM/perfil React, escape de respostas, campos somente leitura, foto e conversão de agenda entre três fusos.",
 );
+
+for (const editable of [true, false]) {
+  const html = render(OpportunityDialog, {
+    initial: {
+      ...initial,
+      plus_ready: true,
+      activities: [
+        {
+          id: 1,
+          kind: "call",
+          subject: "<script>atividade</script>",
+          body: "Resumo",
+          due_at: "2027-01-05 15:30:00",
+          completed_at: null,
+        },
+      ],
+    },
+    api,
+    workspace: 1,
+    editable,
+    stages: { new: "Novo lead" },
+    people: [],
+    close() {},
+    saved() {},
+  });
+  assert.match(html, /Empresa cadastrada/);
+  assert.match(html, /Contato principal/);
+  assert.match(html, /Serviço de interesse/);
+  assert.match(html, /Previsão de fechamento/);
+  assert.match(html, /Motivo de perda/);
+  assert.match(html, /Atividades e follow-up/);
+  assert.match(html, /&lt;script&gt;atividade&lt;\/script&gt;/);
+  assert.equal(html.includes("Nova atividade"), editable);
+  assert.match(html, /Histórico/);
+}
+console.log(
+  "OK: CRM ampliado mantém histórico, campos vinculados, escape e atividades somente para editores.",
+);

@@ -1,5 +1,26 @@
 # Bādon Forms — React + PHP/MySQL na hospedagem atual
 
+## CRM ampliado — empresas, contatos e follow-up
+
+Atualização aditiva para a instalação em `app.produtorabadon.com`, sem novo serviço, dependência ou assinatura. O CRM existente continua como base; não foi substituído pelo trycompai/crm.
+
+- Abas Oportunidades, Empresas e Contatos; busca e paginação dos cadastros.
+- Vínculos explícitos entre empresa, contato e oportunidade, com serviço, previsão de fechamento e motivo de perda/desqualificação.
+- Atividades de ligação, reunião, e-mail, tarefa e nota, com agendamento, conclusão e histórico. O registro de e-mail é manual, sem envio. Não cria eventos Google nem notificações externas.
+- Filtros rápidos de acompanhamento e filtros salvos privados por usuário e espaço, persistidos no MySQL.
+- Mantidos os formulários, dados legados e encaminhamento para aprovação, pagamento e clientes. Criar empresa/contato no CRM não concede acesso ao portal. Os registros antigos não são associados automaticamente por nome.
+
+### Publicação desta atualização
+
+1. Antes de atualizar, execute `php /home/produ7943464/badon-app/console.php backup:database`. O backup é privado e deve permanecer fora da pasta pública.
+2. Atualize o repositório e publique com o procedimento de deploy existente.
+3. Execute `php /home/produ7943464/badon-app/console.php crm:upgrade`.
+4. Reabra o CRM. As novas abas só aparecem quando as cinco tabelas adicionais estão prontas. O comando pode ser repetido; não altera registros existentes nem envia e-mail.
+
+Testes: `npm run build`, `node tests/crm-ui.mjs`, `node tests/integration.mjs`. A integração usa MySQL e SMTP locais isolados, cobrindo permissões, vínculos entre espaços, concorrência, idempotência, filtros privados e preservação de dados. `BADON_CRM_PREVIEW=1 node tests/integration.mjs` mantém a base descartável aberta para revisão visual e imprime o acesso de teste; não usar em produção.
+
+O custo adicional de serviços é zero nesta etapa, dentro da capacidade da hospedagem já contratada. Isso não elimina manutenção nem eventuais limites futuros de armazenamento e processamento.
+
 ## Novo painel: atualização de outubro/2026
 
 O painel React fica em **`/admin/studio/`**. O login existente da Bādon continua válido e tem papel de agência. Os clientes entram por convite e têm contas separadas, sem acesso ao painel global antigo. O site institucional e as URLs públicas dos formulários permanecem iguais.

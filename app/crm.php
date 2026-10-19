@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/studio.php';
+require_once __DIR__ . '/crm-plus.php';
 
 function crm_ready(): bool
 {
@@ -58,6 +59,7 @@ function crm_capture(int $leadId): void
 function crm_migrate(): void
 {
     db()->exec(file_get_contents(__DIR__ . '/crm-schema.sql'));
+    db()->exec(file_get_contents(__DIR__ . '/crm-plus-schema.sql'));
     $last = 0;
     do {
         $q = db()->prepare('SELECT l.id FROM leads l JOIN bf_forms f ON f.form_id=l.form_id LEFT JOIN bf_opportunities o ON o.lead_id=l.id WHERE l.id>? AND o.id IS NULL ORDER BY l.id LIMIT 250'); $q->execute([$last]); $ids = $q->fetchAll(PDO::FETCH_COLUMN);
@@ -116,7 +118,8 @@ function crm_handle(string $action, array $u, array $in): never
         studio_login($user, $u['agency']); studio_json(['ok'=>true,'csrf'=>$_SESSION['csrf']]);
     }
     $workspace = (int)($in['workspace'] ?? $_GET['workspace'] ?? 0);
-    studio_access($u, $workspace, in_array($action, ['crm-list','crm-item'], true) ? 'read' : 'edit');
+    studio_access($u, $workspace, in_array($action, ['crm-list','crm-item','crm-plus-directory','crm-plus-views','crm-plus-view-save','crm-plus-view-delete'], true) ? 'read' : 'edit');
+    crm_plus_handle($action,$u,$in,$workspace);
     if ($action === 'crm-list') {
         $where = ['o.workspace_id=?']; $args = [$workspace];
         $search = studio_text($_GET['search'] ?? '', 150);
@@ -125,12 +128,32 @@ function crm_handle(string $action, array $u, array $in): never
         foreach (['from'=>'>=', 'to'=>'<='] as $key=>$operator) if (!empty($_GET[$key])) { $where[]="o.created_at $operator ?"; $args[]=crm_date($_GET[$key]); }
         $agenda = ($_GET['agenda'] ?? '') === '1';
         if ($agenda) $where[]='o.scheduled_at IS NOT NULL';
+        $plus=crm_plus_ready();
+        $extra=''; $join='';
+        if ($plus) {
+            $join=' LEFT JOIN bf_crm_details d ON d.opportunity_id=o.id';
+            $extra=',d.company_id,d.contact_id,d.service,d.expected_close,d.loss_reason,(SELECT MIN(a.due_at) FROM bf_crm_activities a WHERE a.opportunity_id=o.id AND a.completed_at IS NULL) AS followup_due,(SELECT COUNT(*) FROM bf_crm_activities a WHERE a.opportunity_id=o.id AND a.completed_at IS NULL) AS pending_activities';
+            foreach (['company_id','contact_id'] as $key) if (!empty($_GET[$key])) { $where[]="d.$key=?"; $args[]=(int)$_GET[$key]; }
+            $active="o.stage NOT IN ('won','disqualified','fake')";
+            $overdue='(o.scheduled_at<UTC_TIMESTAMP() OR EXISTS (SELECT 1 FROM bf_crm_activities a WHERE a.opportunity_id=o.id AND a.completed_at IS NULL AND a.due_at<UTC_TIMESTAMP()))';
+            $focus=$_GET['focus']??'';
+            if ($focus==='open') $where[]=$active;
+            if ($focus==='mine') { $where[]='o.assignee=?'; $args[]=crm_actor($u); }
+            if ($focus==='overdue') $where[]="$active AND $overdue";
+            if ($focus==='untouched') $where[]="$active AND COALESCE(o.last_contact_at,o.created_at)<DATE_SUB(UTC_TIMESTAMP(),INTERVAL 7 DAY)";
+            if ($focus==='unscheduled') $where[]="$active AND o.scheduled_at IS NULL AND NOT EXISTS (SELECT 1 FROM bf_crm_activities a WHERE a.opportunity_id=o.id AND a.completed_at IS NULL)";
+            if ($agenda) { array_splice($where,array_search('o.scheduled_at IS NOT NULL',$where,true),1); $where[]='(o.scheduled_at IS NOT NULL OR EXISTS (SELECT 1 FROM bf_crm_activities a WHERE a.opportunity_id=o.id AND a.completed_at IS NULL))'; }
+        }
         $filter = implode(' AND ', $where);
-        $q=db()->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(amount),0) AS amount, COALESCE(SUM(stage='won'),0) AS won, COALESCE(SUM(scheduled_at < UTC_TIMESTAMP()),0) AS overdue, COALESCE(SUM(COALESCE(last_contact_at,created_at)<DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY) AND stage NOT IN ('won','disqualified','fake')),0) AS untouched FROM bf_opportunities o WHERE $filter"); $q->execute($args); $metrics=$q->fetch();
+        $dueExpression=$plus?"$active AND $overdue":"o.scheduled_at<UTC_TIMESTAMP()";
+        $q=db()->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(o.amount),0) AS amount, COALESCE(SUM(o.stage='won'),0) AS won, COALESCE(SUM($dueExpression),0) AS overdue, COALESCE(SUM(COALESCE(o.last_contact_at,o.created_at)<DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY) AND o.stage NOT IN ('won','disqualified','fake')),0) AS untouched FROM bf_opportunities o $join WHERE $filter"); $q->execute($args); $metrics=$q->fetch();
         $page=max(1,(int)($_GET['page']??1));
-        $q=db()->prepare("SELECT o.*, l.form_title FROM bf_opportunities o LEFT JOIN leads l ON l.id=o.lead_id WHERE $filter ORDER BY " . ($agenda ? 'o.scheduled_at ASC, o.id DESC' : 'o.id DESC') . ' LIMIT 100 OFFSET ' . (($page-1)*100)); $q->execute($args);
-        $groups=db()->prepare("SELECT stage,COUNT(*) AS total FROM bf_opportunities o WHERE $filter GROUP BY stage"); $groups->execute($args);
-        studio_json(['items'=>$q->fetchAll(),'metrics'=>$metrics,'counts'=>$groups->fetchAll(),'people'=>crm_people($workspace),'stages'=>crm_stages(),'page'=>$page]);
+        $sort=$_GET['sort']??'';
+        $order=$sort==='amount'?'o.amount DESC,o.id DESC':($sort==='closing' && $plus?'d.expected_close IS NULL,d.expected_close,o.id DESC':'o.id DESC');
+        if ($agenda || $sort==='activity') $order=$plus?"LEAST(COALESCE(o.scheduled_at,'9999-12-31'),COALESCE(followup_due,'9999-12-31')),o.id DESC":'o.scheduled_at IS NULL,o.scheduled_at,o.id DESC';
+        $q=db()->prepare("SELECT o.*, l.form_title $extra FROM bf_opportunities o LEFT JOIN leads l ON l.id=o.lead_id $join WHERE $filter ORDER BY $order LIMIT 100 OFFSET " . (($page-1)*100)); $q->execute($args);
+        $groups=db()->prepare("SELECT o.stage,COUNT(*) AS total FROM bf_opportunities o $join WHERE $filter GROUP BY o.stage"); $groups->execute($args);
+        studio_json(['items'=>$q->fetchAll(),'metrics'=>$metrics,'counts'=>$groups->fetchAll(),'people'=>crm_people($workspace),'stages'=>crm_stages(),'page'=>$page,'plus_ready'=>$plus]);
     }
     if ($action === 'crm-create') {
         $data=crm_clean($in,$workspace); $key=text_value($in['create_key']??'');
@@ -139,7 +162,10 @@ function crm_handle(string $action, array $u, array $in): never
         $columns=array_keys($data);
         $q=db()->prepare('INSERT INTO bf_opportunities (workspace_id,create_key,'.implode(',',$columns).',created_at,updated_at) VALUES (?,?,' . implode(',',array_fill(0,count($data),'?')) . ',?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)');
         $q->execute(array_merge([$workspace,$key],array_values($data),[utc_now(),utc_now()])); $id=(int)db()->lastInsertId();
-        if ($q->rowCount()===1) crm_event($id,crm_actor($u),'Oportunidade criada manualmente.');
+        if ($q->rowCount()===1) {
+            if (crm_plus_ready()) crm_plus_save_details($id,$workspace,$in);
+            crm_event($id,crm_actor($u),'Oportunidade criada manualmente.');
+        }
         db()->commit(); studio_json(['id'=>$id]);
     }
     $id=(int)($in['id']??$_GET['id']??0);
@@ -149,11 +175,18 @@ function crm_handle(string $action, array $u, array $in): never
     if ($action === 'crm-item') {
         $q=db()->prepare('SELECT e.*,p.name AS actor_name FROM bf_crm_events e LEFT JOIN bf_profiles p ON p.actor=e.actor WHERE opportunity_id=? ORDER BY e.id DESC LIMIT 100'); $q->execute([$id]); $events=$q->fetchAll();
         $q=db()->prepare('SELECT values_json,form_title,created_at FROM leads WHERE id=?'); $q->execute([$item['lead_id']]); $lead=$q->fetch();
-        studio_json(['item'=>$item,'events'=>$events,'answers'=>$lead?json_decode($lead['values_json'],true):[]]);
+        $activities=[]; $linked=[];
+        if (crm_plus_ready()) {
+            $item+=crm_plus_details($id);
+            $linked=['company'=>crm_plus_record('company',(int)$item['company_id'],$workspace),'contact'=>crm_plus_record('contact',(int)$item['contact_id'],$workspace)];
+            $q=db()->prepare('SELECT * FROM bf_crm_activities WHERE opportunity_id=? ORDER BY completed_at IS NOT NULL,due_at IS NULL,due_at,id DESC LIMIT 200'); $q->execute([$id]); $activities=$q->fetchAll();
+        }
+        studio_json(['item'=>$item,'events'=>$events,'answers'=>$lead?json_decode($lead['values_json'],true):[],'plus_ready'=>crm_plus_ready(),'activities'=>$activities,'linked'=>$linked]);
     }
     if ((int)($in['revision']??0)!==(int)$item['revision']) { db()->rollBack(); studio_error(409,'Esta oportunidade mudou. Feche e reabra antes de salvar.'); }
     if ($action === 'crm-update') {
         $data=crm_clean($in,$workspace);
+        if (crm_plus_ready()) crm_plus_save_details($id,$workspace,$in);
         $q=db()->prepare('UPDATE bf_opportunities SET '.implode(',',array_map(fn($key)=>"$key=?",array_keys($data))).',revision=revision+1,updated_at=? WHERE id=?'); $q->execute(array_merge(array_values($data),[utc_now(),$id]));
         crm_event($id,crm_actor($u), $data['stage']!==$item['stage'] ? 'Etapa: '.crm_stages()[$item['stage']].' → '.crm_stages()[$data['stage']] : 'Dados da oportunidade atualizados.');
     } elseif ($action === 'crm-note') {

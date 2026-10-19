@@ -37,6 +37,11 @@ if ($command === 'google:migrate') {
     if (!studio_ready() || !crm_ready()) { fwrite(STDERR, "Execute studio:migrate e crm:migrate primeiro.\n"); exit(1); }
     tasks_migrate();
     echo "Tarefas, listas e datas preparadas. Dados existentes preservados. Nenhum e-mail enviado.\n";
+} elseif ($command === 'crm:upgrade') {
+    require __DIR__ . '/crm.php';
+    if (!crm_ready()) exit("Execute crm:migrate primeiro.\n");
+    db()->exec(file_get_contents(__DIR__ . '/crm-plus-schema.sql'));
+    echo "CRM ampliado: empresas, contatos, oportunidades, atividades e filtros. Nenhum registro existente alterado; nenhum e-mail enviado.\n";
 } elseif ($command === 'crm:migrate') {
     require __DIR__ . '/crm.php';
     if (!studio_ready()) exit("Execute studio:migrate primeiro.\n");
@@ -82,5 +87,5 @@ if ($command === 'google:migrate') {
     db()->prepare('DELETE FROM rate_limits WHERE window_start < ?')->execute([time() - 172800]);
     echo "Contadores de proteção com mais de 48 horas removidos. Leads preservados.\n";
 } else {
-    echo "Comandos: migrate | studio:migrate | crm:migrate | tasks:migrate | flow:migrate | auth:migrate | google:migrate | google:work | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
+    echo "Comandos: migrate | studio:migrate | crm:migrate | crm:upgrade | tasks:migrate | flow:migrate | auth:migrate | google:migrate | google:work | check | admin:create EMAIL | admin:password EMAIL | notifications:work | mail:retry | webhook:retry | security:cleanup\n";
 }

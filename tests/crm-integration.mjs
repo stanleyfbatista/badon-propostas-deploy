@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { crmPlusTests } from './crm-plus-integration.mjs';
 
 export async function crmTests({
   base,
@@ -18,6 +19,7 @@ export async function crmTests({
   messages,
 }) {
   const emailCount = messages.length;
+  await crmPlusTests({editor,reader,other,wa,wb,sql,run,php,cli,messages});
   const before = sql("SELECT COUNT(*) FROM badon_test.leads").trim();
   const manual = {
     workspace: wa,

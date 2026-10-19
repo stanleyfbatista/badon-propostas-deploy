@@ -385,6 +385,14 @@ try {
   assert.equal(fs.readFileSync(path.join(account, 'badon-config/config.php'), 'utf8'), formsConfig);
   log('app: ativação e reversão com backup privado, configuração preservada, painel redirecionado e formulários antigos mantidos');
   console.log('Integração concluída. Nenhum e-mail externo foi enviado.');
+  if (process.env.BADON_CRM_PREVIEW === '1') {
+    // Explicit opt-in: disposable local fixtures only, never the production DB.
+    run(php, [cli, 'admin:password', 'admin@example.invalid'], { input: 'crm-preview-local-only-2026\n', stdio: ['pipe','pipe','ignore'] });
+    sql('DELETE FROM badon_test.rate_limits');
+    console.log('Prévia isolada: ' + base + '/entrar?acesso=equipe');
+    console.log('Login local de teste: admin@example.invalid / crm-preview-local-only-2026');
+    await new Promise(resolve => { process.once('SIGINT', resolve); process.once('SIGTERM', resolve); });
+  }
 } finally {
   kill(phpProc); kill(dbProc);
   if (smtp) smtp.close();

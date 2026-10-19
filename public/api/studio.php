@@ -22,7 +22,7 @@ if ($method === 'POST') {
     } else $in = $_POST;
 }
 $action = text_value($_GET['action'] ?? 'boot');
-if ($method !== 'POST' && !in_array($action, ['boot', 'google-status', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item', 'task-list', 'task-item', 'task-options', 'task-day','flow-clients','flow-client-history','flow-projects','flow-sales','flow-sale-item','flow-overview','flow-work'], true)) studio_error(405, 'Esta ação exige POST.');
+if ($method !== 'POST' && !in_array($action, ['boot', 'google-status', 'forms', 'form', 'leads', 'members', 'profile', 'crm-list', 'crm-item', 'crm-plus-directory', 'crm-plus-views', 'task-list', 'task-item', 'task-options', 'task-day','flow-clients','flow-client-history','flow-projects','flow-sales','flow-sale-item','flow-overview','flow-work'], true)) studio_error(405, 'Esta ação exige POST.');
 $u = studio_user();
 try {
     if (str_starts_with($action, 'google-')) flow_google_handle($action,$u,$in);

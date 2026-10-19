@@ -16,6 +16,12 @@ import {
 import type { Profile } from "./types";
 import "./crm.css";
 import { SalesControl } from "./Flow";
+import {
+  CrmDirectory,
+  CrmSavedViews,
+  DirectoryPicker,
+  CrmActivities,
+} from "./CrmPlus";
 
 export type Api = (
   action: string,
@@ -49,6 +55,13 @@ type Opportunity = {
   created_at: string;
   lead_id: number | null;
   form_title?: string;
+  company_id?: number | null;
+  contact_id?: number | null;
+  service?: string;
+  expected_close?: string | null;
+  loss_reason?: string;
+  followup_due?: string | null;
+  pending_activities?: number;
 };
 export const stageColors: Record<string, string> = {
   new: "#8b9bb2",
@@ -202,6 +215,11 @@ export function Crm({
   commercial?: boolean;
 }) {
   const [mode, setMode] = useState(agenda ? "agenda" : "kanban");
+  const [section, setSection] = useState("opportunities");
+  const [focus, setFocus] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [companyId, setCompanyId] = useState("");
+  const [contactId, setContactId] = useState("");
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("");
   const [assignee, setAssignee] = useState("");
@@ -225,6 +243,10 @@ export function Crm({
         search,
         stage,
         assignee,
+        focus,
+        sort,
+        company_id: companyId,
+        contact_id: contactId,
         page,
         agenda: mode === "agenda" ? 1 : 0,
         from: from ? utcInput(from + "T00:00:00")! : "",
@@ -244,7 +266,21 @@ export function Crm({
       alive = false;
       clearTimeout(timer);
     };
-  }, [workspace, search, stage, assignee, from, to, page, mode, refresh]);
+  }, [
+    workspace,
+    search,
+    stage,
+    assignee,
+    from,
+    to,
+    page,
+    mode,
+    refresh,
+    focus,
+    sort,
+    companyId,
+    contactId,
+  ]);
   const stages: Record<string, string> = data?.stages || {};
   const people: Person[] = data?.people || [];
   const person = (actor: string | null) =>
@@ -337,305 +373,519 @@ export function Crm({
           <h1>{agenda ? "Agendamentos" : "CRM"}</h1>
           <p className="muted">Da primeira resposta à próxima conversa.</p>
         </div>
-        {editable && (
+        {editable && section === "opportunities" && (
           <button
             className="btn primary"
             disabled={busy || !data}
             onClick={() =>
-              setSelected({ item: blank(), events: [], answers: [] })
+              setSelected({
+                item: blank(),
+                events: [],
+                answers: [],
+                plus_ready: data?.plus_ready,
+                activities: [],
+              })
             }
           >
             <Plus size={17} /> Nova oportunidade
           </button>
         )}
       </div>
-      <div className="crm-toolbar">
-        <label className="crm-search">
-          <Search size={17} />
-          <input
-            aria-label="Buscar oportunidades"
-            placeholder="Buscar nome, empresa, e-mail…"
-            value={search}
-            onChange={(e) => filters(() => setSearch(e.target.value))}
-          />
-        </label>
-        <select
-          aria-label="Filtrar etapa"
-          value={stage}
-          onChange={(e) => filters(() => setStage(e.target.value))}
-        >
-          <option value="">Todas as etapas</option>
-          {Object.entries(stages).map(([key, label]) => (
-            <option key={key} value={key}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Filtrar responsável"
-          value={assignee}
-          onChange={(e) => filters(() => setAssignee(e.target.value))}
-        >
-          <option value="">Todos os responsáveis</option>
-          {people.map((p) => (
-            <option key={p.actor} value={p.actor}>
-              {p.name || p.email}
-            </option>
-          ))}
-        </select>
-        <label>
-          Recebido de{" "}
-          <input
-            type="date"
-            aria-label="Recebido a partir de"
-            value={from}
-            onChange={(e) => filters(() => setFrom(e.target.value))}
-          />
-        </label>
-        <label>
-          até{" "}
-          <input
-            type="date"
-            aria-label="Recebido até"
-            value={to}
-            onChange={(e) => filters(() => setTo(e.target.value))}
-          />
-        </label>
-        <button
-          className="btn"
-          disabled={!items.length || loading}
-          onClick={exportPage}
-        >
-          <Download size={16} /> Exportar página
-        </button>
-      </div>
-      <div className="crm-metrics">
-        {[
-          ["Oportunidades", data?.metrics.total || 0],
-          ["Valor total", money(data?.metrics.amount || 0)],
-          [
-            "Conversão",
-            data?.metrics.total
-              ? (
-                  (Number(data.metrics.won) / Number(data.metrics.total)) *
-                  100
-                ).toFixed(1) + "%"
-              : "0%",
-          ],
-          ["Fechadas", data?.metrics.won || 0],
-          ["Atividades atrasadas", data?.metrics.overdue || 0],
-          ["Sem contato há 7 dias", data?.metrics.untouched || 0],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <small>{label}</small>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </div>
-      <div className="crm-viewbar">
-        <p className="muted">
-          {loading
-            ? "Atualizando oportunidades…"
-            : `${data?.metrics.total || 0} oportunidades · página ${page}`}
-        </p>
-        <div className="crm-switch" role="group" aria-label="Visualização">
+      {data?.plus_ready && (
+        <div className="crm-section-tabs" role="group" aria-label="Área do CRM">
           {[
-            ["kanban", "Kanban", LayoutGrid],
-            ["list", "Lista", List],
-            ["agenda", "Agenda", CalendarDays],
-          ].map(([key, label, Icon]: any) => (
+            ["opportunities", "Oportunidades"],
+            ["company", "Empresas"],
+            ["contact", "Contatos"],
+          ].map(([key, label]) => (
             <button
               key={key}
-              className={mode === key ? "selected" : ""}
-              aria-pressed={mode === key}
-              onClick={() => filters(() => setMode(key))}
+              aria-pressed={section === key}
+              className={section === key ? "selected" : ""}
+              onClick={() => setSection(key)}
             >
-              <Icon size={15} />
               {label}
             </button>
           ))}
         </div>
-      </div>
-      {error && (
-        <p className="notice error" role="alert">
-          {error}{" "}
-          <button className="btn" onClick={() => setRefresh((x) => x + 1)}>
-            Tentar novamente
-          </button>
-        </p>
       )}
-      {mode === "kanban" && (
-        <div className="crm-board" aria-busy={loading}>
-          {Object.entries(stages).map(([key, label]) => (
-            <section
-              className="crm-column"
-              key={key}
-              style={
-                { "--stage-color": stageColors[key] } as React.CSSProperties
-              }
-              onDragOver={(e) => {
-                if (editable && dragging !== null) e.preventDefault();
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const item = items.find((i) => Number(i.id) === dragging);
-                if (item) void move(item, key);
+      {section !== "opportunities" ? (
+        <CrmDirectory
+          key={section}
+          api={api}
+          workspace={workspace}
+          kind={section as "company" | "contact"}
+          editable={editable}
+          onOpportunities={(kind, r) => {
+            setCompanyId(kind === "company" ? String(r.id) : "");
+            setContactId(kind === "contact" ? String(r.id) : "");
+            setSearch("");
+            setStage("");
+            setAssignee("");
+            setFrom("");
+            setTo("");
+            setFocus("");
+            setMode("list");
+            setPage(1);
+            setSection("opportunities");
+          }}
+        />
+      ) : (
+        <>
+          {data?.plus_ready && (
+            <>
+              <div
+                className="crm-quick-filters"
+                role="group"
+                aria-label="Acompanhamento"
+              >
+                {[
+                  ["", "Todas"],
+                  ["open", "Em negociação"],
+                  ["mine", "Minhas oportunidades"],
+                  ["overdue", "Follow-ups atrasados"],
+                  ["untouched", "Sem contato há 7 dias"],
+                  ["unscheduled", "Sem próximo passo"],
+                ].map(([key, label]) => (
+                  <button
+                    className={focus === key ? "selected" : ""}
+                    aria-pressed={focus === key}
+                    key={key}
+                    onClick={() => filters(() => setFocus(key))}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <CrmSavedViews
+                api={api}
+                workspace={workspace}
+                filters={{
+                  search,
+                  stage,
+                  assignee,
+                  from,
+                  to,
+                  focus,
+                  sort,
+                  mode,
+                  company_id: companyId,
+                  contact_id: contactId,
+                }}
+                apply={(v) => {
+                  setSearch(v.search || "");
+                  setStage(v.stage || "");
+                  setAssignee(v.assignee || "");
+                  setFrom(v.from || "");
+                  setTo(v.to || "");
+                  setFocus(v.focus || "");
+                  setSort(v.sort || "newest");
+                  setMode(v.mode || "kanban");
+                  setCompanyId(v.company_id || "");
+                  setContactId(v.contact_id || "");
+                  setPage(1);
+                }}
+              />
+              {(companyId || contactId) && (
+                <p className="crm-linked-filter">
+                  Filtrando oportunidades vinculadas ao cadastro selecionado.{" "}
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setCompanyId("");
+                      setContactId("");
+                      setPage(1);
+                    }}
+                  >
+                    Limpar vínculo
+                  </button>
+                </p>
+              )}
+            </>
+          )}
+          <div className="crm-toolbar">
+            <label className="crm-search">
+              <Search size={17} />
+              <input
+                aria-label="Buscar oportunidades"
+                placeholder="Buscar nome, empresa, e-mail…"
+                value={search}
+                onChange={(e) => filters(() => setSearch(e.target.value))}
+              />
+            </label>
+            <select
+              aria-label="Filtrar etapa"
+              value={stage}
+              onChange={(e) => filters(() => setStage(e.target.value))}
+            >
+              <option value="">Todas as etapas</option>
+              {Object.entries(stages).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filtrar responsável"
+              value={assignee}
+              onChange={(e) => filters(() => setAssignee(e.target.value))}
+            >
+              <option value="">Todos os responsáveis</option>
+              {people.map((p) => (
+                <option key={p.actor} value={p.actor}>
+                  {p.name || p.email}
+                </option>
+              ))}
+            </select>
+            <label>
+              Recebido de{" "}
+              <input
+                type="date"
+                aria-label="Recebido a partir de"
+                value={from}
+                onChange={(e) => filters(() => setFrom(e.target.value))}
+              />
+            </label>
+            <label>
+              até{" "}
+              <input
+                type="date"
+                aria-label="Recebido até"
+                value={to}
+                onChange={(e) => filters(() => setTo(e.target.value))}
+              />
+            </label>
+            <button
+              className="btn"
+              disabled={!items.length || loading}
+              onClick={exportPage}
+            >
+              <Download size={16} /> Exportar página
+            </button>
+            {data?.plus_ready && (
+              <select
+                aria-label="Ordenar oportunidades"
+                value={sort}
+                onChange={(e) => filters(() => setSort(e.target.value))}
+              >
+                <option value="newest">Mais recentes</option>
+                <option value="amount">Maior valor</option>
+                <option value="closing">Previsão de fechamento</option>
+                <option value="activity">Próxima atividade</option>
+              </select>
+            )}
+            <button
+              className="btn"
+              onClick={() => {
+                setSearch("");
+                setStage("");
+                setAssignee("");
+                setFrom("");
+                setTo("");
+                setFocus("");
+                setCompanyId("");
+                setContactId("");
+                setPage(1);
               }}
             >
-              <header>
-                <h2>{label}</h2>
-                <span>
-                  {data?.counts.find((c: any) => c.stage === key)?.total || 0}
-                </span>
-              </header>
-              {items
-                .filter((i) => i.stage === key)
-                .map((i) => (
-                  <article
-                    key={i.id}
-                    className="crm-card"
-                    draggable={editable && !busy}
-                    onDragStart={() => setDragging(Number(i.id))}
-                    onDragEnd={() => setDragging(null)}
-                  >
-                    <button
-                      className="crm-card-title"
-                      disabled={busy}
-                      onClick={() => void open(Number(i.id))}
-                    >
-                      {i.name}
-                      <ArrowRight size={14} />
-                    </button>
-                    <p>{i.company || i.email || "Contato recebido"}</p>
-                    <strong>{money(i.amount)}</strong>
-                    <small className="crm-source">
-                      {i.lead_id ? "Formulário: " : "Origem: "}
-                      {i.source}
-                    </small>
-                    {i.scheduled_at && (
-                      <p
-                        className={
-                          new Date(isoDate(i.scheduled_at)!) < new Date()
-                            ? "crm-overdue"
-                            : ""
-                        }
-                      >
-                        <CalendarDays size={13} /> {dateLabel(i.scheduled_at)}
-                        <small>{i.next_action}</small>
-                      </p>
-                    )}
-                    <footer>
-                      {person(i.assignee) ? (
-                        <span className="crm-person">
-                          <Avatar person={person(i.assignee)!} />
-                          {person(i.assignee)!.name ||
-                            person(i.assignee)!.email}
-                        </span>
-                      ) : (
-                        <small>
-                          <UserRound size={13} /> Sem responsável
-                        </small>
-                      )}
-                    </footer>
-                    {editable && (
-                      <select
-                        aria-label={`Mover ${i.name} para etapa`}
-                        disabled={busy}
-                        value={i.stage}
-                        onChange={(e) => void move(i, e.target.value)}
-                      >
-                        {Object.entries(stages).map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </article>
-                ))}
-              {!items.some((i) => i.stage === key) && (
-                <div className="crm-empty">
-                  <Inbox size={25} />
-                  <span>Nenhuma oportunidade nesta página</span>
-                  <small>
-                    {editable
-                      ? "Arraste um cartão para cá"
-                      : "As oportunidades aparecerão aqui"}
-                  </small>
-                </div>
-              )}
-            </section>
-          ))}
-        </div>
-      )}
-      {mode !== "kanban" && (
-        <div className="crm-table-wrap">
-          <table className="crm-table">
-            <thead>
-              <tr>
-                <th>Contato / empresa</th>
-                <th>Etapa</th>
-                <th>Responsável</th>
-                <th>Valor</th>
-                <th>Próxima atividade</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((i) => (
-                <tr key={i.id}>
-                  <td>
-                    <button
-                      className="crm-card-title"
-                      disabled={busy}
-                      onClick={() => void open(Number(i.id))}
-                    >
-                      {i.name}
-                    </button>
-                    <small>{i.company || i.email}</small>
-                  </td>
-                  <td>{stages[i.stage]}</td>
-                  <td>
-                    {person(i.assignee)?.name ||
-                      person(i.assignee)?.email ||
-                      "Sem responsável"}
-                  </td>
-                  <td>{money(i.amount)}</td>
-                  <td>
-                    {i.next_action}
-                    <small>{dateLabel(i.scheduled_at)}</small>
-                  </td>
-                </tr>
+              Limpar filtros
+            </button>
+          </div>
+          <div className="crm-metrics">
+            {[
+              ["Oportunidades", data?.metrics.total || 0],
+              ["Valor total", money(data?.metrics.amount || 0)],
+              [
+                "Conversão",
+                data?.metrics.total
+                  ? (
+                      (Number(data.metrics.won) / Number(data.metrics.total)) *
+                      100
+                    ).toFixed(1) + "%"
+                  : "0%",
+              ],
+              ["Fechadas", data?.metrics.won || 0],
+              ["Atividades atrasadas", data?.metrics.overdue || 0],
+              ["Sem contato há 7 dias", data?.metrics.untouched || 0],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <small>{label}</small>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="crm-viewbar">
+            <p className="muted">
+              {loading
+                ? "Atualizando oportunidades…"
+                : `${data?.metrics.total || 0} oportunidades · página ${page}`}
+            </p>
+            <div className="crm-switch" role="group" aria-label="Visualização">
+              {[
+                ["kanban", "Kanban", LayoutGrid],
+                ["list", "Lista", List],
+                ["agenda", "Agenda", CalendarDays],
+              ].map(([key, label, Icon]: any) => (
+                <button
+                  key={key}
+                  className={mode === key ? "selected" : ""}
+                  aria-pressed={mode === key}
+                  onClick={() => filters(() => setMode(key))}
+                >
+                  <Icon size={15} />
+                  {label}
+                </button>
               ))}
-            </tbody>
-          </table>
-          {!items.length && !loading && (
-            <p className="crm-empty">
-              {mode === "agenda"
-                ? "Nenhuma atividade agendada. Abra uma oportunidade para definir o próximo passo."
-                : "Nenhuma oportunidade encontrada."}
+            </div>
+          </div>
+          {error && (
+            <p className="notice error" role="alert">
+              {error}{" "}
+              <button className="btn" onClick={() => setRefresh((x) => x + 1)}>
+                Tentar novamente
+              </button>
             </p>
           )}
-        </div>
+          {mode === "kanban" && (
+            <div className="crm-board" aria-busy={loading}>
+              {Object.entries(stages).map(([key, label]) => (
+                <section
+                  className="crm-column"
+                  key={key}
+                  style={
+                    { "--stage-color": stageColors[key] } as React.CSSProperties
+                  }
+                  onDragOver={(e) => {
+                    if (editable && dragging !== null) e.preventDefault();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const item = items.find((i) => Number(i.id) === dragging);
+                    if (item) void move(item, key);
+                  }}
+                >
+                  <header>
+                    <h2>{label}</h2>
+                    <span>
+                      {data?.counts.find((c: any) => c.stage === key)?.total ||
+                        0}
+                    </span>
+                  </header>
+                  {items
+                    .filter((i) => i.stage === key)
+                    .map((i) => (
+                      <article
+                        key={i.id}
+                        className="crm-card"
+                        draggable={editable && !busy}
+                        onDragStart={() => setDragging(Number(i.id))}
+                        onDragEnd={() => setDragging(null)}
+                      >
+                        <button
+                          className="crm-card-title"
+                          disabled={busy}
+                          onClick={() => void open(Number(i.id))}
+                        >
+                          {i.name}
+                          <ArrowRight size={14} />
+                        </button>
+                        <p>{i.company || i.email || "Contato recebido"}</p>
+                        <strong>{money(i.amount)}</strong>
+                        {i.service && <p>{i.service}</p>}
+                        {i.expected_close && (
+                          <small>
+                            Previsão:{" "}
+                            {i.expected_close.split("-").reverse().join("/")}
+                          </small>
+                        )}
+                        {!!Number(i.pending_activities) && (
+                          <p
+                            className={
+                              i.followup_due &&
+                              new Date(isoDate(i.followup_due)!) < new Date()
+                                ? "crm-overdue"
+                                : ""
+                            }
+                          >
+                            {i.pending_activities}{" "}
+                            {Number(i.pending_activities) === 1
+                              ? "atividade pendente"
+                              : "atividades pendentes"}
+                            <small>{dateLabel(i.followup_due || null)}</small>
+                          </p>
+                        )}
+                        <small className="crm-source">
+                          {i.lead_id ? "Formulário: " : "Origem: "}
+                          {i.source}
+                        </small>
+                        {i.scheduled_at && (
+                          <p
+                            className={
+                              new Date(isoDate(i.scheduled_at)!) < new Date()
+                                ? "crm-overdue"
+                                : ""
+                            }
+                          >
+                            <CalendarDays size={13} />{" "}
+                            {dateLabel(i.scheduled_at)}
+                            <small>{i.next_action}</small>
+                          </p>
+                        )}
+                        <footer>
+                          {person(i.assignee) ? (
+                            <span className="crm-person">
+                              <Avatar person={person(i.assignee)!} />
+                              {person(i.assignee)!.name ||
+                                person(i.assignee)!.email}
+                            </span>
+                          ) : (
+                            <small>
+                              <UserRound size={13} /> Sem responsável
+                            </small>
+                          )}
+                        </footer>
+                        {editable && (
+                          <select
+                            aria-label={`Mover ${i.name} para etapa`}
+                            disabled={busy}
+                            value={i.stage}
+                            onChange={(e) => void move(i, e.target.value)}
+                          >
+                            {Object.entries(stages).map(([v, l]) => (
+                              <option key={v} value={v}>
+                                {l}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </article>
+                    ))}
+                  {!items.some((i) => i.stage === key) && (
+                    <div className="crm-empty">
+                      <Inbox size={25} />
+                      <span>Nenhuma oportunidade nesta página</span>
+                      <small>
+                        {editable
+                          ? "Arraste um cartão para cá"
+                          : "As oportunidades aparecerão aqui"}
+                      </small>
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
+          )}
+          {mode !== "kanban" && (
+            <div className="crm-table-wrap">
+              <table className="crm-table">
+                <thead>
+                  <tr>
+                    <th>Contato / empresa</th>
+                    <th>Etapa</th>
+                    <th>Responsável</th>
+                    <th>Valor</th>
+                    {data?.plus_ready && <th>Serviço / previsão</th>}
+                    <th>Próxima atividade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((i) => (
+                    <tr key={i.id}>
+                      <td>
+                        <button
+                          className="crm-card-title"
+                          disabled={busy}
+                          onClick={() => void open(Number(i.id))}
+                        >
+                          {i.name}
+                        </button>
+                        <small>{i.company || i.email}</small>
+                      </td>
+                      <td>
+                        {editable ? (
+                          <select
+                            aria-label={`Mover ${i.name} para etapa`}
+                            value={i.stage}
+                            disabled={busy || loading}
+                            onChange={(e) => void move(i, e.target.value)}
+                          >
+                            {Object.entries(stages).map(([key, label]) => (
+                              <option key={key} value={key}>
+                                {label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          stages[i.stage]
+                        )}
+                      </td>
+                      <td>
+                        {person(i.assignee)?.name ||
+                          person(i.assignee)?.email ||
+                          "Sem responsável"}
+                      </td>
+                      <td>{money(i.amount)}</td>
+                      {data?.plus_ready && (
+                        <td>
+                          {i.service || "—"}
+                          <small>
+                            {i.expected_close?.split("-").reverse().join("/") ||
+                              "Sem previsão"}
+                          </small>
+                        </td>
+                      )}
+                      <td>
+                        {i.next_action}
+                        {(i.scheduled_at || !Number(i.pending_activities)) && (
+                          <small>{dateLabel(i.scheduled_at)}</small>
+                        )}
+                        {!!Number(i.pending_activities) && (
+                          <small>
+                            {i.pending_activities}{" "}
+                            {Number(i.pending_activities) === 1
+                              ? "pendente"
+                              : "pendentes"}{" "}
+                            · {dateLabel(i.followup_due || null)}
+                          </small>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!items.length && !loading && (
+                <p className="crm-empty">
+                  {mode === "agenda"
+                    ? "Nenhuma atividade agendada. Abra uma oportunidade para definir o próximo passo."
+                    : "Nenhuma oportunidade encontrada."}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="crm-pagination">
+            <button
+              className="btn"
+              disabled={page === 1 || loading}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Anterior
+            </button>
+            <small>
+              Até 100 cartões por página · métricas de todos os resultados
+              filtrados
+            </small>
+            <button
+              className="btn"
+              disabled={
+                loading || page * 100 >= Number(data?.metrics.total || 0)
+              }
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próxima
+            </button>
+          </div>
+        </>
       )}
-      <div className="crm-pagination">
-        <button
-          className="btn"
-          disabled={page === 1 || loading}
-          onClick={() => setPage((p) => p - 1)}
-        >
-          Anterior
-        </button>
-        <small>
-          Até 100 cartões por página · métricas de todos os resultados filtrados
-        </small>
-        <button
-          className="btn"
-          disabled={loading || page * 100 >= Number(data?.metrics.total || 0)}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Próxima
-        </button>
-      </div>
       {selected && (
         <OpportunityDialog
           key={selected.item.id}
@@ -646,7 +896,10 @@ export function Crm({
           editable={editable}
           stages={stages}
           people={people}
-          close={() => setSelected(null)}
+          close={() => {
+            setSelected(null);
+            setRefresh((x) => x + 1);
+          }}
           saved={() => {
             setSelected(null);
             setRefresh((x) => x + 1);
@@ -681,6 +934,13 @@ export function OpportunityDialog({
   const [item, setItem] = useState<Opportunity & { create_key?: string }>(
     initial.item,
   );
+  const [detail, setDetail] = useState(initial);
+  async function reloadDetail() {
+    const r = await api("crm-item", undefined, { workspace, id: item.id });
+    setDetail(r);
+    setItem(r.item);
+    setSchedule(localDate(r.item.scheduled_at));
+  }
   const [schedule, setSchedule] = useState(
     localDate(initial.item.scheduled_at),
   );
@@ -688,18 +948,27 @@ export function OpportunityDialog({
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [activityState, setActivityState] = useState({
+    busy: false,
+    dirty: false,
+  });
   const change = (key: string, value: unknown) => {
     setDirty(true);
     setItem({ ...item, [key]: value });
   };
   const dismiss = () => {
+    if (busy || activityState.busy) return;
     if (
-      (!dirty && !note.trim()) ||
+      (!dirty && !note.trim() && !activityState.dirty) ||
       confirm("Descartar alterações não salvas desta oportunidade?")
     )
       close();
   };
   async function action(type: string, extra: object = {}) {
+    if (activityState.busy || activityState.dirty) {
+      setError("Salve ou feche o formulário da atividade antes de continuar.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -720,7 +989,7 @@ export function OpportunityDialog({
     <Modal
       title={item.id ? "Detalhes da oportunidade" : "Nova oportunidade"}
       close={dismiss}
-      busy={busy}
+      busy={busy || activityState.busy}
     >
       <form
         onSubmit={(e) => {
@@ -728,7 +997,60 @@ export function OpportunityDialog({
           void action(item.id ? "crm-update" : "crm-create");
         }}
       >
-        <fieldset disabled={!editable || busy} className="crm-fields">
+        {initial.plus_ready && (
+          <section className="crm-opportunity-links">
+            <h3>Relacionamentos</h3>
+            <p className="muted">
+              Vincule cadastros existentes. Ao selecionar, os dados de contato
+              são preenchidos abaixo; mudanças futuras no cadastro não alteram
+              esta negociação automaticamente.
+            </p>
+            <div className="crm-fields">
+              <DirectoryPicker
+                api={api}
+                workspace={workspace}
+                kind="company"
+                label="Empresa cadastrada"
+                value={item.company_id || null}
+                disabled={!editable || busy}
+                onChange={(r) => {
+                  setDirty(true);
+                  setItem((i) => ({
+                    ...i,
+                    company_id: r?.id || null,
+                    contact_id: null,
+                    ...(r
+                      ? { company: r.name, document: r.document || i.document }
+                      : {}),
+                  }));
+                }}
+              />
+              <DirectoryPicker
+                api={api}
+                workspace={workspace}
+                kind="contact"
+                label="Contato principal"
+                value={item.contact_id || null}
+                companyId={item.company_id || null}
+                disabled={!editable || busy}
+                onChange={(r) => {
+                  setDirty(true);
+                  setItem((i) => ({
+                    ...i,
+                    contact_id: r?.id || null,
+                    ...(r
+                      ? { name: r.name, email: r.email, phone: r.phone }
+                      : {}),
+                  }));
+                }}
+              />
+            </div>
+          </section>
+        )}
+        <fieldset
+          disabled={!editable || busy || activityState.busy}
+          className="crm-fields"
+        >
           <Control label="Nome do contato *">
             <input
               required
@@ -836,6 +1158,36 @@ export function OpportunityDialog({
               onChange={(e) => change("notes", e.target.value)}
             />
           </Control>
+          {initial.plus_ready && (
+            <>
+              <Control label="Serviço de interesse">
+                <input
+                  maxLength={150}
+                  placeholder="Ex.: site institucional, campanhas"
+                  value={item.service || ""}
+                  onChange={(e) => change("service", e.target.value)}
+                />
+              </Control>
+              <Control label="Previsão de fechamento">
+                <input
+                  type="date"
+                  value={item.expected_close || ""}
+                  onChange={(e) =>
+                    change("expected_close", e.target.value || null)
+                  }
+                />
+              </Control>
+              <Control label="Motivo de perda / desqualificação">
+                <textarea
+                  maxLength={1000}
+                  rows={2}
+                  placeholder="Preencha quando a negociação não avançar"
+                  value={item.loss_reason || ""}
+                  onChange={(e) => change("loss_reason", e.target.value)}
+                />
+              </Control>
+            </>
+          )}
         </fieldset>
         {error && (
           <p role="alert" className="notice error">
@@ -864,6 +1216,18 @@ export function OpportunityDialog({
       </form>
       {!!item.id && (
         <>
+          {initial.plus_ready && (
+            <CrmActivities
+              api={api}
+              workspace={workspace}
+              id={Number(item.id)}
+              items={detail.activities || []}
+              editable={editable}
+              disabled={dirty || busy || !!note.trim()}
+              reload={reloadDetail}
+              onStateChange={setActivityState}
+            />
+          )}
           <hr />
           <h3>Relacionamento</h3>
           <p className="muted">
@@ -934,7 +1298,7 @@ export function OpportunityDialog({
           )}
           <h3 className="crm-history-title">Histórico</h3>
           <ol className="crm-history">
-            {initial.events.map((event: any) => (
+            {detail.events.map((event: any) => (
               <li key={event.id}>
                 <p>{event.message}</p>
                 <small>
