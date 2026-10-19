@@ -190,6 +190,8 @@ for (const mode of ["board", "calendar", "review"]) {
   assert.match(html, /Nova demanda/);
   if (mode === "board") {
     assert.match(html, /A fazer/);
+    assert.match(html, /Aguardando aprovação/);
+    assert.equal((html.match(/data-status=/g) || []).length, 4);
     assert.match(html, /Concluído/);
   }
 }
@@ -210,5 +212,5 @@ assert.equal(ics.split("\r\nBEGIN:VEVENT").length, 2);
 assert.ok(ics.split("\r\n").every((l) => Buffer.byteLength(l) <= 75));
 assert.throws(() => deliveryCalendar({ id: 0, due_date: null }, 1));
 console.log(
-  "OK · Bādon workspace: capas, três colunas, agenda mensal e exportação local segura.",
+  "OK · Bādon workspace: capas, quatro colunas, agenda mensal e exportação local segura.",
 );

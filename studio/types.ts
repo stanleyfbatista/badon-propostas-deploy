@@ -72,6 +72,7 @@ export type Form = {
 export type Workspace = {
   id: number;
   name: string;
+  slug?: string;
   role: "agency" | "admin" | "editor" | "reader";
 };
 export type Boot = {

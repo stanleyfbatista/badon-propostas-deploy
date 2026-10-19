@@ -710,6 +710,7 @@ export function TaskDialog({
   close,
   saved,
   openChild,
+  noun = "tarefa",
 }: {
   initial: any;
   people: Person[];
@@ -720,6 +721,7 @@ export function TaskDialog({
   close: () => void;
   saved: () => void;
   openChild?: (item: any) => void;
+  noun?: "tarefa" | "demanda";
 }) {
   const taskFormId = useId();
   const [item, setItem] = useState<TaskItem>(initial.item);
@@ -729,6 +731,13 @@ export function TaskDialog({
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [confirmation, setConfirmation] = useState<null | {
+    title: string;
+    message: string;
+    label: string;
+    type?: string;
+    extra?: object;
+  }>(null);
   const [clientName, setClientName] = useState(initial.client_name || "");
   const attachmentsRef = useRef<HTMLDivElement>(null);
   const [optionsError, setOptionsError] = useState("");
@@ -760,23 +769,31 @@ export function TaskDialog({
     setDirty(true);
   };
   const dismiss = () => {
-    if (
-      (!dirty && !subtaskDirty && !comment.trim()) ||
-      confirm("Descartar alterações não salvas desta tarefa?")
-    )
-      close();
+    if (!dirty && !subtaskDirty && !comment.trim()) close();
+    else
+      setConfirmation({
+        title: "Descartar alterações?",
+        message:
+          "Existem alterações ou um comentário ainda não salvos. Ao sair, esse conteúdo será perdido.",
+        label: "Descartar e sair",
+      });
   };
-  async function action(type: string, extra: object = {}) {
+  async function action(type: string, extra: object = {}, confirmed = false) {
     if (subtaskDirty) {
       setError("Crie ou cancele a subtarefa em edição antes de continuar.");
       return;
     }
-    if (
-      type !== "task-comment" &&
-      comment.trim() &&
-      !confirm("Há um comentário não publicado. Continuar e descartá-lo?")
-    )
+    if (type !== "task-comment" && comment.trim() && !confirmed) {
+      setConfirmation({
+        title: "Comentário não publicado",
+        message:
+          "Esta ação vai descartar o comentário em edição. Você pode voltar para publicá-lo antes de continuar.",
+        label: "Continuar sem o comentário",
+        type,
+        extra,
+      });
       return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -789,351 +806,393 @@ export function TaskDialog({
     }
   }
   const writable = editable && !item.archived;
+  const itemNoun = item.parent_id ? "subtarefa" : noun;
   return (
-    <Modal
-      title={item.id ? "Detalhes da tarefa" : "Nova tarefa"}
-      close={dismiss}
-      busy={busy}
-      className="task-detail-dialog"
-    >
-      <div className="task-dialog-layout">
-        <section className="task-dialog-main">
-          <div className="task-context">
-            <Folder size={15} />
-            <strong>{clientName || "Espaço do cliente"}</strong>
-            <span>/</span>
-            <span>
-              {item.parent_id ? "Subtarefa" : "Demanda"}
-              {item.id ? " #" + item.id : ""}
-            </span>
-            {item.archived ? <span className="tag">Arquivada</span> : null}
-          </div>
-          <form
-            id={taskFormId}
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (item.description.length > 10000) {
-                setError(
-                  "Reduza a descrição para até 10.000 caracteres antes de salvar.",
-                );
-                return;
-              }
-              void action(item.id ? "task-update" : "task-create");
-            }}
-          >
-            <fieldset disabled={!writable || busy} className="task-fields">
-              <Control label="Título *" className="task-title-control">
-                <input
-                  autoFocus
-                  required
-                  maxLength={200}
-                  placeholder="Nova tarefa — escreva o nome aqui"
-                  value={item.title}
-                  onChange={(e) => change("title", e.target.value)}
+    <>
+      <Modal
+        title={item.id ? `Detalhes da ${itemNoun}` : `Nova ${itemNoun}`}
+        close={dismiss}
+        busy={busy}
+        className="task-detail-dialog"
+      >
+        <div className="task-dialog-layout">
+          <section className="task-dialog-main">
+            <div className="task-context">
+              <Folder size={15} />
+              <strong>{clientName || "Espaço do cliente"}</strong>
+              <span>/</span>
+              <span>
+                {item.parent_id ? "Subtarefa" : "Demanda"}
+                {item.id ? " #" + item.id : ""}
+              </span>
+              {item.archived ? <span className="tag">Arquivada</span> : null}
+            </div>
+            <form
+              id={taskFormId}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (item.description.length > 10000) {
+                  setError(
+                    "Reduza a descrição para até 10.000 caracteres antes de salvar.",
+                  );
+                  return;
+                }
+                void action(item.id ? "task-update" : "task-create");
+              }}
+            >
+              <fieldset disabled={!writable || busy} className="task-fields">
+                <Control label="Título *" className="task-title-control">
+                  <input
+                    autoFocus
+                    required
+                    maxLength={200}
+                    placeholder={`Nova ${itemNoun} — escreva o nome aqui`}
+                    value={item.title}
+                    onChange={(e) => change("title", e.target.value)}
+                  />
+                </Control>
+                <TaskProperties
+                  item={item}
+                  people={people}
+                  actor={actor}
+                  projects={projects}
+                  extensions={extensions}
+                  datesReady={!!initial.dates_ready}
+                  change={change}
                 />
-              </Control>
-              <TaskProperties
-                item={item}
-                people={people}
-                actor={actor}
-                projects={projects}
-                extensions={extensions}
-                datesReady={!!initial.dates_ready}
-                change={change}
-              />
 
-              {optionsError && (
-                <p className="notice error" role="alert">
-                  {optionsError}
-                </p>
-              )}
-              <div className="control task-description">
-                <span>
-                  <AlignLeft size={17} /> Descrição e informações da tarefa
-                </span>
-                <FlowTextEditor
-                  value={item.description}
-                  onAttach={() => {
-                    attachmentsRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "center",
-                    });
-                    attachmentsRef.current?.focus();
-                  }}
-                  onChange={(v) => change("description", v)}
-                  disabled={!writable || busy}
-                />
-              </div>
-              {extensions && (
-                <div
-                  className="flow-task-extras"
-                  ref={attachmentsRef}
-                  tabIndex={-1}
-                >
-                  <TaskAttachments
-                    item={item}
-                    workspace={workspace}
-                    files={initial.files || []}
-                    change={(extras) => change("extras", extras)}
-                    onBusy={setBusy}
+                {optionsError && (
+                  <p className="notice error" role="alert">
+                    {optionsError}
+                  </p>
+                )}
+                <div className="control task-description">
+                  <span>
+                    <AlignLeft size={17} /> Descrição e informações da tarefa
+                  </span>
+                  <FlowTextEditor
+                    value={item.description}
+                    onAttach={() => {
+                      attachmentsRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                      attachmentsRef.current?.focus();
+                    }}
+                    onChange={(v) => change("description", v)}
+                    disabled={!writable || busy}
                   />
                 </div>
-              )}
-            </fieldset>
-          </form>
-          {extensions && !!item.id && openChild && (
-            <section className="flow-sale-control">
-              <h3>{item.parent_id ? "Tarefa-mãe" : "Subtarefas"}</h3>
-              {item.parent_id ? (
-                <button
-                  className="btn"
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    void api("task-item", undefined, {
-                      workspace,
-                      id: item.parent_id!,
-                    })
-                      .then(openChild)
-                      .catch((e) => setError(e.message))
-                  }
-                >
-                  Abrir tarefa-mãe
-                </button>
-              ) : (
-                <>
-                  {children.map((child: any) => (
-                    <button
-                      className="flow-row"
-                      key={child.id}
-                      disabled={busy || dirty || subtaskDirty}
-                      onClick={() =>
-                        void api("task-item", undefined, {
-                          workspace,
-                          id: child.id,
-                        })
-                          .then(openChild)
-                          .catch((e) => setError(e.message))
-                      }
-                    >
-                      <span>
-                        <strong>{child.title}</strong>
-                        <small>{taskStatuses[child.status]}</small>
-                      </span>
-                    </button>
-                  ))}
-                  {writable && (
-                    <QuickSubtask
-                      parent={item}
-                      actor={actor}
-                      people={people}
+                {extensions && (
+                  <div
+                    className="flow-task-extras"
+                    ref={attachmentsRef}
+                    tabIndex={-1}
+                  >
+                    <TaskAttachments
+                      item={item}
                       workspace={workspace}
-                      api={api}
-                      disabled={busy || dirty}
+                      files={initial.files || []}
+                      change={(extras) => change("extras", extras)}
                       onBusy={setBusy}
-                      onDraft={setSubtaskDirty}
-                      created={async () => {
-                        const fresh = await api("task-item", undefined, {
-                          workspace,
-                          id: item.id,
-                        });
-                        setChildren(fresh.children || []);
-                      }}
                     />
-                  )}
-                </>
-              )}
-            </section>
-          )}
-          <fieldset
-            disabled={!writable || busy}
-            className="task-fields task-checklist-section"
-          >
-            <h3>
-              Checklist{" "}
-              <small>
-                {item.checklist.filter((c) => c.done).length}/
-                {item.checklist.length}
-              </small>
-            </h3>
-            <div className="task-checklist">
-              {item.checklist.map((c, i) => (
-                <div key={c.id}>
-                  <input
-                    form={taskFormId}
-                    type="checkbox"
-                    aria-label={"Concluir item " + (i + 1)}
-                    checked={c.done}
-                    onChange={(e) =>
-                      change(
-                        "checklist",
-                        item.checklist.map((x) =>
-                          x.id === c.id ? { ...x, done: e.target.checked } : x,
-                        ),
-                      )
-                    }
-                  />
-                  <input
-                    form={taskFormId}
-                    aria-label={"Texto do item " + (i + 1)}
-                    required
-                    maxLength={300}
-                    value={c.text}
-                    onChange={(e) =>
-                      change(
-                        "checklist",
-                        item.checklist.map((x) =>
-                          x.id === c.id ? { ...x, text: e.target.value } : x,
-                        ),
-                      )
-                    }
-                  />
+                  </div>
+                )}
+              </fieldset>
+            </form>
+            {extensions && !!item.id && openChild && (
+              <section className="flow-sale-control">
+                <h3>{item.parent_id ? "Tarefa-mãe" : "Subtarefas"}</h3>
+                {item.parent_id ? (
                   <button
-                    type="button"
                     className="btn"
-                    aria-label={"Remover item " + (i + 1)}
+                    disabled={busy || dirty}
                     onClick={() =>
-                      change(
-                        "checklist",
-                        item.checklist.filter((x) => x.id !== c.id),
-                      )
+                      void api("task-item", undefined, {
+                        workspace,
+                        id: item.parent_id!,
+                      })
+                        .then(openChild)
+                        .catch((e) => setError(e.message))
                     }
                   >
-                    ×
+                    Abrir tarefa-mãe
                   </button>
-                </div>
-              ))}
-            </div>
-            <button
-              className="btn"
-              type="button"
-              disabled={item.checklist.length >= 50}
-              onClick={() =>
-                change("checklist", [
-                  ...item.checklist,
-                  { id: crypto.randomUUID(), text: "", done: false },
-                ])
-              }
+                ) : (
+                  <>
+                    {children.map((child: any) => (
+                      <button
+                        className="flow-row"
+                        key={child.id}
+                        disabled={busy || dirty || subtaskDirty}
+                        onClick={() =>
+                          void api("task-item", undefined, {
+                            workspace,
+                            id: child.id,
+                          })
+                            .then(openChild)
+                            .catch((e) => setError(e.message))
+                        }
+                      >
+                        <span>
+                          <strong>{child.title}</strong>
+                          <small>{taskStatuses[child.status]}</small>
+                        </span>
+                      </button>
+                    ))}
+                    {writable && (
+                      <QuickSubtask
+                        parent={item}
+                        actor={actor}
+                        people={people}
+                        workspace={workspace}
+                        api={api}
+                        disabled={busy || dirty}
+                        onBusy={setBusy}
+                        onDraft={setSubtaskDirty}
+                        created={async () => {
+                          const fresh = await api("task-item", undefined, {
+                            workspace,
+                            id: item.id,
+                          });
+                          setChildren(fresh.children || []);
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+              </section>
+            )}
+            <fieldset
+              disabled={!writable || busy}
+              className="task-fields task-checklist-section"
             >
-              <Plus size={15} /> Item do checklist
-            </button>
-          </fieldset>
-          {error && (
-            <p className="notice error" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="crm-actions">
-            {!!item.id && item.due_date && (
+              <h3>
+                Checklist{" "}
+                <small>
+                  {item.checklist.filter((c) => c.done).length}/
+                  {item.checklist.length}
+                </small>
+              </h3>
+              <div className="task-checklist">
+                {item.checklist.map((c, i) => (
+                  <div key={c.id}>
+                    <input
+                      form={taskFormId}
+                      type="checkbox"
+                      aria-label={"Concluir item " + (i + 1)}
+                      checked={c.done}
+                      onChange={(e) =>
+                        change(
+                          "checklist",
+                          item.checklist.map((x) =>
+                            x.id === c.id
+                              ? { ...x, done: e.target.checked }
+                              : x,
+                          ),
+                        )
+                      }
+                    />
+                    <input
+                      form={taskFormId}
+                      aria-label={"Texto do item " + (i + 1)}
+                      required
+                      maxLength={300}
+                      value={c.text}
+                      onChange={(e) =>
+                        change(
+                          "checklist",
+                          item.checklist.map((x) =>
+                            x.id === c.id ? { ...x, text: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn"
+                      aria-label={"Remover item " + (i + 1)}
+                      onClick={() =>
+                        change(
+                          "checklist",
+                          item.checklist.filter((x) => x.id !== c.id),
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="btn"
+                type="button"
+                disabled={item.checklist.length >= 50}
+                onClick={() =>
+                  change("checklist", [
+                    ...item.checklist,
+                    { id: crypto.randomUUID(), text: "", done: false },
+                  ])
+                }
+              >
+                <Plus size={15} /> Item do checklist
+              </button>
+            </fieldset>
+            {error && (
+              <p className="notice error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="crm-actions">
+              {!!item.id && item.due_date && (
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={busy || dirty}
+                  onClick={() => downloadDeliveryCalendar(item, workspace)}
+                >
+                  <CalendarDays size={16} /> Exportar para agenda (.ics)
+                </button>
+              )}
               <button
                 type="button"
                 className="btn"
-                disabled={busy || dirty}
-                onClick={() => downloadDeliveryCalendar(item, workspace)}
-              >
-                <CalendarDays size={16} /> Exportar para agenda (.ics)
-              </button>
-            )}
-            <button
-              type="button"
-              className="btn"
-              disabled={busy}
-              onClick={dismiss}
-            >
-              Fechar
-            </button>
-            {writable && (
-              <button
-                form={taskFormId}
-                type="submit"
-                className="btn primary"
                 disabled={busy}
+                onClick={dismiss}
               >
-                {busy
-                  ? "Salvando…"
-                  : item.id
-                    ? "Salvar tarefa"
-                    : "Criar tarefa"}
+                Fechar
+              </button>
+              {writable && (
+                <button
+                  form={taskFormId}
+                  type="submit"
+                  className="btn primary"
+                  disabled={busy}
+                >
+                  {busy
+                    ? "Salvando…"
+                    : item.id
+                      ? `Salvar ${itemNoun}`
+                      : `Criar ${itemNoun}`}
+                </button>
+              )}
+            </div>
+            {!!item.id && editable && (
+              <button
+                className="btn"
+                disabled={busy || dirty}
+                onClick={() => {
+                  setConfirmation({
+                    title: `${item.archived ? "Restaurar" : "Arquivar"} ${itemNoun}?`,
+                    message:
+                      (item.archived
+                        ? "Ela voltará às demandas ativas."
+                        : "Ela poderá ser restaurada em Arquivadas.") +
+                      (comment.trim()
+                        ? " O comentário em edição será descartado."
+                        : ""),
+                    label: item.archived ? "Restaurar" : "Arquivar",
+                    type: "task-archive",
+                    extra: { archived: !item.archived },
+                  });
+                }}
+              >
+                <Archive size={15} />
+                {item.archived
+                  ? `Restaurar ${itemNoun}`
+                  : `Arquivar ${itemNoun}`}
               </button>
             )}
-          </div>
-          {!!item.id && editable && (
+          </section>
+          <aside className="task-dialog-activity">
+            <h3>
+              <MessageSquare size={18} /> Comentários e histórico
+            </h3>
+            {!item.id && (
+              <p className="muted">
+                Salve a {itemNoun} para iniciar a conversa com a equipe.
+              </p>
+            )}
+            {!!item.id && (
+              <>
+                {writable && (
+                  <form
+                    className="crm-note"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void action("task-comment", { message: comment });
+                    }}
+                  >
+                    <Control label="Novo comentário">
+                      <textarea
+                        required
+                        maxLength={2000}
+                        disabled={busy}
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                      />
+                    </Control>
+                    <button
+                      className="btn"
+                      disabled={busy || dirty || !comment.trim()}
+                    >
+                      Publicar comentário
+                    </button>
+                    {dirty && (
+                      <small>
+                        Salve a tarefa antes de publicar o comentário.
+                      </small>
+                    )}
+                  </form>
+                )}
+                <ol className="crm-history">
+                  {(initial.events || []).map((event: any) => (
+                    <li key={event.id}>
+                      <p>{event.message}</p>
+                      <small>
+                        {event.actor_name ||
+                          people.find((p) => p.actor === event.actor)?.email ||
+                          "Membro da equipe"}{" "}
+                        · {timeLabel(event.created_at)}
+                      </small>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
+          </aside>
+        </div>
+      </Modal>
+      {confirmation && (
+        <Modal
+          title={confirmation.title}
+          close={() => setConfirmation(null)}
+          busy={busy}
+        >
+          <p>{confirmation.message}</p>
+          <div className="crm-actions">
             <button
               className="btn"
-              disabled={busy || dirty}
+              autoFocus
+              onClick={() => setConfirmation(null)}
+            >
+              Continuar editando
+            </button>
+            <button
+              className="btn primary"
               onClick={() => {
-                if (
-                  confirm(
-                    item.archived
-                      ? "Restaurar esta tarefa?"
-                      : "Arquivar esta tarefa? Ela poderá ser restaurada em Arquivadas.",
-                  )
-                )
-                  void action("task-archive", { archived: !item.archived });
+                const pending = confirmation;
+                setConfirmation(null);
+                if (pending.type)
+                  void action(pending.type, pending.extra, true);
+                else close();
               }}
             >
-              <Archive size={15} />
-              {item.archived ? "Restaurar tarefa" : "Arquivar tarefa"}
+              {confirmation.label}
             </button>
-          )}
-        </section>
-        <aside className="task-dialog-activity">
-          <h3>
-            <MessageSquare size={18} /> Comentários e histórico
-          </h3>
-          {!item.id && (
-            <p className="muted">
-              Salve a tarefa para iniciar a conversa com a equipe.
-            </p>
-          )}
-          {!!item.id && (
-            <>
-              {writable && (
-                <form
-                  className="crm-note"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void action("task-comment", { message: comment });
-                  }}
-                >
-                  <Control label="Novo comentário">
-                    <textarea
-                      required
-                      maxLength={2000}
-                      disabled={busy}
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                    />
-                  </Control>
-                  <button
-                    className="btn"
-                    disabled={busy || dirty || !comment.trim()}
-                  >
-                    Publicar comentário
-                  </button>
-                  {dirty && (
-                    <small>
-                      Salve a tarefa antes de publicar o comentário.
-                    </small>
-                  )}
-                </form>
-              )}
-              <ol className="crm-history">
-                {(initial.events || []).map((event: any) => (
-                  <li key={event.id}>
-                    <p>{event.message}</p>
-                    <small>
-                      {event.actor_name ||
-                        people.find((p) => p.actor === event.actor)?.email ||
-                        "Membro da equipe"}{" "}
-                      · {timeLabel(event.created_at)}
-                    </small>
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-        </aside>
-      </div>
-    </Modal>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

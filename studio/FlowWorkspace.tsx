@@ -162,6 +162,7 @@ export function useDeliveryDialog(
     [target, setTarget] = useState(workspace || Number(spaces[0]?.id) || 0),
     [choosing, setChoosing] = useState(false),
     [createDate, setCreateDate] = useState<string | null>(null),
+    [createStatus, setCreateStatus] = useState("todo"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function open(item: any) {
@@ -199,13 +200,22 @@ export function useDeliveryDialog(
   }
   function create() {
     setCreateDate(null);
+    setCreateStatus("todo");
     if (workspace) void open({ workspace_id: workspace });
     else setChoosing(true);
   }
   function createAt(date: string, preferredWorkspace = workspace || 0) {
     setCreateDate(date);
+    setCreateStatus("todo");
     if (preferredWorkspace)
       void open({ workspace_id: preferredWorkspace, due_date: date });
+    else setChoosing(true);
+  }
+  function createInStatus(status: string, preferredWorkspace = workspace || 0) {
+    setCreateDate(null);
+    setCreateStatus(status);
+    if (preferredWorkspace)
+      void open({ workspace_id: preferredWorkspace, status });
     else setChoosing(true);
   }
   const dialog = (
@@ -240,7 +250,11 @@ export function useDeliveryDialog(
             disabled={!target || busy}
             onClick={() => {
               setChoosing(false);
-              void open({ workspace_id: target, due_date: createDate });
+              void open({
+                workspace_id: target,
+                due_date: createDate,
+                status: createStatus,
+              });
             }}
           >
             Continuar <ArrowRight size={16} />
@@ -256,6 +270,7 @@ export function useDeliveryDialog(
           workspace={target}
           api={api}
           editable
+          noun="demanda"
           close={() => {
             setSelected(null);
             changed();
@@ -269,7 +284,7 @@ export function useDeliveryDialog(
       )}
     </>
   );
-  return { open, create, createAt, dialog, busy };
+  return { open, create, createAt, createInStatus, dialog, busy };
 }
 export function FlowHome(props: Props & { navigate: Navigate }) {
   const { api, actor, navigate } = props;
@@ -311,7 +326,8 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
     near = tasks.filter(
       (t) => t.due_date >= data.today && t.due_date <= data.attention_end,
     ),
-    review = tasks.filter((t) => t.status === "review");
+    review = tasks.filter((t) => t.status === "review"),
+    doing = tasks.filter((t) => t.status === "doing");
   const mine = tasks.filter((t) => t.assignee === actor);
   const shown =
     filter === "mine"
@@ -322,7 +338,9 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
           ? near
           : filter === "review"
             ? review
-            : tasks;
+            : filter === "doing"
+              ? doing
+              : tasks;
   const groups = new Set(
     late.map((t) => t.workspace_id + ":" + (t.project_id || "unassigned")),
   ).size;
@@ -366,12 +384,12 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
           <strong>{data.clients}</strong>
           <small>Cada cliente, um espaço próprio</small>
         </button>
-        <button onClick={() => setFilter("all")}>
+        <button onClick={() => setFilter("doing")}>
           <span>
             Em andamento <CalendarDays size={18} />
           </span>
-          <strong>{tasks.length}</strong>
-          <small>Demandas abertas da equipe</small>
+          <strong>{doing.length}</strong>
+          <small>Demandas em execução pela equipe</small>
         </button>
         <button className="blue" onClick={() => setFilter("review")}>
           <span>
@@ -399,8 +417,11 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
                 : "projetos com entregas em atraso"}
             </strong>
             <small>
-              {late.length} entrega(s) com prazo vencido. Revise as pendências e
-              defina o próximo passo.
+              {late.length}{" "}
+              {late.length === 1
+                ? "entrega com prazo vencido"
+                : "entregas com prazo vencido"}
+              . Revise as pendências e defina o próximo passo.
             </small>
           </span>
           Revisar atrasos <ArrowRight size={18} />
@@ -418,7 +439,9 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
                     ? "Prazos próximos"
                     : filter === "review"
                       ? "Aguardando aprovação"
-                      : "Próximas entregas"}
+                      : filter === "doing"
+                        ? "Em andamento"
+                        : "Próximas entregas"}
             </h2>
             <button
               className="flow-text-button"
@@ -490,7 +513,11 @@ export function FlowHome(props: Props & { navigate: Navigate }) {
                 <ClientMark client={c} />
                 <span>
                   <strong>{c.name}</strong>
-                  <small>{c.counts.demands} entregas em aberto</small>
+                  <small>
+                    {c.counts.demands}{" "}
+                    {Number(c.counts.demands) === 1 ? "entrega" : "entregas"} em
+                    aberto
+                  </small>
                 </span>
                 <ArrowRight size={16} />
               </button>
@@ -760,34 +787,29 @@ function FlowWorkBody(
             "flow-delivery-board" + (mode === "review" ? " review-only" : "")
           }
         >
-          {(mode === "review" ? ["review"] : ["todo", "doing", "done"]).map(
-            (stage) => (
-              <section key={stage}>
-                <h2>
-                  <span>●</span> {stageNames[stage]}{" "}
-                  <small>
-                    {
-                      items.filter((t) =>
-                        stage === "doing"
-                          ? ["doing", "review"].includes(t.status)
-                          : t.status === stage,
-                      ).length
-                    }
-                  </small>
-                </h2>
-                {items
-                  .filter((t) =>
-                    stage === "doing"
-                      ? ["doing", "review"].includes(t.status)
-                      : t.status === stage,
+          {(mode === "review"
+            ? ["review"]
+            : ["todo", "doing", "review", "done"]
+          ).map((stage) => (
+            <section key={stage} data-status={stage}>
+              <h2>
+                <span>●</span> {stageNames[stage]}{" "}
+                <small>{items.filter((t) => t.status === stage).length}</small>
+              </h2>
+              {items.filter((t) => t.status === stage).map(card)}
+              <button
+                className="flow-add-delivery"
+                onClick={() =>
+                  editor.createInStatus(
+                    stage,
+                    Number(client) || props.workspace || 0,
                   )
-                  .map(card)}
-                <button className="flow-add-delivery" onClick={editor.create}>
-                  + Adicionar demanda
-                </button>
-              </section>
-            ),
-          )}
+                }
+              >
+                + Adicionar demanda
+              </button>
+            </section>
+          ))}
         </div>
       )}
       {data?.total > 200 && (

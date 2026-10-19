@@ -1,5 +1,11 @@
 import "vite/modulepreload-polyfill";
 import React, { useEffect, useRef, useState } from "react";
+import {
+  defaultWorkspace,
+  panelUrl,
+  readPanelRoute,
+  resolvePanelRoute,
+} from "./panel-route";
 import { createRoot } from "react-dom/client";
 import {
   ArrowLeft,
@@ -205,13 +211,16 @@ function SessionDialog({ children }: { children: React.ReactNode }) {
   );
 }
 function App() {
+  const initialRoute = useRef(readPanelRoute(location.search));
+  const routeInitialized = useRef(false);
+  const routeUrlInitialized = useRef(false);
   const [boot, setBoot] = useState<Boot | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
-    [workspace, setWorkspace] = useState(0),
+    [workspace, setWorkspace] = useState(initialRoute.current.workspace),
     [form, setForm] = useState<FormRecord | null>(null),
-    [view, setView] = useState("overview"),
+    [view, setView] = useState(initialRoute.current.view),
     [refresh, setRefresh] = useState(0);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -233,10 +242,12 @@ function App() {
       (form.elements.namedItem(issue.field) as HTMLInputElement)?.focus();
     return !issue;
   }
-  const [project, setProject] = useState(0);
+  const [project, setProject] = useState(initialRoute.current.project);
   const [crmSection, setCrmSection] = useState("followup");
   function navigate(next: string, target?: number, projectId = 0) {
     if (target) setWorkspace(target);
+    else if (next === "crm" && boot?.user?.agency)
+      setWorkspace(defaultWorkspace(boot.workspaces, true));
     setProject(projectId);
     setView(next);
   }
@@ -246,6 +257,17 @@ function App() {
   async function load() {
     const b = await api("boot");
     setBoot(b);
+    if (b.user && !routeInitialized.current) {
+      const route = resolvePanelRoute(
+        initialRoute.current,
+        b.workspaces,
+        b.user.agency,
+      );
+      setView(route.view);
+      setWorkspace(route.workspace);
+      setProject(route.project);
+      routeInitialized.current = true;
+    }
     if (b.google_notice) {
       if (b.google_notice.ok) setNotice(b.google_notice.message);
       else setError(b.google_notice.message);
@@ -257,7 +279,7 @@ function App() {
     setWorkspace((w) =>
       b.workspaces.some((x: Workspace) => Number(x.id) === w)
         ? w
-        : Number(b.workspaces[0]?.id || 0),
+        : defaultWorkspace(b.workspaces, !!b.user?.agency),
     );
   }
   useEffect(() => {
@@ -294,6 +316,7 @@ function App() {
   }
   useEffect(() => {
     if (!boot) return;
+    if (boot.user && !token) return;
     // Tokens have already been captured in state; keep them out of the URL.
     const path =
       boot.user && !token
@@ -304,6 +327,42 @@ function App() {
     if (location.pathname + location.search !== path || location.hash)
       history.replaceState(null, "", path);
   }, [boot?.user, token]);
+  useEffect(() => {
+    if (!boot?.user || token || form || !routeInitialized.current) return;
+    const url = panelUrl({ view, workspace, project });
+    if (location.pathname + location.search !== url || location.hash) {
+      if (routeUrlInitialized.current) history.pushState(null, "", url);
+      else history.replaceState(null, "", url);
+    }
+    routeUrlInitialized.current = true;
+  }, [boot?.user, token, form, view, workspace, project]);
+  useEffect(() => {
+    if (!boot?.user) return;
+    const restore = () => {
+      if (
+        form &&
+        !confirm("Sair do editor? Alterações não salvas serão descartadas.")
+      ) {
+        history.pushState(
+          null,
+          "",
+          panelUrl({ view: "forms", workspace, project: 0 }),
+        );
+        return;
+      }
+      const route = resolvePanelRoute(
+        readPanelRoute(location.search),
+        boot.workspaces,
+        boot.user!.agency,
+      );
+      setForm(null);
+      setView(route.view);
+      setWorkspace(route.workspace);
+      setProject(route.project);
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [boot, form, workspace]);
   useEffect(() => {
     document.documentElement.dataset.appearance =
       boot?.user &&
@@ -425,16 +484,37 @@ function App() {
               {!token && boot.google_available && (
                 <>
                   <div className="auth-google">
-                    <Button type="button" disabled={busy} onClick={(e) => {
-                      const d = new FormData(e.currentTarget.form!);
-                      task(async () => {
-                        const r = await api("google-login", { remember: d.get("remember") === "on" });
-                        window.location.assign(r.url);
-                      });
-                    }}><img className="google-signin-icon" src="/assets/google-g.png" width="20" height="20" alt="" aria-hidden="true" />Entrar com Google</Button>
-                    <small>Para contas já vinculadas. No primeiro acesso, use seu convite ou o link por e-mail.</small>
+                    <Button
+                      type="button"
+                      disabled={busy}
+                      onClick={(e) => {
+                        const d = new FormData(e.currentTarget.form!);
+                        task(async () => {
+                          const r = await api("google-login", {
+                            remember: d.get("remember") === "on",
+                          });
+                          window.location.assign(r.url);
+                        });
+                      }}
+                    >
+                      <img
+                        className="google-signin-icon"
+                        src="/assets/google-g.png"
+                        width="20"
+                        height="20"
+                        alt=""
+                        aria-hidden="true"
+                      />
+                      Entrar com Google
+                    </Button>
+                    <small>
+                      Para contas já vinculadas. No primeiro acesso, use seu
+                      convite ou o link por e-mail.
+                    </small>
                   </div>
-                  <div className="auth-divider"><span>ou entre com seu e-mail</span></div>
+                  <div className="auth-divider">
+                    <span>ou entre com seu e-mail</span>
+                  </div>
                 </>
               )}
               {!token && (
@@ -604,7 +684,8 @@ function App() {
               onChange={(e) => {
                 setWorkspace(Number(e.target.value));
                 setProject(0);
-                setView(boot.user?.agency ? "forms" : "portal");
+                if (view === "client" || view === "projects")
+                  setView(boot.user?.agency ? "client" : "portal");
               }}
             >
               {boot.workspaces.map((w) => (
@@ -778,7 +859,7 @@ function App() {
               <p className="eyebrow flow-nav-divider">RELACIONAMENTO</p>
               <button
                 className={view === "crm" ? "selected" : ""}
-                onClick={() => setView("crm")}
+                onClick={() => navigate("crm")}
               >
                 <BriefcaseBusiness size={18} /> CRM
               </button>
@@ -947,7 +1028,8 @@ function App() {
                   <section className="flow-panel">
                     <h2>Integrações</h2>
                     <p>
-                      Asaas ainda não conectado. A confirmação de recebimento continua manual.
+                      Asaas ainda não conectado. A confirmação de recebimento
+                      continua manual.
                     </p>
                   </section>
                 </section>
@@ -1265,7 +1347,8 @@ function FormList({
               <p className="muted">/f/{f.slug}</p>
               <div className="card-stats">
                 <span>
-                  <strong>{f.lead_count}</strong> respostas
+                  <strong>{f.lead_count}</strong>{" "}
+                  {Number(f.lead_count) === 1 ? "resposta" : "respostas"}
                 </span>
                 {f.published_revision &&
                   Number(f.revision) !== Number(f.published_revision) && (

@@ -597,12 +597,15 @@ export function Crm({
               ["Valor total", money(data?.metrics.amount || 0)],
               [
                 "Conversão",
-                data?.metrics.total
-                  ? (
-                      (Number(data.metrics.won) / Number(data.metrics.total)) *
-                      100
-                    ).toFixed(1) + "%"
-                  : "0%",
+                new Intl.NumberFormat("pt-BR", {
+                  style: "percent",
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }).format(
+                  data?.metrics.total
+                    ? Number(data.metrics.won) / Number(data.metrics.total)
+                    : 0,
+                ),
               ],
               ["Fechadas", data?.metrics.won || 0],
               ["Atividades atrasadas", data?.metrics.overdue || 0],

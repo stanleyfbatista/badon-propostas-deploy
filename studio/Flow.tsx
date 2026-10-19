@@ -340,13 +340,16 @@ export function FlowClients({
         <p>{c.details.segment || c.contact || "Perfil do cliente"}</p>
         <div className="flow-client-counts">
           <span>
-            <strong>{c.counts?.projects || 0}</strong> projetos
+            <strong>{c.counts?.projects || 0}</strong>{" "}
+            {Number(c.counts?.projects) === 1 ? "projeto" : "projetos"}
           </span>
           <span>
-            <strong>{c.counts?.demands || 0}</strong> demandas
+            <strong>{c.counts?.demands || 0}</strong>{" "}
+            {Number(c.counts?.demands) === 1 ? "demanda" : "demandas"}
           </span>
           <span>
-            <strong>{c.counts?.approvals || 0}</strong> aprovações
+            <strong>{c.counts?.approvals || 0}</strong>{" "}
+            {Number(c.counts?.approvals) === 1 ? "aprovação" : "aprovações"}
           </span>
         </div>
         <small
@@ -1410,7 +1413,10 @@ export function FlowProjects({
             <h2>{p.name}</h2>
             <p>{p.description || "Abra para organizar as demandas."}</p>
             <p className="muted">
-              {p.done || 0} de {p.tasks} entregas concluídas
+              {p.done || 0} de {p.tasks}{" "}
+              {Number(p.tasks) === 1
+                ? "entrega concluída"
+                : "entregas concluídas"}
             </p>
             <progress value={Number(p.done || 0)} max={Number(p.tasks) || 1} />
             {(p.preview || []).map((t: any) => (
@@ -1422,7 +1428,8 @@ export function FlowProjects({
               </div>
             ))}
             <span>
-              {p.tasks} demanda(s) · Abrir projeto <ArrowRight size={16} />
+              {p.tasks} {Number(p.tasks) === 1 ? "demanda" : "demandas"} · Abrir
+              projeto <ArrowRight size={16} />
             </span>
           </button>
         ))}

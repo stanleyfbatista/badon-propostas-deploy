@@ -35,7 +35,10 @@
   letter-spacing: -0.6px;
   margin: 0 auto 0 8px;
   min-width: 160px;
-  text-transform: capitalize;
+  text-transform: none;
+}
+.agenda-toolbar h2::first-letter {
+  text-transform: uppercase;
 }
 .agenda-toolbar .btn {
   padding: 10px 14px;
