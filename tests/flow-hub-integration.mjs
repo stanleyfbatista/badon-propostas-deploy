@@ -535,6 +535,34 @@ export async function flowHubTests({
   assert.equal(portalTasks.status, 200);
   const portalReader = (await reader.req('boot')).body.user;
   assert.ok(portalTasks.body.items.every(t => t.visibility === 'team' || t.creator === 'u:' + portalReader.id));
+  // Calendar spans and narrow date updates preserve existing task data and authorization.
+  const calendarCreated = await agency.req('task-create', {...task, workspace:wa, project_id:null, assignee:null, title:'Agenda QA · campanha', start_date:'2027-01-01', due_date:'2027-02-05',create_key:randomUUID()});
+  assert.equal(calendarCreated.status,200,JSON.stringify(calendarCreated.body));
+  const calendarId=calendarCreated.body.id;
+  const calendarQuery={workspace:wa,calendar:'1',from:'2027-01-18',to:'2027-01-24'};
+  const calendarItems=(await agency.req('flow-work',undefined,calendarQuery)).body.items;
+  assert.ok(calendarItems.some(t=>Number(t.id)===calendarId));
+  assert.ok(!calendarItems.some(t=>Number(t.id)===privateEditor.body.id));
+  assert.equal((await reader.req('flow-work',undefined,calendarQuery)).status,403);
+  assert.equal((await agency.req('flow-work',undefined,{...calendarQuery,to:'2028-01-01'})).status,422);
+  assert.equal((await agency.req('flow-work',undefined,{...calendarQuery,from:'2027-02-30'})).status,422);
+  const before=(await agency.req('task-item',undefined,{workspace:wa,id:calendarId})).body.item;
+  const change={workspace:wa,id:calendarId,revision:before.revision,start_date:'2027-01-02',due_date:'2027-02-06'};
+  assert.equal((await reader.req('task-reschedule',change)).status,403);
+  assert.equal((await other.req('task-reschedule',change)).status,403);
+  assert.equal((await agency.req('task-reschedule',{...change,id:privateEditor.body.id})).status,404);
+  assert.equal((await agency.req('task-reschedule',{...change,revision:0})).status,409);
+  assert.equal((await agency.req('task-reschedule',{...change,due_date:'2026-12-31'})).status,422);
+  assert.equal((await agency.req('task-reschedule',{...change,due_date:null})).status,422);
+  assert.equal((await agency.req('task-reschedule',change)).status,200);
+  const after=(await agency.req('task-item',undefined,{workspace:wa,id:calendarId})).body.item;
+  assert.equal(after.start_date,change.start_date);assert.equal(after.due_date,change.due_date);
+  assert.equal(Number(after.revision),Number(before.revision)+1);
+  for(const key of ['title','description','assignee','priority','extras','checklist','status','project_id']) assert.deepEqual(after[key],before[key],key);
+  assert.equal((await agency.req('task-reschedule',change)).status,409);
+  assert.equal((await agency.req('task-update',{...task,workspace:wa,id:calendarId,revision:after.revision,project_id:null,assignee:null,status:'done',start_date:after.start_date,due_date:after.due_date})).status,200);
+  assert.ok(!(await agency.req('flow-work',undefined,{...calendarQuery,hide_done:'1'})).body.items.some(t=>Number(t.id)===calendarId));
+  assert.equal((await agency.req('task-reschedule',{...change,revision:Number(after.revision)+1})).status,422);
   assert.equal(messages.length, mails);
   console.log(
     "OK: Bādon Flow, migração repetível sem perdas, clientes diretos/vinculados, projetos, subtarefas, isolamento, aprovação, pagamento manual idempotente e captura no follow-up.",

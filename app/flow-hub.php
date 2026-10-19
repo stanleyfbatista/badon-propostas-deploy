@@ -112,7 +112,15 @@ function flow_handle(string $action,array $u,array $in): never {
         if (!empty($_GET['status'])) { $where[]='t.status=?'; $args[]=studio_text($_GET['status'],16); }
         $search=studio_text($_GET['search']??'',200);
         if ($search!=='') { $where[]='(t.title LIKE ? OR p.name LIKE ? OR w.name LIKE ?)'; array_push($args,"%$search%","%$search%","%$search%"); }
-        foreach (['from'=>'>=','to'=>'<='] as $key=>$op) if (!empty($_GET[$key])) { $where[]="t.due_date $op ?"; $args[]=tasks_date($_GET[$key]); }
+        if (($_GET['calendar']??'')==='1') {
+            $from=tasks_date($_GET['from']??null); $to=tasks_date($_GET['to']??null);
+            if (!$from || !$to || $to<$from || strtotime($to)-strtotime($from)>62*86400) throw new InvalidArgumentException('Escolha um período de até 63 dias para a agenda.');
+            // Include tasks spanning the visible period, not only tasks due in it.
+            $where[]='t.due_date>=? AND COALESCE(t.start_date,t.due_date)<=?'; array_push($args,$from,$to);
+            if (($_GET['hide_done']??'')==='1') $where[]="t.status<>'done'";
+        } else {
+            foreach (['from'=>'>=','to'=>'<='] as $key=>$op) if (!empty($_GET[$key])) { $where[]="t.due_date $op ?"; $args[]=tasks_date($_GET[$key]); }
+        }
         $join=' FROM bf_tasks t JOIN bf_workspaces w ON w.id=t.workspace_id LEFT JOIN bf_flow_projects p ON p.id=t.project_id AND p.workspace_id=t.workspace_id LEFT JOIN bf_profiles a ON a.actor=t.assignee';
         $filter=implode(' AND ',$where);
         $q=db()->prepare("SELECT COUNT(*) $join WHERE $filter"); $q->execute($args); $total=(int)$q->fetchColumn();

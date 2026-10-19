@@ -1,5 +1,18 @@
 # Bādon Forms — React + PHP/MySQL na hospedagem atual
 
+## Agenda de demandas — outubro/2026
+
+Agenda adaptada ao modelo de navegação e interação da [referência ReUI](https://reui.io/components/event-calendar), implementada no React/PHP existente com a identidade Bādon. Não instala o componente Pro, não copia seus blocos pagos e não acrescenta serviço ou assinatura.
+
+- Visões mês, semana, dia e lista; navegação e salto para data; filtros por cliente, responsável, texto e status; atalho Minhas demandas.
+- Períodos entre início e vencimento, cores por status e atraso, opções de fim de semana, início da semana e ocultar concluídas. As preferências de visualização são temporárias.
+- Criação pelo dia e abertura do card existente. Arrastar move o intervalo; arrastar a borda altera o vencimento. Ambas pedem confirmação. O botão Alterar datas oferece a alternativa por teclado e celular.
+- Reagendamento atualiza somente datas com revisão concorrente, autorização de edição, isolamento de espaço e proteção de tarefas privadas. Concluídas precisam ser reabertas antes de reagendar. Subtarefas mantêm seus próprios prazos.
+- Até 2.000 demandas por período, carregadas em páginas; aviso explícito orienta filtrar caso exceda. Demandas sem vencimento continuam na área Demandas.
+- Mantém a conexão Google existente; quando ativa, o sincronizador existente usa o novo vencimento. Não muda permissões OAuth, não cria uma segunda integração e não sincroniza atividades do CRM. São demandas de dia inteiro: horários, recorrência, recursos e visões customizadas N-dias da referência não fazem parte desta etapa.
+
+Sem migração adicional para esta agenda em instalações Flow atualizadas. Se a atualização anterior do CRM ainda estiver pendente, execute `crm:upgrade` no deploy, como descrito abaixo. Verificação: `npm run build`, `npm test` (inclui datas civis, intervalos e paginação), testes de integração com MySQL isolado e revisão no navegador.
+
 ## CRM ampliado — empresas, contatos e follow-up
 
 Atualização aditiva para a instalação em `app.produtorabadon.com`, sem novo serviço, dependência ou assinatura. O CRM existente continua como base; não foi substituído pelo trycompai/crm.

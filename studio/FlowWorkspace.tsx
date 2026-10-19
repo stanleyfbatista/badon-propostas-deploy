@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { GoogleConnection } from "./GoogleConnection";
+import { FlowAgenda } from "./FlowAgenda";
 import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Camera,
   Plus,
@@ -155,7 +153,7 @@ export function ClientMark({
     </span>
   );
 }
-function useDeliveryDialog(
+export function useDeliveryDialog(
   { api, actor, spaces, workspace, project = 0 }: Props,
   changed: () => void,
 ) {
@@ -163,6 +161,7 @@ function useDeliveryDialog(
     [people, setPeople] = useState<Person[]>([]),
     [target, setTarget] = useState(workspace || Number(spaces[0]?.id) || 0),
     [choosing, setChoosing] = useState(false),
+    [createDate, setCreateDate] = useState<string | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function open(item: any) {
@@ -199,7 +198,14 @@ function useDeliveryDialog(
     }
   }
   function create() {
+    setCreateDate(null);
     if (workspace) void open({ workspace_id: workspace });
+    else setChoosing(true);
+  }
+  function createAt(date: string, preferredWorkspace = workspace || 0) {
+    setCreateDate(date);
+    if (preferredWorkspace)
+      void open({ workspace_id: preferredWorkspace, due_date: date });
     else setChoosing(true);
   }
   const dialog = (
@@ -234,7 +240,7 @@ function useDeliveryDialog(
             disabled={!target || busy}
             onClick={() => {
               setChoosing(false);
-              void open({ workspace_id: target });
+              void open({ workspace_id: target, due_date: createDate });
             }}
           >
             Continuar <ArrowRight size={16} />
@@ -263,7 +269,7 @@ function useDeliveryDialog(
       )}
     </>
   );
-  return { open, create, dialog, busy };
+  return { open, create, createAt, dialog, busy };
 }
 export function FlowHome(props: Props & { navigate: Navigate }) {
   const { api, actor, navigate } = props;
@@ -511,6 +517,19 @@ export function FlowWork(
     embedded?: boolean;
   },
 ) {
+  return props.mode === "calendar" ? (
+    <FlowAgenda {...props} />
+  ) : (
+    <FlowWorkBody {...props} />
+  );
+}
+function FlowWorkBody(
+  props: Props & {
+    mode?: "board" | "calendar" | "review";
+    project?: number;
+    embedded?: boolean;
+  },
+) {
   const {
     api,
     spaces,
@@ -524,14 +543,12 @@ export function FlowWork(
     [client, setClient] = useState(workspace),
     [assignee, setAssignee] = useState(""),
     [view, setView] = useState("board"),
-    [month, setMonth] = useState(todayLocal().slice(0, 7)),
     [page, setPage] = useState(1),
     [revision, setRevision] = useState(0),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(false),
     [owners, setOwners] = useState<Person[]>([]);
   const editor = useDeliveryDialog(props, () => setRevision((v) => v + 1));
-  const days = monthDays(month);
   useEffect(() => {
     let alive = true;
     const timer = setTimeout(() => {
@@ -542,8 +559,6 @@ export function FlowWork(
         search,
         assignee,
         status: mode === "review" ? "review" : "",
-        from: mode === "calendar" ? days[0] : "",
-        to: mode === "calendar" ? days[41] : "",
         page,
       })
         .then((r) => {
@@ -564,14 +579,8 @@ export function FlowWork(
       alive = false;
       clearTimeout(timer);
     };
-  }, [client, project, search, assignee, mode, month, page, revision]);
+  }, [client, project, search, assignee, mode, page, revision]);
   const items: any[] = data?.items || [];
-  const adjustMonth = (delta: number) => {
-    const d = new Date(month + "-01T12:00:00");
-    d.setMonth(d.getMonth() + delta);
-    setMonth(dayKey(d).slice(0, 7));
-    setPage(1);
-  };
   const card = (t: any) => (
     <button
       className="flow-delivery-card"
@@ -622,18 +631,14 @@ export function FlowWork(
           <div>
             <p className="eyebrow">/ ESPAÇO DE TRABALHO /</p>
             <h1>
-              {mode === "calendar"
-                ? "Tempo para fazer acontecer."
-                : mode === "review"
-                  ? "O próximo passo passa por aqui."
-                  : "Da ideia à entrega."}
+              {mode === "review"
+                ? "O próximo passo passa por aqui."
+                : "Da ideia à entrega."}
             </h1>
             <p className="muted">
-              {mode === "calendar"
-                ? "Prazos e entregas em uma agenda compartilhada."
-                : mode === "review"
-                  ? "Entregas aguardando revisão e aprovação."
-                  : "Um fluxo claro para cada demanda."}
+              {mode === "review"
+                ? "Entregas aguardando revisão e aprovação."
+                : "Um fluxo claro para cada demanda."}
             </p>
           </div>
           <button className="btn primary" onClick={editor.create}>
@@ -687,7 +692,7 @@ export function FlowWork(
             setPage(1);
           }}
         />
-        {mode !== "calendar" && (
+        {
           <div className="crm-switch">
             <button
               className={view === "board" ? "selected" : ""}
@@ -702,7 +707,7 @@ export function FlowWork(
               Lista
             </button>
           </div>
-        )}
+        }
         {embedded && (
           <button className="btn primary" onClick={editor.create}>
             <Plus size={16} /> Nova demanda
@@ -719,103 +724,7 @@ export function FlowWork(
           Atualizando demandas…
         </p>
       )}
-      {mode === "calendar" ? (
-        <div className="flow-calendar-layout">
-          <section className="flow-panel flow-calendar">
-            <div className="flow-heading">
-              <h2>
-                {new Date(month + "-01T12:00:00").toLocaleDateString("pt-BR", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </h2>
-              <div className="flow-calendar-nav">
-                <button
-                  className="btn"
-                  aria-label="Mês anterior"
-                  onClick={() => adjustMonth(-1)}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  className="btn"
-                  onClick={() => {
-                    setMonth(todayLocal().slice(0, 7));
-                    setPage(1);
-                  }}
-                >
-                  Hoje
-                </button>
-                <button
-                  className="btn"
-                  aria-label="Próximo mês"
-                  onClick={() => adjustMonth(1)}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-            <div className="flow-calendar-scroll">
-              <div className="flow-calendar-grid">
-                {["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"].map((d) => (
-                  <div className="flow-weekday" key={d}>
-                    {d}
-                  </div>
-                ))}
-                {days.map((d) => (
-                  <div
-                    key={d}
-                    className={
-                      "flow-calendar-day" +
-                      (d.slice(0, 7) !== month ? " outside" : "")
-                    }
-                  >
-                    <span className={d === todayLocal() ? "today" : ""}>
-                      {Number(d.slice(-2))}
-                    </span>
-                    {items
-                      .filter((t) => t.due_date === d)
-                      .map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => void editor.open(t)}
-                          className={
-                            t.status !== "done" && d < todayLocal()
-                              ? "late"
-                              : ""
-                          }
-                          title={t.client + " · " + t.title}
-                        >
-                          {t.title}
-                          <small>{t.client}</small>
-                        </button>
-                      ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-          <aside className="flow-panel flow-calendar-aside">
-            <span className="flow-calendar-icon">31</span>
-            <h2>
-              Sua agenda,
-              <br />
-              mais próxima.
-            </h2>
-            <p className="muted">
-              Todos os prazos das demandas em um só lugar. Clique em uma entrega
-              para abrir seus detalhes.
-            </p>
-            <GoogleConnection api={api} compact />
-            <hr />
-            <h3>Leve para sua agenda</h3>
-            <p className="muted">
-              Abra a demanda e use a opção de calendário para exportar a
-              entrega. A exportação é manual, sem sincronização.
-            </p>
-          </aside>
-        </div>
-      ) : view === "list" ? (
+      {view === "list" ? (
         <FlowTaskTable
           items={items}
           people={owners}
@@ -874,7 +783,6 @@ export function FlowWork(
           </button>
           <small>
             {data.total} demandas · página {page} · até 200 por página
-            {mode === "calendar" ? " (a agenda mostra esta página)" : ""}
           </small>
           <button
             className="btn"

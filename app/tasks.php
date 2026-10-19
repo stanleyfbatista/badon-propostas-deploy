@@ -201,7 +201,14 @@ function tasks_handle(string $action, array $u, array $in): never
         studio_json(['item'=>tasks_row($item),'events'=>$events,'children'=>$children,'files'=>$files,'dates_ready'=>tasks_dates_ready(),'extensions_ready'=>tasks_extensions_ready()]);
     }
     if ((int)($in['revision']??0)!==(int)$item['revision']) { db()->rollBack(); studio_error(409,'Esta tarefa mudou. Feche e reabra antes de salvar.'); }
-    if ($action==='task-update') {
+    if ($action==='task-reschedule') {
+        if ($item['archived'] || $item['status']==='done') throw new InvalidArgumentException('Reabra a demanda antes de alterar suas datas.');
+        if (!tasks_dates_ready()) throw new InvalidArgumentException('Atualize as datas de tarefas antes de reagendar.');
+        $start=tasks_date($in['start_date']??null); $due=tasks_date($in['due_date']??null);
+        if (!$due || ($start && $start>$due)) throw new InvalidArgumentException('Informe um vencimento igual ou posterior ao início.');
+        db()->prepare('UPDATE bf_tasks SET start_date=?,due_date=?,revision=revision+1,updated_at=? WHERE id=?')->execute([$start,$due,utc_now(),$id]);
+        tasks_event($id,$actor,'Datas atualizadas pela agenda: '.($start?:'sem início').' → '.$due.'.');
+    } elseif ($action==='task-update') {
         if ($item['archived']) throw new InvalidArgumentException('Restaure a tarefa antes de editar.');
         $data=tasks_clean($in,$u,$workspace,$item);
         $data['completed_at']=$data['status']==='done'?($item['completed_at']?:utc_now()):null;

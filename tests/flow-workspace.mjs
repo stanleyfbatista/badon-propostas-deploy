@@ -171,7 +171,7 @@ for (const mode of ["board", "calendar", "review"]) {
   assert.ok(!html.includes("Meu dia"));
   assert.match(
     html,
-    mode === "calendar" ? /flow-calendar-grid/ : /flow-delivery-board/,
+    mode === "calendar" ? /agenda-grid/ : /flow-delivery-board/,
   );
   assert.match(html, /Nova demanda/);
   if (mode === "board") {
