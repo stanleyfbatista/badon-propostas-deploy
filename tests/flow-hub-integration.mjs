@@ -181,6 +181,8 @@ export async function flowHubTests({
     create_key: randomUUID(),
   });
   assert.equal(project.status, 200);
+  assert.ok(project.body.items.some(p => Number(p.id) === project.body.id && p.name === 'Campanha novembro'), 'Salvar projeto devolve a lista atualizada imediatamente');
+  assert.ok(project.body.items.every(p => Number(p.workspace_id) === cid), 'Resposta contém somente projetos do cliente escolhido');
   const actor = (await agency.req("boot")).body.profile.actor;
   const task = {
     workspace: cid,

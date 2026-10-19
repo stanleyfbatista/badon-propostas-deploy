@@ -178,15 +178,16 @@ function flow_handle(string $action,array $u,array $in): never {
     }
     if ($action==='flow-projects' || $action==='flow-project-create') {
         $w=(int)($in['workspace']??$_GET['workspace']??0); studio_access($u,$w);
+        $createdId=null;
         if ($action==='flow-project-create') {
             $key=flow_key($in['create_key']??null);
             db()->prepare('INSERT INTO bf_flow_projects (workspace_id,create_key,name,description,created_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)')->execute([$w,$key,studio_text($in['name']??'',150,true),studio_text($in['description']??'',4000),utc_now()]);
-            studio_json(['id'=>(int)db()->lastInsertId()]);
+            $createdId=(int)db()->lastInsertId();
         }
         $q=db()->prepare('SELECT p.*,(SELECT COUNT(*) FROM bf_tasks t WHERE t.project_id=p.id AND t.archived=0 AND (t.visibility=\'team\' OR t.creator=?)) AS tasks FROM bf_flow_projects p WHERE p.workspace_id=? ORDER BY p.id DESC'); $q->execute([crm_actor($u),$w]); $items=$q->fetchAll();
         $summary=db()->prepare("SELECT id,title,status,due_date FROM bf_tasks WHERE project_id=? AND workspace_id=? AND archived=0 AND (visibility='team' OR creator=?) ORDER BY due_date IS NULL,due_date,id");
         foreach($items as &$p) { $summary->execute([$p['id'],$w,crm_actor($u)]);$tasks=$summary->fetchAll();$p['done']=count(array_filter($tasks,fn($t)=>$t['status']==='done'));$p['preview']=array_slice($tasks,0,3); }
-        studio_json(['items'=>$items]);
+        studio_json($createdId===null?['items'=>$items]:['id'=>$createdId,'items'=>$items]);
     }
     if ($action==='flow-sales') {
         $q=db()->query("SELECT s.*,o.name,o.company,o.amount,o.workspace_id,o.phone,o.email FROM bf_flow_sales s JOIN bf_opportunities o ON o.id=s.opportunity_id ORDER BY s.updated_at DESC");

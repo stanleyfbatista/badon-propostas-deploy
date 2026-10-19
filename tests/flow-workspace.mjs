@@ -28,6 +28,7 @@ const {
   calendarDays,
   taskFieldUpdate,
   FlowTaskTable,
+  deliveryGroups,
   TaskAttachments,
   DateField,
 } = module.exports;
@@ -77,6 +78,19 @@ const listMarkup = render(FlowTaskTable, {
   changed() {},
   disabled: false,
 });
+assert.match(listMarkup, /Agrupar demandas por/);
+assert.match(listMarkup, /Recolher grupos/);
+const manyItems = Array.from({length: 24}, (_, i) => ({...originalTask, id: i + 1, title: `Demanda ${i + 1}`, client: 'Cliente A'}));
+const groupedMarkup = render(FlowTaskTable, {items: [...manyItems, {...originalTask, id: 99, title: 'Concluída recolhida', status:'done'}], people: [], api() {}, open() {}, changed() {}, disabled:false});
+assert.equal((groupedMarkup.match(/class="flow-table-title"/g) || []).length, 10);
+assert.match(groupedMarkup, /Mostrar mais 10/);
+assert.match(groupedMarkup, /24 demandas/);
+assert.ok(!groupedMarkup.includes('Concluída recolhida'));
+assert.deepEqual(deliveryGroups([{...originalTask, status:'done'}, originalTask], 'status').map(g => g.id), ['doing', 'done']);
+const clients = deliveryGroups([{...originalTask, client:'Mesmo nome'}, {...originalTask,id:5,workspace_id:3,client:'Mesmo nome'}], 'client');
+assert.equal(clients.length, 2, 'Clientes com nomes iguais não se misturam');
+assert.equal(clients.reduce((sum,g) => sum + g.items.length,0), 2);
+assert.deepEqual(deliveryGroups([], 'client'), []);
 for (const label of [
   "Status de Campanha",
   "Prioridade de Campanha",

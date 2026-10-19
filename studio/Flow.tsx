@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ArrowRight,
   Plus,
@@ -1297,10 +1297,12 @@ export function FlowProjects({
   api,
   workspace,
   navigate,
+  onCreated,
 }: {
   api: Api;
   workspace: number;
   navigate: (view: string, workspace?: number, project?: number) => void;
+  onCreated?: () => void;
 }) {
   const [items, setItems] = useState<any[]>([]),
     [name, setName] = useState(""),
@@ -1310,14 +1312,17 @@ export function FlowProjects({
     [refresh, setRefresh] = useState(0),
     [key, setKey] = useState(() => crypto.randomUUID()),
     [creating, setCreating] = useState(false);
+  const requestVersion = useRef(0);
+  const saving = useRef(false);
   useEffect(() => {
     let alive = true;
+    const version = ++requestVersion.current;
     api("flow-projects", undefined, { workspace })
       .then((r) => {
-        if (alive) setItems(r.items);
+        if (alive && version === requestVersion.current) setItems(r.items);
       })
       .catch((e) => {
-        if (alive) setError(e.message);
+        if (alive && version === requestVersion.current) setError(e.message);
       });
     return () => {
       alive = false;
@@ -1341,23 +1346,32 @@ export function FlowProjects({
           className="flow-panel"
           onSubmit={async (e) => {
             e.preventDefault();
+            if (saving.current) return;
+            saving.current = true;
+            const version = ++requestVersion.current;
             setBusy(true);
             try {
-              await api("flow-project-create", {
+              const result = await api("flow-project-create", {
                 workspace,
                 name,
                 description,
                 create_key: key,
               });
+              if (version !== requestVersion.current) return;
+              // The save response carries the authoritative list: no second
+              // request or reload is needed to make the new project visible.
+              setItems(result.items);
               setName("");
               setDescription("");
               setKey(crypto.randomUUID());
-              setRefresh((n) => n + 1);
               setCreating(false);
               setError("");
+              onCreated?.();
             } catch (e) {
               setError((e as Error).message);
+              setRefresh((n) => n + 1);
             } finally {
+              saving.current = false;
               setBusy(false);
             }
           }}

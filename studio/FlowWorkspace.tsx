@@ -15,7 +15,7 @@ import { Api, Avatar, Control, Modal, Person } from "./Crm";
 import { TaskDialog } from "./Tasks";
 import { FlowTaskTable } from "./FlowTaskTable";
 import { ChoiceField } from "./TaskControls";
-import { blankTask, dueLabel, todayLocal } from "./task-model";
+import { blankTask, dueLabel, todayLocal, taskStatuses } from "./task-model";
 import { ClientDialog, contractState, FlowProjects } from "./Flow";
 
 type Space = { id: number; name: string };
@@ -542,6 +542,7 @@ function FlowWorkBody(
     [search, setSearch] = useState(""),
     [client, setClient] = useState(workspace),
     [assignee, setAssignee] = useState(""),
+    [status, setStatus] = useState(""),
     [view, setView] = useState("board"),
     [page, setPage] = useState(1),
     [revision, setRevision] = useState(0),
@@ -558,7 +559,7 @@ function FlowWorkBody(
         project,
         search,
         assignee,
-        status: mode === "review" ? "review" : "",
+        status: mode === "review" ? "review" : status,
         page,
       })
         .then((r) => {
@@ -579,7 +580,7 @@ function FlowWorkBody(
       alive = false;
       clearTimeout(timer);
     };
-  }, [client, project, search, assignee, mode, page, revision]);
+  }, [client, project, search, assignee, status, mode, page, revision]);
   const items: any[] = data?.items || [];
   const card = (t: any) => (
     <button
@@ -692,6 +693,23 @@ function FlowWorkBody(
             setPage(1);
           }}
         />
+        {mode !== "review" && (
+          <ChoiceField
+            label="Filtrar status das demandas"
+            value={status}
+            options={[
+              { value: "", label: "Todos os status" },
+              ...Object.entries(taskStatuses).map(([value, label]) => ({
+                value,
+                label,
+              })),
+            ]}
+            onChange={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+          />
+        )}
         {
           <div className="crm-switch">
             <button
@@ -928,6 +946,7 @@ export function FlowClientSpace(
         <FlowProjects
           api={api}
           workspace={workspace!}
+          onCreated={() => setRevision((v) => v + 1)}
           navigate={(_, w, p) => {
             setTab("tasks");
             navigate("client", w, p);

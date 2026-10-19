@@ -1,5 +1,13 @@
 # Bādon Forms — React + PHP/MySQL na hospedagem atual
 
+## Demandas agrupadas e criação de projetos — outubro/2026
+
+- A lista de Demandas permite agrupar por status ou por cliente (identidade do workspace, sem misturar nomes iguais), recolher/expandir grupos e filtrar status no servidor.
+- Cada grupo começa com até 10 linhas; “Mostrar mais 10” e “Mostrar menos” controlam a densidade. Concluídas começam recolhidas no agrupamento por status. Contadores são da página atual; a paginação de 200 registros continua disponível.
+- Linhas compactas com título/contexto truncados visualmente, sem sobrepor colunas. Status, prioridade, responsável, início, vencimento e etiquetas mantêm edição direta e controle de revisão.
+- Criar projeto devolve a lista atualizada na mesma resposta. O painel a aplica imediatamente, descarta consultas antigas e bloqueia duplo envio; a chave idempotente permanece no fluxo de erro/reenvio. Sem migração de banco.
+- Regressões: `tests/flow-projects.mjs`, `tests/flow-workspace.mjs` e `tests/flow-hub-integration.mjs`.
+
 ## Agenda de demandas — outubro/2026
 
 Agenda adaptada ao modelo de navegação e interação da [referência ReUI](https://reui.io/components/event-calendar), implementada no React/PHP existente com a identidade Bādon. Não instala o componente Pro, não copia seus blocos pagos e não acrescenta serviço ou assinatura.
