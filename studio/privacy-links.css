@@ -1,0 +1,48 @@
+.privacy-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.privacy-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  color: var(--muted, #5b687b);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.privacy-links a:hover {
+  color: var(--ink, #172b46);
+}
+.privacy-links a:focus-visible {
+  outline: 3px solid #76aaff;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.login-page > .privacy-links {
+  justify-content: center;
+  margin-top: 12px;
+}
+.flow-welcome .privacy-links a {
+  color: #5b687b;
+  text-decoration: underline;
+}
+.flow-welcome .privacy-links a:hover {
+  color: #172b46;
+}
+.app-privacy-footer {
+  padding: 16px 32px;
+  border-top: 1px solid var(--line);
+}
+.app-privacy-footer .privacy-links {
+  justify-content: flex-end;
+}
+@media (max-width: 480px) {
+  .app-privacy-footer {
+    padding: 12px 20px;
+  }
+}

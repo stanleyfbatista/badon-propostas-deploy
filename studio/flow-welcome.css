@@ -681,16 +681,9 @@
   font-size: 16px;
 }
 .welcome-footer p {
-  color: #8a95a5;
+  color: #5b687b;
   font-size: 12px;
   margin: 0 auto 0 0;
-}
-.welcome-footer > a:last-child {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  color: #6b788d;
-  font-size: 12px;
 }
 .welcome-login-dialog {
   width: calc(100% - 32px);
@@ -746,7 +739,7 @@
 .welcome-login-dialog .login-page > small {
   font-size: 11px;
   margin-top: 20px;
-  color: #8591a2;
+  color: #5b687b;
 }
 .welcome-login-dialog .control input {
   min-height: 46px;
@@ -868,7 +861,7 @@
   .welcome-footer p {
     margin: 0;
   }
-  .welcome-footer > a:last-child {
+  .welcome-footer > .privacy-links {
     margin-left: auto;
   }
 }

@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 const compiled = await build({
   stdin: {
     contents:
-      'export * from "./studio/FlowWelcome"; export * from "./studio/FlowMemberHome"; export * from "./studio/login-validation";',
+      'export * from "./studio/FlowWelcome"; export * from "./studio/FlowMemberHome"; export * from "./studio/login-validation"; export * from "./studio/PrivacyLinks";',
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -41,6 +41,28 @@ const render = (props) =>
     ),
   );
 const landing = render({});
+const privacyLinks = renderToStaticMarkup(
+  React.createElement(module.exports.PrivacyLinks),
+);
+assert.match(privacyLinks, /aria-label="Informações de privacidade"/);
+for (const [label, href] of [
+  ["Privacidade", "/privacidade/"],
+  ["Cookies", "/privacidade/#cookies"],
+]) {
+  assert.ok(privacyLinks.includes(`href="${href}"`));
+  assert.ok(privacyLinks.includes(`aria-label="${label} (abre em nova aba)"`));
+}
+assert.equal(
+  (privacyLinks.match(/target="_blank" rel="noopener noreferrer"/g) || [])
+    .length,
+  2,
+);
+assert.ok(landing.includes(privacyLinks));
+assert.match(
+  readFileSync("public/privacidade/index.php", "utf8"),
+  /<h2 id="cookies">/,
+);
+assert.doesNotMatch(privacyLinks, /<script|<input|\/termos\//);
 assert.match(landing, /Seu negócio/);
 assert.match(landing, /Acessar meu espaço/);
 assert.match(landing, /clientes e parceiros convidados/);
@@ -65,10 +87,55 @@ for (const props of [{ initialOpen: true }, { sessionExpired: true }]) {
 for (const [, src] of landing.matchAll(/src="([^"]+)"/g))
   assert.ok(existsSync("public" + src), "Asset local disponível: " + src);
 const app = readFileSync("studio/main.tsx", "utf8");
-assert.match(app, /className="google-signin-icon"\s+src="\/assets\/google-g.png"\s+width="20"\s+height="20"\s+alt=""\s+aria-hidden="true"/);
-assert.ok(existsSync("public/assets/google-g.png"), "Google logo bundled locally");
-const loginOrder = [app.indexOf('className="auth-google"'), app.indexOf('label="E-mail"'), app.indexOf('name="password"', app.indexOf('label="E-mail"')), app.indexOf('<Button kind="primary" disabled={busy}>', app.indexOf('label="E-mail"')), app.indexOf('className="auth-passwordless"')];
-assert.ok(loginOrder.every((position, index) => position >= 0 && (index === 0 || position > loginOrder[index - 1])), "Login order: Google, email, password, sign in, email link");
+assert.match(app, /suas permissões\.\s*<\/small>\s*<PrivacyLinks \/>/);
+assert.match(
+  app,
+  /<footer className="app-privacy-footer">\s*<PrivacyLinks \/>/,
+);
+const welcomeCss = readFileSync("studio/flow-welcome.css", "utf8");
+const loginNoteColor = welcomeCss.match(
+  /\.welcome-login-dialog \.login-page > small\s*\{[^}]*color:\s*(#[a-f\d]{6})/i,
+)?.[1];
+assert.ok(loginNoteColor);
+const linear = (channel) =>
+  channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+const luminance = (hex) =>
+  [1, 3, 5]
+    .map((i) => linear(parseInt(hex.slice(i, i + 2), 16) / 255))
+    .reduce((sum, value, i) => sum + value * [0.2126, 0.7152, 0.0722][i], 0);
+assert.ok(
+  1.05 / (luminance(loginNoteColor) + 0.05) >= 4.5,
+  "Login invitation note meets AA contrast on white",
+);
+assert.match(
+  readFileSync("studio/privacy-links.css", "utf8"),
+  /\.privacy-links a:focus-visible\s*\{\s*outline: 3px solid/,
+);
+assert.match(
+  app,
+  /className="google-signin-icon"\s+src="\/assets\/google-g.png"\s+width="20"\s+height="20"\s+alt=""\s+aria-hidden="true"/,
+);
+assert.ok(
+  existsSync("public/assets/google-g.png"),
+  "Google logo bundled locally",
+);
+const loginOrder = [
+  app.indexOf('className="auth-google"'),
+  app.indexOf('label="E-mail"'),
+  app.indexOf('name="password"', app.indexOf('label="E-mail"')),
+  app.indexOf(
+    '<Button kind="primary" disabled={busy}>',
+    app.indexOf('label="E-mail"'),
+  ),
+  app.indexOf('className="auth-passwordless"'),
+];
+assert.ok(
+  loginOrder.every(
+    (position, index) =>
+      position >= 0 && (index === 0 || position > loginOrder[index - 1]),
+  ),
+  "Login order: Google, email, password, sign in, email link",
+);
 assert.match(app, /initialOpen=\{!!token \|\| location.pathname !== "\/"\}/);
 assert.match(app, /token \? "accept" : "login"/);
 assert.match(app, /remember: d.get\("remember"\) === "on"/);

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import "./flow-welcome.css";
 import "./flow-portal.css";
+import { PrivacyLinks } from "./PrivacyLinks";
 
 export function FlowPreview() {
   return (
@@ -442,9 +443,7 @@ export function FlowWelcome({
           <em>flow</em>
         </a>
         <p>Um espaço de trabalho e relacionamento da Produtora Bādon.</p>
-        <a href="https://produtorabadon.com/privacidade/">
-          Privacidade <ArrowUpRight size={14} />
-        </a>
+        <PrivacyLinks />
       </footer>
       {loginOpen && (
         <dialog

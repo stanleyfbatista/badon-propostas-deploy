@@ -71,6 +71,7 @@ import { FlowWelcome, accessAudience, accessUrl } from "./FlowWelcome";
 import { FlowMemberHome } from "./FlowMemberHome";
 import { validateLoginFields, LoginFieldError } from "./login-validation";
 import { GoogleConnection } from "./GoogleConnection";
+import { PrivacyLinks } from "./PrivacyLinks";
 
 const session = createSessionClient(window.fetch.bind(window), () => {
   window.dispatchEvent(new Event("badon-session-expired"));
@@ -630,6 +631,7 @@ function App() {
               Acesso por convite. Esta entrada não cria uma conta nem altera
               suas permissões.
             </small>
+            <PrivacyLinks />
           </div>
         )}
       </FlowWelcome>
@@ -1216,6 +1218,9 @@ function App() {
             </main>
           </div>
         )}
+        <footer className="app-privacy-footer">
+          <PrivacyLinks />
+        </footer>
       </div>
     </FlowUploadContext.Provider>
   );

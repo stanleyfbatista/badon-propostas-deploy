@@ -16,7 +16,7 @@ page_start('Política de Privacidade — Bādon');
   <h2>Prazo e seus direitos</h2>
   <p>Para contatos que não evoluírem para uma contratação, o prazo de referência é de <?= (int)$config['privacy']['retention_days'] ?> dias após o envio, com revisão e exclusão pelo responsável. Dados necessários a uma relação contratual ou ao cumprimento de obrigações podem seguir prazos específicos. Backups e cópias de e-mail precisam seguir o processo de retenção da hospedagem e do atendimento.</p>
   <p>Você pode solicitar confirmação de tratamento, acesso, correção e exclusão dos dados, além de revogar seu consentimento. Entre em contato pelo e-mail acima; poderemos pedir informações necessárias para confirmar sua identidade. A revogação não invalida os tratamentos anteriores realizados de forma legítima.</p>
-  <h2>Cookies e segurança</h2>
+  <h2 id="cookies">Cookies e segurança</h2>
   <p>Usamos um cookie de sessão necessário para proteger os formulários e o acesso administrativo. Para limitar tentativas abusivas, o endereço de conexão é transformado em um identificador criptográfico; o endereço original não é salvo no cadastro do lead. Os logs gerais do servidor seguem as configurações da hospedagem.</p>
   <h2>Medição opcional de anúncios</h2>
   <p>Quando o responsável pelo formulário ativa o Pixel da Meta, mostramos uma escolha separada para aceitar ou recusar a medição de anúncios. O Pixel só é carregado após sua autorização. Recusar não impede o uso do formulário e não modifica o consentimento necessário para enviar sua solicitação.</p>
