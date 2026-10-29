@@ -16,7 +16,8 @@ for (const file of pages) {
   for (const [,url] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
     if (/^(?:https?:|mailto:|tel:|data:|#)/.test(url)) continue;
     const clean = url.split(/[?#]/)[0].replace(/(^|\/)cara-de-empresa-grande$/, '$1cara-de-empresa-grande.html');
-    assert.ok(fs.existsSync(path.resolve(path.dirname(file),clean)), file+': '+url);
+    const localTarget = clean.startsWith('/') ? path.resolve(root, '.'+clean) : path.resolve(path.dirname(file),clean);
+    assert.ok(fs.existsSync(localTarget), file+': '+url);
   }
 }
 assert.equal((fs.readFileSync(path.join(root,'index.html'),'utf8').match(/class="client-logo"/g)||[]).length,30);
