@@ -164,6 +164,7 @@
   const posts = [
   {
     "id": "cara-de-empresa-grande",
+    "author": "STANLEY BATISTA",
     "title": "Coisas que deixam seu negócio com cara de grande",
     "category": "Presença profissional",
     "image": "blog/marca.webp",
@@ -266,7 +267,7 @@
 ];
   const visiblePosts = posts;
   const postPath = id => id + (id === 'cara-de-empresa-grande' ? '' : '.html');
-  const postMarkup = post => '<article class="post-card"><a class="post-image" style="display:block" href="blog/' + postPath(post.id) + '" tabindex="-1" aria-hidden="true"><img src="assets/img/' + post.image + '" alt="" width="1400" height="933" loading="lazy"><span class="post-notch">↗</span></a><div class="post-meta">' + (post.displayDate || '16 OUT 2026') + ' / REDAÇÃO BĀDON</div><h3><a href="blog/' + postPath(post.id) + '">' + post.title + '</a></h3><p>' + post.summary + '</p><div class="post-bottom"><span>/ ' + post.category + ' /</span><a class="read-more" href="blog/' + postPath(post.id) + '">LEIA MAIS ↗</a></div></article>';
+  const postMarkup = post => '<article class="post-card"><a class="post-image" style="display:block" href="blog/' + postPath(post.id) + '" tabindex="-1" aria-hidden="true"><img src="assets/img/' + post.image + '" alt="" width="1400" height="933" loading="lazy"><span class="post-notch">↗</span></a><div class="post-meta">' + (post.displayDate || '16 OUT 2026') + ' / ' + (post.author || 'REDAÇÃO BĀDON') + '</div><h3><a href="blog/' + postPath(post.id) + '">' + post.title + '</a></h3><p>' + post.summary + '</p><div class="post-bottom"><span>/ ' + post.category + ' /</span><a class="read-more" href="blog/' + postPath(post.id) + '">LEIA MAIS ↗</a></div></article>';
   function renderPosts(page) {
     const grid = $('#posts-grid');
     if (!grid) return;

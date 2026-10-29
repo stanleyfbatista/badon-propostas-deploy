@@ -18,7 +18,7 @@ for (const slug of articles) {
   assert.match(html, slug === 'cara-de-empresa-grande' ? /id="conversar"/ : /id="checklist"/);
   assert.match(html, /Fontes e leitura complementar/);
   assert.match(html, /https:\/\/unsplash.com\/license/);
-  assert.match(html, /Redação Bādon/);
+  assert.match(html, slug === 'cara-de-empresa-grande' ? /Stanley Batista/ : /Redação Bādon/);
   assert.match(html, /noindex, nofollow/);
   assert.doesNotMatch(html, /CONTEÚDO DEMONSTRATIVO|EXEMPLO FICTÍCIO/);
   const source = html.match(/class="article-hero"><img src="([^"]+)"/)[1];
