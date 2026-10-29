@@ -8,9 +8,10 @@ const origin = 'https://produtorabadon.com';
 const walk = dir => fs.readdirSync(dir, {withFileTypes:true}).flatMap(e => e.isDirectory() ? walk(path.join(dir,e.name)) : [path.join(dir,e.name)]);
 const pages = [path.join(source,'index.html'), ...walk(path.join(source,'blog')), ...walk(path.join(source,'servicos'))].filter(p => p.endsWith('.html'));
 const exported = [];
+const publicPath = relative => relative.replace(/index\.html$/, '').replace(/^blog\/cara-de-empresa-grande\.html$/, 'blog/cara-de-empresa-grande');
 for (const file of pages) {
   const relative = path.relative(source,file);
-  const url = origin + '/' + relative.replace(/index\.html$/, '');
+  const url = origin + '/' + publicPath(relative);
   let html = fs.readFileSync(file,'utf8')
     .replace(/<meta name="robots" content="noindex,\s*nofollow">/g, '<meta name="robots" content="index, follow">')
     .replace(/\s*<aside class="review-badge">[\s\S]*?<\/aside>/g, '')
@@ -39,5 +40,5 @@ for (const directory of ['css','js','svg','img']) {
   }
 }
 fs.writeFileSync(path.join(target,'robots.txt'), 'User-agent: *\nDisallow: /admin/\nDisallow: /api/\nDisallow: /f/\nDisallow: /painel\nDisallow: /entrar\nDisallow: /propostas/\nDisallow: /relatorios/\nSitemap: '+origin+'/sitemap.xml\n');
-fs.writeFileSync(path.join(target,'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+pages.map(file => '  <url><loc>'+origin+'/'+path.relative(source,file).replace(/index\.html$/, '')+'</loc></url>').join('\n')+'\n</urlset>\n');
+fs.writeFileSync(path.join(target,'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+pages.map(file => '  <url><loc>'+origin+'/'+publicPath(path.relative(source,file))+'</loc></url>').join('\n')+'\n</urlset>\n');
 console.log('Exportadas '+pages.length+' páginas e '+(exported.length-pages.length)+' assets, robots.txt e sitemap.xml. Outras rotas preservadas.');

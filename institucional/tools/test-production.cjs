@@ -15,7 +15,7 @@ for (const file of pages) {
   assert.doesNotMatch(html, /noindex|REVISAO\.md|PRÉVIA PARA REVISÃO|Nome a confirmar|ainda não publicada|não publicada\./);
   for (const [,url] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
     if (/^(?:https?:|mailto:|tel:|data:|#)/.test(url)) continue;
-    const clean = url.split(/[?#]/)[0];
+    const clean = url.split(/[?#]/)[0].replace(/(^|\/)cara-de-empresa-grande$/, '$1cara-de-empresa-grande.html');
     assert.ok(fs.existsSync(path.resolve(path.dirname(file),clean)), file+': '+url);
   }
 }

@@ -9,12 +9,14 @@ backup_root="$account_dir/badon-site-backups"
 [[ -d "$public_dir" && ! -L "$public_dir" && ! -L "$backup_root" ]] || exit 1
 files=(
   assets/css/article-business.css
+  assets/img/blog/badon-site-desktop.jpg
+  assets/img/blog/badon-site-mobile.jpg
   blog/cara-de-empresa-grande.html
   assets/js/main.js
   blog/index.html
   sitemap.xml
 )
-for dir in assets assets/css assets/js blog; do
+for dir in assets assets/css assets/js assets/img assets/img/blog blog; do
   [[ -d "$public_dir/$dir" && ! -L "$public_dir/$dir" ]] || exit 1
 done
 for file in "${files[@]}"; do

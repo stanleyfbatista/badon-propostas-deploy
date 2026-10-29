@@ -3,6 +3,14 @@ DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 <IfModule mod_rewrite.c>
 RewriteEngine On
+# Public article: canonical URL without extension; keep query parameters.
+RewriteCond %{HTTP_HOST} ^(?:www\.)?produtorabadon\.com(?::[0-9]+)?$ [NC]
+RewriteCond %{THE_REQUEST} \s/+blog/cara-de-empresa-grande\.html(?:[?\s]) [NC]
+RewriteRule ^blog/cara-de-empresa-grande\.html$ https://produtorabadon.com/blog/cara-de-empresa-grande [R=301,END]
+RewriteCond %{HTTP_HOST} ^(?:www\.)?produtorabadon\.com(?::[0-9]+)?$ [NC]
+RewriteRule ^blog/cara-de-empresa-grande/$ https://produtorabadon.com/blog/cara-de-empresa-grande [R=301,END]
+RewriteCond %{HTTP_HOST} ^(?:www\.)?produtorabadon\.com(?::[0-9]+)?$ [NC]
+RewriteRule ^blog/cara-de-empresa-grande$ blog/cara-de-empresa-grande.html [END]
 # Retired institutional home; keep query parameters and do not redirect app/forms.
 RewriteCond %{HTTP_HOST} ^(?:www\.)?produtorabadon\.com(?::[0-9]+)?$ [NC]
 RewriteRule ^home/?$ https://produtorabadon.com/ [R=301,END]

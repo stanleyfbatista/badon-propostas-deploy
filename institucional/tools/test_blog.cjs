@@ -10,12 +10,12 @@ const script = read('assets/js/main.js');
 assert.match(read('assets/css/blog.css'), /\.journal-header img\{object-fit:contain;height:auto\}/, 'Logo deve preservar a proporção sem cortar as letras');
 for (const slug of articles) {
   const html = read('blog/' + slug + '.html');
-  assert.match(archive, new RegExp(slug + '\\.html'));
+  assert.ok(archive.includes(slug === 'cara-de-empresa-grande' ? 'href="' + slug + '"' : slug + '.html'));
   assert.match(script, new RegExp(slug));
   assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
   assert.match(html, /assets\/css\/blog\.css/);
   assert.match(html, /aria-label="Neste artigo"/);
-  assert.match(html, /id="checklist"/);
+  assert.match(html, slug === 'cara-de-empresa-grande' ? /id="conversar"/ : /id="checklist"/);
   assert.match(html, /Fontes e leitura complementar/);
   assert.match(html, /https:\/\/unsplash.com\/license/);
   assert.match(html, /Redação Bādon/);
@@ -23,7 +23,7 @@ for (const slug of articles) {
   assert.doesNotMatch(html, /CONTEÚDO DEMONSTRATIVO|EXEMPLO FICTÍCIO/);
   const source = html.match(/class="article-hero"><img src="([^"]+)"/)[1];
   assert.ok(fs.statSync(path.resolve(root, 'blog', source)).size > 1000);
-  const text = html.match(/class="article-prose">([\s\S]*?)<section class="article-checklist"/)[1].replace(/<[^>]+>/g, ' ');
+  const text = html.split('class="article-prose">')[1].split('<section class="article-sources">')[0].replace(/<[^>]+>/g, ' ');
   assert.ok(text.split(/\s+/).length > 350);
 }
 assert.match(home, /id="all-posts" href="blog\/index.html"/);

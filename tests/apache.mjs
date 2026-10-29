@@ -14,6 +14,8 @@ for (const [file, body] of Object.entries({ 'index.html': 'HOME', '404.html': 'N
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), body);
 }
 fs.copyFileSync(path.join(repo, '.badon-404-rules'), path.join(root, '.htaccess'));
+fs.mkdirSync(path.join(root, 'blog'));
+fs.writeFileSync(path.join(root, 'blog/cara-de-empresa-grande.html'), 'ARTICLE');
 const mediaDir = path.join(root, 'forms-media/uploads/1'); fs.mkdirSync(mediaDir, { recursive: true });
 fs.copyFileSync(path.join(repo, 'public/forms-media/uploads/.htaccess'), path.join(root, 'forms-media/uploads/.htaccess'));
 fs.writeFileSync(path.join(mediaDir, 'a'.repeat(32) + '.mp4'), Buffer.alloc(512, 1));
@@ -50,6 +52,20 @@ try {
   let started = false;
   for (let i = 0; i < 40; i++) { try { await fetch(`http://127.0.0.1:${port}/`); started = true; break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   assert.ok(started, 'Apache did not start');
+  for (const host of ['produtorabadon.com','www.produtorabadon.com']) {
+    for (const suffix of ['.html','.html?utm_source=instagram&utm_medium=dm','/']) {
+      const response = await requestHost(`http://127.0.0.1:${port}/blog/cara-de-empresa-grande${suffix}`, host);
+      assert.equal(response.status,301);
+      assert.equal(response.headers.get('location'),'https://produtorabadon.com/blog/cara-de-empresa-grande' + (suffix.includes('?') ? '?'+suffix.split('?')[1] : ''));
+    }
+    const response = await requestHost(`http://127.0.0.1:${port}/blog/cara-de-empresa-grande?utm_source=instagram`, host);
+    assert.equal(response.status,200);
+    assert.equal(await response.text(),'ARTICLE');
+    assert.equal(response.headers.get('location'),null);
+  }
+  for (const host of ['app.produtorabadon.com','forms.produtorabadon.com']) {
+    assert.equal((await requestHost(`http://127.0.0.1:${port}/blog/cara-de-empresa-grande`, host)).status,404);
+  }
   for (const [url, body, status] of [['/', 'HOME', 200], ['/links/', 'LINKS', 200], ['/f/trafego-local', 'FORM', 200], ['/f/trafego-local/', 'FORM', 200], ['/f/trafego-local?slug=outro', 'FORM', 200], ['/admin/', 'ADMIN', 200], ['/admin/studio/', 'STUDIO', 200], ['/api/studio.php', 'STUDIO_API', 200], ['/api/enviar.php', 'SUBMISSION', 200], ['/f/confirmacao.php?r=abc', 'CONFIRMATION', 200], ['/nao-existe/', 'NOT_FOUND', 404]]) {
     const result = await fetch(`http://127.0.0.1:${port}${url}`);
     assert.equal(result.status, status, url); assert.equal(await result.text(), body, url);
