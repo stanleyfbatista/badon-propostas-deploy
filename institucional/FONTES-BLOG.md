@@ -1,5 +1,15 @@
 # Fontes e imagens do Blog Bādon
 
+## Cara de empresa grande · 29/10/2026
+
+- Pauta original do usuário, desenvolvida em oito tópicos e um checklist de prioridades. Sem números de resultados, depoimentos inventados ou promessas de vendas.
+- Fontes oficiais: [Google Workspace](https://workspace.google.com/intl/pt-BR/business/new-business/), [catálogo do WhatsApp](https://faq.whatsapp.com/405903568419894/) e [respostas a avaliações no Google](https://support.google.com/business/answer/3474050?hl=pt-BR).
+- Pesquisa de fotografias: comparados exemplos de papelaria, organização de mesa e identidade visual. Selecionada a foto de amostras de cores de Christina Rumpf já presente no acervo editorial; página de origem e licença Unsplash reconferidas em 29/10. Não utilizados resultados de terceiros sem licença demonstrada.
+- Imagens complementares reaproveitadas do site institucional: mockup da papelaria da Clínica Jardim, mockup da página de Juliana Galvão e retrato de Stanley Batista. A origem como portfólio foi conferida na home e nos detalhes dos projetos. Mockups identificados nas legendas; não apresentados como fotos de materiais físicos ou prova de desempenho.
+- Sem compras de imagem, novas assinaturas, geração por IA ou recursos externos de rastreamento. Imagens servidas localmente.
+- Destino: `/blog/cara-de-empresa-grande.html`. Canonical limpo; link de campanha sugerido: `?utm_source=instagram&utm_medium=dm&utm_campaign=cara_de_empresa_grande&utm_content=manychat`. Os parâmetros identificam a campanha, não pessoas; não foi configurada coleta de analytics ou alterada a automação do ManyChat.
+- Botões abrem o WhatsApp comercial já usado no site (5519983256292), com texto editável. Nenhuma mensagem é enviada automaticamente.
+
 ## Ampliação com os textos enviados · 16/10/2026
 
 Cinco artigos importados do arquivo Texto colado.txt enviado pelo usuário. Os parágrafos e a divisão temática foram preservados; acrescentados resumo, capa, checklist, links clicáveis e leituras relacionadas. Total atual: nove artigos.

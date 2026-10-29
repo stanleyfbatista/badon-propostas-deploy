@@ -163,6 +163,17 @@
   // Local editorial preview. Each entry has its own static article page.
   const posts = [
   {
+    "id": "cara-de-empresa-grande",
+    "title": "Coisas que deixam seu negócio com cara de grande",
+    "category": "Presença profissional",
+    "image": "blog/marca.webp",
+    "alt": "Amostras de cores para uma identidade visual consistente",
+    "summary": "8 cuidados para transmitir confiança e um plano para começar pelo mais barato.",
+    "minutes": 9,
+    "height": 933,
+    "displayDate": "29 OUT 2026"
+  },
+  {
     "id": "atualizacao-chatgpt-astra-sol",
     "title": "Atualização do ChatGPT: o que muda com Astra e GPT-6.1 Sol",
     "category": "Inteligência artificial",
@@ -254,7 +265,7 @@
   }
 ];
   const visiblePosts = posts;
-  const postMarkup = post => '<article class="post-card"><a class="post-image" style="display:block" href="blog/' + post.id + '.html" tabindex="-1" aria-hidden="true"><img src="assets/img/' + post.image + '" alt="" width="1400" height="933" loading="lazy"><span class="post-notch">↗</span></a><div class="post-meta">16 OUT 2026 / REDAÇÃO BĀDON</div><h3><a href="blog/' + post.id + '.html">' + post.title + '</a></h3><p>' + post.summary + '</p><div class="post-bottom"><span>/ ' + post.category + ' /</span><a class="read-more" href="blog/' + post.id + '.html">LEIA MAIS ↗</a></div></article>';
+  const postMarkup = post => '<article class="post-card"><a class="post-image" style="display:block" href="blog/' + post.id + '.html" tabindex="-1" aria-hidden="true"><img src="assets/img/' + post.image + '" alt="" width="1400" height="933" loading="lazy"><span class="post-notch">↗</span></a><div class="post-meta">' + (post.displayDate || '16 OUT 2026') + ' / REDAÇÃO BĀDON</div><h3><a href="blog/' + post.id + '.html">' + post.title + '</a></h3><p>' + post.summary + '</p><div class="post-bottom"><span>/ ' + post.category + ' /</span><a class="read-more" href="blog/' + post.id + '.html">LEIA MAIS ↗</a></div></article>';
   function renderPosts(page) {
     const grid = $('#posts-grid');
     if (!grid) return;

@@ -1,0 +1,31 @@
+/* Scoped editorial additions: no changes to the Flow or shared blog layout. */
+.business-article .article-heading{max-width:980px}
+.business-jump{display:flex;flex-wrap:wrap;align-items:center;gap:18px 28px;margin:0 0 38px;font-size:14px}
+.business-jump>a:not(.button){text-decoration:underline;text-underline-offset:5px}
+.business-article .article-sidebar li a{padding-block:10px}
+.business-article .article-prose>section:not(.article-sources):not(.article-checklist){padding-top:30px;border-top:1px solid #ccd3dd;margin-top:52px}
+.business-perception{border-left:3px solid #0053c3;padding:4px 0 4px 22px;color:#17243a}
+.business-email{overflow-wrap:anywhere}
+.business-figure{margin:28px 0}
+.business-figure img{width:100%;height:auto;border-radius:16px;background:#e5edf9}
+.business-figure figcaption{font-size:12px;line-height:1.7;color:#526077;margin-top:12px}
+.business-brand-example{display:grid;grid-template-columns:minmax(0,363px) 1fr;align-items:center;gap:22px}
+.business-brand-example figcaption{margin:0}
+.business-person{max-width:420px}
+.business-inline-cta{background:#e5edf9;padding:30px;border-radius:20px;margin:48px 0}
+.business-inline-cta h2{font-size:27px}
+.business-inline-cta .button{margin-top:22px;color:#fff;text-decoration:none}
+.business-response{margin:24px 0;background:#fff;border:1px solid #ccd3dd;border-radius:16px;padding:24px}
+.business-response cite{display:block;font-size:12px;font-style:normal;color:#526077;margin-top:14px}
+.business-article .article-checklist h3{font-size:21px;margin:30px 0 15px;line-height:1.4}
+.business-article .article-checklist>p{font-size:15px}
+.business-cost-note{border-top:1px solid #b9c4d3;padding-top:20px;margin-top:26px}
+.business-final-cta{scroll-margin-top:24px}
+.business-final-cta>div{max-width:820px}
+.business-final-cta h2{font-size:clamp(30px,3.6vw,46px);max-width:770px}
+.business-final-cta p:not(.journal-kicker){max-width:690px;font-size:16px}
+.business-final-cta .button{margin-top:26px;white-space:normal}
+.business-final-cta p.business-cta-note{font-size:12px}
+.business-related-links{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.business-related-links a{font-size:22px;line-height:1.4;border-top:1px solid #ccd3dd;padding-top:20px;color:#0053c3}
+@media(max-width:650px){.business-article .article-heading h1{font-size:clamp(34px,9.5vw,44px)}.business-article .journal-header nav{gap:14px;font-size:11px}.business-article .journal-header img{width:100px}.business-article .journal-header>.journal-width{gap:14px}.business-jump .button{width:100%}.business-brand-example{display:block;max-width:363px}.business-brand-example figcaption{margin-top:12px}.business-inline-cta{padding:24px}.business-related-links{grid-template-columns:1fr}.business-article .article-prose>section:not(.article-sources):not(.article-checklist){margin-top:40px}.business-response{padding:20px}}

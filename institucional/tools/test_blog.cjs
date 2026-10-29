@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
-const articles = ['antes-de-anunciar', 'site-e-contato', 'perfil-local', 'marca-consistente', 'atualizacao-chatgpt-astra-sol', 'atualizacao-claude-haiku', 'engenharia-reversa-ia', 'google-atrair-clientes-regiao', 'algoritmo-instagram-conteudo'];
+const articles = ['cara-de-empresa-grande', 'antes-de-anunciar', 'site-e-contato', 'perfil-local', 'marca-consistente', 'atualizacao-chatgpt-astra-sol', 'atualizacao-claude-haiku', 'engenharia-reversa-ia', 'google-atrair-clientes-regiao', 'algoritmo-instagram-conteudo'];
 const archive = read('blog/index.html');
 const home = read('index.html');
 const script = read('assets/js/main.js');
@@ -33,7 +33,7 @@ for (const service of ['trafego-pago', 'sites', 'google-meu-negocio', 'identidad
   assert.match(html, /\.\.\/blog\/[a-z-]+\.html/);
   assert.doesNotMatch(html, /Ler exemplo|Conteúdo demonstrativo/);
 }
-assert.equal((archive.match(/<article class="journal-card"/g) || []).length, 9);
+assert.equal((archive.match(/<article class="journal-card"/g) || []).length, 10);
 const reverse = read('blog/engenharia-reversa-ia.html');
 for (const term of ['PhotoCraft', 'LightCraft', 'Remaster', 'Replica', 'REA', 're-skill']) {
   assert.ok(reverse.includes(term), 'Exemplo pesquisado ausente: ' + term);
@@ -64,4 +64,4 @@ select.value = 'Sites'; select.change();
 assert.equal(count.textContent, '1 artigo');
 select.value = ''; select.change();
 assert.ok(cards.every(card => !card.hidden));
-console.log('Blog: 9 artigos, 5 páginas na home, filtros, imagens, fontes e links validados.');
+console.log('Blog: 10 artigos, 5 páginas na home, filtros, imagens, fontes e links validados.');
