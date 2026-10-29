@@ -47,7 +47,14 @@ for (const [,href] of html.matchAll(/href="(https:\/\/wa.me\/[^"]+)"/g)) {
   assert.equal(url.pathname, '/5519983256292');
   assert.match(url.searchParams.get('text'), /Stanley.*Cara de empresa grande/);
 }
-assert.equal((html.match(/https:\/\/wa.me\//g) || []).length, 2);
+assert.equal((html.match(/https:\/\/wa.me\//g) || []).length, 4);
+for (const [id,label,intent] of [['identidade','Quero fazer minha identidade visual','identidade visual'],['site','Quero fazer meu site','quero fazer meu site'],['conversar','Quero ajuda com minha marca','ajuda com minha marca']]) {
+  const section = html.split('id="'+id+'"')[1].split('</section>')[0];
+  const links = [...section.matchAll(/href="(https:\/\/wa.me\/[^\"]+)"[^>]*>([^<]+)<\/a>/g)];
+  const match = links.find(link=>link[2]===label);
+  assert.ok(match, 'CTA ausente: '+id);
+  assert.ok(new URL(match[1]).searchParams.get('text').includes(intent));
+}
 assert.doesNotMatch(html, /fbq\(|gtag\(|googletagmanager|connect.facebook|<iframe|<form/);
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'badon-article-'));
 for (const dir of ['assets/css','assets/js','assets/img/blog','blog']) fs.mkdirSync(path.join(fixture,'public_html',dir),{recursive:true});

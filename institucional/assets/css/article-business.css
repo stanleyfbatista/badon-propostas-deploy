@@ -23,6 +23,8 @@
 .business-inline-cta{background:#e5edf9;padding:30px;border-radius:20px;margin:48px 0}
 .business-inline-cta h2{font-size:27px}
 .business-inline-cta .button{margin-top:22px;color:#fff;text-decoration:none}
+.business-section-cta{margin-top:26px}
+.business-section-cta .button{max-width:100%;white-space:normal;text-align:center;color:#fff;text-decoration:none}
 .business-response{margin:24px 0;background:#fff;border:1px solid #ccd3dd;border-radius:16px;padding:24px}
 .business-response cite{display:block;font-size:12px;font-style:normal;color:#526077;margin-top:14px}
 .business-article .article-checklist h3{font-size:21px;margin:30px 0 15px;line-height:1.4}
