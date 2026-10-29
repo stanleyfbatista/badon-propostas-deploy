@@ -44,7 +44,8 @@ try {
   fs.writeFileSync(path.join(account, 'public_html/unrelated.txt'), 'preserve');
   run('/bin/bash', ['deploy/deploy.sh'], { env: { ...process.env, BADON_ACCOUNT_DIR: account } });
   const firstRules = fs.readFileSync(path.join(account, 'public_html/.htaccess'), 'utf8');
-  assert.ok(firstRules.includes('# cPanel handler preserved') && firstRules.includes('# Keep this'));
+  assert.ok(firstRules.includes('# cPanel handler preserved') && !firstRules.includes('# Keep this'));
+  assert.ok(!firstRules.includes('# BEGIN WordPress'));
   assert.ok(firstRules.includes('f/index.php [END]') && !firstRules.includes('Old rule'));
   assert.ok(!fs.existsSync(path.join(account, 'public_html/app')));
   fs.mkdirSync(path.join(account, 'badon-config'), { mode: 0o700 });

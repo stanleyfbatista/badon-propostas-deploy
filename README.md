@@ -353,7 +353,7 @@ O `.cpanel.yml` executa `deploy/deploy.sh`, que:
 - Copia `app/` (incluindo PHPMailer) para `/home/USUARIO/badon-app`, fora da área pública.
 - Não toca em `badon-config/config.php`.
 - Guarda uma cópia do `.htaccess` existente e substitui somente o bloco gerenciado Bādon.
-- Preserva as demais regras cPanel/WordPress e acrescenta `/f/{slug}` antes da regra de 404.
+- Preserva as regras do cPanel/PHP, remove o bloco legado WordPress e mantém `/f/{slug}` antes da regra de 404.
 - Não cria tabelas nem administradores automaticamente em cada deploy.
 
 No Terminal do cPanel, confirme `php -v` e execute com o binário PHP 8 da hospedagem:
@@ -449,7 +449,11 @@ php /home/USUARIO/badon-app/console.php security:cleanup
 
 O último comando pode ser agendado diariamente no Cron do cPanel.
 Guarde backups do MySQL e do arquivo privado conforme a política de retenção.
-Backups das regras antigas ficam em `public_html/.htaccess.badon-backup-*`.
+Novos backups das regras ficam fora da área pública em `badon-site-backups/rules-*/`.
+Para publicar apenas as regras, sem alterar aplicação ou banco: `bash deploy/install-rules.sh`.
+O WordPress foi descontinuado: `/home/` redireciona para a inicial institucional;
+rotas antigas do WordPress retornam 404. Um `ScriptAlias` da hospedagem para
+`/cgi-sys/` pode ignorar `.htaccess` e exigir correção pelo suporte no virtual host.
 
 ## Desenvolvimento e verificação
 

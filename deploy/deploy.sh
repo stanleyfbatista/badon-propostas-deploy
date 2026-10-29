@@ -34,23 +34,7 @@ cp -R "$repo_dir/public/." "$public_dir/"
 cp -R "$repo_dir/app/." "$app_dir/"
 chmod -R go-rwx "$app_dir"
 # O config privado nunca é criado, copiado ou sobrescrito pelo deploy.
-if [[ -f "$public_dir/.htaccess" ]]; then
-  cp "$public_dir/.htaccess" "$public_dir/.htaccess.badon-backup-$(date +%Y%m%d%H%M%S)"
-fi
-merged="$(mktemp "$public_dir/.htaccess.badon-XXXXXX")"
-cat "$repo_dir/.badon-404-rules" > "$merged"
-if [[ -f "$public_dir/.htaccess" ]]; then
-  # Substituir somente o bloco Bādon; manter regras do cPanel, PHP e WordPress.
-  awk '
-    /^# BEGIN BADON CUSTOM 404\r?$/ {if (skip) exit 1; skip=1; next}
-    /^# END BADON CUSTOM 404\r?$/ {skip=0; next}
-    /^DirectoryIndex index.html index.php\r?$/ {next}
-    !skip {print}
-    END {if (skip) exit 1}
-  ' "$public_dir/.htaccess" >> "$merged"
-fi
-chmod 644 "$merged"
-mv "$merged" "$public_dir/.htaccess"
+BADON_ACCOUNT_DIR="$account_dir" /bin/bash "$repo_dir/deploy/install-rules.sh"
 echo 'Arquivos públicos e aplicação atualizados. Configuração privada preservada.'
 if [[ ! -f "$account_dir/badon-config/config.php" ]]; then
   echo 'ATENÇÃO: configure badon-config/config.php e inicialize o banco antes de usar /admin.'

@@ -55,6 +55,16 @@ try {
     assert.equal(result.status, status, url); assert.equal(await result.text(), body, url);
   }
   const videoUrl = `http://127.0.0.1:${port}/forms-media/uploads/1/${'a'.repeat(32)}.mp4`;
+  for (const url of ['/home', '/home/', '/home/?utm_source=legacy']) {
+    const result = await requestHost(`http://127.0.0.1:${port}${url}`, 'produtorabadon.com');
+    assert.equal(result.status, 301, url);
+    assert.equal(result.headers.get('location'), 'https://produtorabadon.com/' + (url.includes('?') ? '?utm_source=legacy' : ''));
+  }
+  for (const url of ['/hello-world/', '/hello-world/?replytocom=1', '/comments/feed/', '/wp-login.php', '/wp-admin/', '/wp-includes/js/wp-emoji-release.min.js', '/xmlrpc.php', '/cgi-sys/suspendedpage.cgi', '/cgi-sys/suspendedpage.cgi?replytocom=1']) {
+    const result = await requestHost(`http://127.0.0.1:${port}${url}`, 'produtorabadon.com');
+    assert.equal(result.status, 404, url);
+  }
+  assert.equal((await requestHost(`http://127.0.0.1:${port}/home/`, 'app.produtorabadon.com')).status, 404);
   for (const [host, url, body] of [
     ['produtorabadon.com', '/', 'HOME'],
     ['app.produtorabadon.com', '/', 'STUDIO'],
