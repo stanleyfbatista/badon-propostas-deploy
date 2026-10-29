@@ -12,7 +12,7 @@ for (const slug of slugs) {
   const description = html.match(/name="description" content="([^"]+)"/)[1];
   titles.add(title); descriptions.add(description);
   assert.equal((html.match(/<h1\b/g)||[]).length, 1);
-  assert.equal((html.match(/<details>/g)||[]).length, 4);
+  assert.equal((html.match(/<details>/g)||[]).length, slug === 'sites' ? 9 : 4);
   assert.equal((html.match(/aria-current="page"/g)||[]).length, 1);
   assert.match(html, /index, follow/);
   assert.doesNotMatch(html, /noindex|<form|fbq\(|gtag\(/);
@@ -28,7 +28,7 @@ for (const slug of slugs) {
   assert.equal(graph[1]['@type'],'BreadcrumbList');
   assert.equal(graph[1].itemListElement[1].item,url);
   const ctas=[...html.matchAll(/href="(https:\/\/wa.me\/[^\"]+)"/g)];
-  assert.equal(ctas.length,2);
+  assert.equal(ctas.length,slug === 'sites' ? 3 : 2);
   for (const [,href] of ctas) {
     const link=new URL(href);
     assert.equal(link.pathname,'/5519983256292');
@@ -47,7 +47,7 @@ for (const slug of slugs) {
 }
 assert.equal(titles.size,4); assert.equal(descriptions.size,4); assert.equal(messages.size,4);
 const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'badon-services-'));
-for(const dir of ['assets/css','servicos']) fs.mkdirSync(path.join(fixture,'public_html',dir),{recursive:true});
+for(const dir of ['assets/css','assets/js','servicos']) fs.mkdirSync(path.join(fixture,'public_html',dir),{recursive:true});
 fs.writeFileSync(path.join(fixture,'public_html/servicos/sites.html'),'previous-service');
 fs.writeFileSync(path.join(fixture,'public_html/.htaccess'),'routing-sentinel');
 fs.writeFileSync(path.join(fixture,'public_html/index.html'),'home-sentinel');
