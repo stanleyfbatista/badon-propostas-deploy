@@ -29,7 +29,7 @@ for (const file of pages) {
   exported.push(relative);
 }
 // Copy approved asset trees; no tools, documentation, private config or node_modules.
-for (const directory of ['css','js','svg','img']) {
+for (const directory of ['css','js','svg','img','previews']) {
   for (const file of walk(path.join(source,'assets',directory))) {
     if (path.basename(file).startsWith('.')) continue;
     const relative = path.relative(source,file);

@@ -1,0 +1,69 @@
+/* Original SVG paths, fills and viewBox; the groups only control their entrance.
+   Change this duration to scale the entire sequence. JS also has a 2800 ms cap. */
+:root {
+  --preloader-duration: 2200ms;
+  --preloader-background: #171717;
+  --preloader-ease: cubic-bezier(.22, .7, .22, 1);
+}
+
+.site-preloader { display: none; }
+.brand-intro-active .site-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: var(--preloader-background);
+  pointer-events: none;
+  animation: preloader-dismiss var(--preloader-duration) var(--preloader-ease) both;
+}
+.site-preloader__logo {
+  display: block;
+  width: min(360px, 100%);
+  height: auto;
+  overflow: visible;
+}
+.site-preloader__symbol,
+.site-preloader__name,
+.site-preloader__engineering {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-duration: var(--preloader-duration);
+  animation-timing-function: var(--preloader-ease);
+  animation-fill-mode: both;
+}
+.site-preloader__symbol { animation-name: preloader-symbol; }
+.site-preloader__name { animation-name: preloader-name; }
+.site-preloader__engineering { animation-name: preloader-engineering; }
+
+/* The header's existing entrance finishes behind the curtain on this visit. */
+.brand-intro-played .header .brand-mark * { animation: none !important; }
+.brand-intro-played .header .brand-mark__outline { opacity: 0; }
+.brand-intro-played .header .brand-mark__fill { clip-path: none; opacity: 1; }
+
+@keyframes preloader-symbol {
+  0% { opacity: 0; transform: translateX(138px) scale(.96); }
+  18% { opacity: 1; transform: translateX(138px) scale(1); }
+  42%, 100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes preloader-name {
+  0%, 26% { opacity: 0; transform: translateY(4px); }
+  52%, 100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes preloader-engineering {
+  0%, 39% { opacity: 0; transform: translateY(3px); }
+  61%, 100% { opacity: 1; transform: translateY(0); }
+}
+/* This CSS exit still completes if the JavaScript cleanup fails. */
+@keyframes preloader-dismiss {
+  0%, 78% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-intro-active .site-preloader { display: none; animation: none; }
+  .site-preloader__logo * { animation: none; }
+}
+@media print {
+  .brand-intro-active .site-preloader { display: none; }
+}

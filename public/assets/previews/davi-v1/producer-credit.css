@@ -1,0 +1,10 @@
+/* Shared production credit, with explicit contrast for each footer surface. */
+.footer-credit{display:flex;flex-basis:100%;grid-column:1/-1;justify-content:flex-end;padding-top:12px}
+.producer-credit{display:inline-flex;align-items:center;gap:10px;min-height:44px;max-width:100%;font-size:11px;line-height:1.5;color:#535353;text-decoration:none}
+.producer-credit img{display:block;width:128px;height:auto;flex:none}
+.producer-credit:hover{color:#171717}
+.producer-credit--dark{color:#bcbcb5}
+.producer-credit--dark:hover{color:#fff}
+.producer-credit:hover span{text-decoration:underline;text-underline-offset:4px}
+.producer-credit:focus-visible{outline:2px solid #dd4718;outline-offset:4px}
+@media(max-width:800px){.footer-credit{justify-content:flex-start}}

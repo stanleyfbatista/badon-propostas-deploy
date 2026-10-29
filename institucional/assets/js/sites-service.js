@@ -79,79 +79,100 @@
     refresh();
   }
 
+  // Scroll interpolation smooths wheel steps without running a perpetual animation.
+  const marquee = document.querySelector('.sales-marquee');
+  if (marquee && typeof IntersectionObserver === 'function') {
+    const lines = Array.from(marquee.querySelectorAll('.sales-marquee-line span'));
+    let visible = false, raf = 0, current = 0, target = 0, last = 0;
+    const paint = () => lines.forEach((line, i) => { line.style.transform = 'translate3d(' + (i ? -330 + current * 300 : -30 - current * 300).toFixed(3) + 'px,0,0)'; });
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; last = 0; lines.forEach(line=>line.style.removeProperty('will-change')); };
+    const render = time => {
+      raf = 0;
+      if (!visible || document.hidden || motion.matches) return stop();
+      const elapsed = last ? Math.min(64,time-last) : 16;
+      last = time;
+      current += (target-current) * (1-Math.exp(-elapsed/90));
+      if (Math.abs(target-current)<.0001) current=target;
+      paint();
+      if (current!==target) raf=requestAnimationFrame(render); else stop();
+    };
+    const update = () => {
+      if (!visible || document.hidden || motion.matches) return stop();
+      const rect=marquee.getBoundingClientRect();
+      target=Math.max(0,Math.min(1,(window.innerHeight-rect.top)/(window.innerHeight+rect.height)));
+      lines.forEach(line=>line.style.willChange='transform');
+      if (!raf) raf=requestAnimationFrame(render);
+    };
+    new IntersectionObserver(entries=>{
+      visible=entries[0].isIntersecting;
+      if (visible) {
+        const rect=marquee.getBoundingClientRect();
+        current=target=Math.max(0,Math.min(1,(window.innerHeight-rect.top)/(window.innerHeight+rect.height)));
+        if (!motion.matches) paint();
+        update();
+      } else stop();
+    }).observe(marquee);
+    window.addEventListener('scroll',update,{passive:true});
+    window.addEventListener('resize',update,{passive:true});
+    document.addEventListener('visibilitychange',()=>document.hidden?stop():update());
+    motion.addEventListener('change',()=>{
+      stop();
+      if (motion.matches) lines.forEach(line=>line.style.removeProperty('transform')); else update();
+    });
+  }
+
   const dialog = document.getElementById('project-dialog');
   if (!dialog || typeof dialog.showModal !== 'function') return;
   const heading = document.getElementById('project-dialog-title');
   const description = document.getElementById('project-dialog-description');
-  const external = dialog.querySelector('[data-project-external]');
   const imageSlot = dialog.querySelector('[data-project-image-slot]');
   const frameSlot = dialog.querySelector('[data-project-frame]');
-  const liveButton = dialog.querySelector('[data-load-project]');
   const closeButton = dialog.querySelector('[data-close-project]');
   const status = dialog.querySelector('[data-project-status]');
-  if (![heading, description, external, imageSlot, frameSlot, liveButton, closeButton, status].every(Boolean)) return;
-  const allowedOrigins = new Set(['https://clpfacilcursos.com', 'https://www.julianagalvaopsi.com.br', 'https://daviguedesengenharia.com.br']);
-  let current;
+  if (![heading,description,imageSlot,frameSlot,closeButton,status].every(Boolean)) return;
+  const projects = {
+    davi:{url:'../assets/previews/davi-v1/index.html',local:true},
+    clp:{url:'https://clpfacilcursos.com/clp-do-zero-ao-avancado/Alt-jul26-001/'},
+    juliana:{url:'https://www.julianagalvaopsi.com.br/birra-sob-controle/'}
+  };
   let opener;
   const clearFrame = () => frameSlot.replaceChildren();
-  document.querySelectorAll('[data-open-project]').forEach(link => link.addEventListener('click', event => {
-    const url = new URL(link.href);
-    if (!allowedOrigins.has(url.origin)) return;
-    const card = link.closest('.sales-project');
-    const image = card && card.querySelector('img');
+  document.querySelectorAll('[data-open-project]').forEach(button => button.addEventListener('click', () => {
+    const project = projects[button.dataset.openProject];
+    const card = button.closest('.sales-project');
     const title = card && card.querySelector('h3');
-    if (!image || !title) return;
-    event.preventDefault();
-    opener = link;
-    const isStatic = link.dataset.openProject === 'davi';
-    current = {url:url.href, name:title.textContent, isStatic};
+    if (!project || !title) return;
+    opener=button;
     clearFrame();
-    const preview = document.createElement('img');
-    preview.src = isStatic ? '../assets/img/cases/paginas-de-vendas/davi-guedes-site-completo.webp' : image.getAttribute('src');
-    preview.alt = isStatic ? 'Captura completa do site Davi Guedes Engenharia. Role para conhecer a apresentação.' : image.alt;
-    preview.width = isStatic ? 1200 : image.width;
-    preview.height = isStatic ? 5446 : image.height;
-    imageSlot.replaceChildren(preview);
-    imageSlot.hidden = false;
-    external.href = current.url;
-    heading.textContent = current.name;
-    description.textContent = isStatic
-      ? 'Apresentação com rolagem. Este projeto não permite incorporação; para usar menus e animações, abra o site completo.'
-      : 'A prévia abaixo é uma imagem. Ao carregar a versão ao vivo, seu navegador acessa o site externo, que pode usar cookies e serviços próprios. Use a prévia para navegar ou abra o site completo.';
-    liveButton.hidden = isStatic;
-    liveButton.disabled = false;
-    status.textContent = '';
+    imageSlot.hidden=true;
+    heading.textContent=title.textContent;
+    description.textContent=project.local
+      ? 'Prévia interativa de demonstração, hospedada no portfólio. Menus e animações disponíveis; contatos externos desativados. Não é uma transmissão ao vivo do site original.'
+      : 'Prévia ao vivo do site externo. Ao abrir este projeto, seu navegador acessa serviços e cookies próprios dele. Navegue dentro desta janela.';
+    status.textContent='Carregando a prévia…';
+    const frame=document.createElement('iframe');
+    frame.title='Prévia do projeto: '+title.textContent;
+    frame.setAttribute('sandbox',project.local?'allow-scripts':'allow-scripts allow-same-origin');
+    frame.referrerPolicy='no-referrer';
+    frame.addEventListener('load',()=>{
+      if (frame.isConnected) status.textContent='Role dentro da prévia para explorar o projeto. Feche no × para voltar ao portfólio.';
+    });
+    frame.src=project.url;
+    frameSlot.append(frame);
     document.body.classList.add('sales-modal-open');
     dialog.showModal();
-    dialog.querySelector('.sales-dialog-body').scrollTop = 0;
+    dialog.querySelector('.sales-dialog-body').scrollTop=0;
     closeButton.focus();
   }));
-  liveButton.addEventListener('click', () => {
-    if (!current || current.isStatic || liveButton.disabled) return;
-    const frame = document.createElement('iframe');
-    frame.title = 'Prévia ao vivo: ' + current.name;
-    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
-    frame.referrerPolicy = 'no-referrer';
-    frame.src = current.url;
-    clearFrame();
-    frameSlot.append(frame);
-    imageSlot.hidden = true;
-    liveButton.disabled = true;
-    description.textContent = 'Você está acessando o site externo dentro desta janela. Ele pode usar cookies e serviços próprios. A prévia termina quando você fecha o projeto.';
-    status.textContent = 'Prévia ao vivo solicitada. Role dentro dela para navegar. Se não aparecer ou alguma função estiver limitada, use “Abrir site completo”.';
-    dialog.querySelector('.sales-dialog-body').scrollTop = 0;
+  closeButton.addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',event=>{
+    if(event.target!==dialog) return;
+    const bounds=dialog.getBoundingClientRect();
+    if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom) dialog.close();
   });
-  closeButton.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => {
-    if (event.target !== dialog) return;
-    const bounds = dialog.getBoundingClientRect();
-    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
-  });
-  dialog.addEventListener('close', () => {
+  dialog.addEventListener('close',()=>{
     clearFrame();
-    imageSlot.replaceChildren();
-    current = undefined;
     document.body.classList.remove('sales-modal-open');
-    if (opener && opener.isConnected) opener.focus();
+    if(opener&&opener.isConnected) opener.focus();
   });
 })();
