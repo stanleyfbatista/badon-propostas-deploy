@@ -51,10 +51,10 @@
     });
   });
   addEventListener('keydown', event => {
-    if (!menuOpen) return;
-    if (event.key === 'Escape') { setMenu(false, true); return; }
+    if (!menuOpen || event.defaultPrevented) return;
+    if (event.key === 'Escape') { if (menu.querySelector('details[open]')) return; setMenu(false, true); return; }
     if (event.key === 'Tab') {
-      const focusable = [menuButton, ...$$('a', menu)];
+      const focusable = [menuButton, ...$('a, summary', menu).filter(el => el.getClientRects().length)];
       const first = focusable[0], last = focusable.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
