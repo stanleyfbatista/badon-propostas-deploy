@@ -1,5 +1,5 @@
 #!/bin/bash
-# Only the sites service page and its two dedicated assets; private backup first.
+# Only the sites service page and dedicated assets; private backup first.
 set -euo pipefail
 repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
 account_dir="${BADON_ACCOUNT_DIR:-$HOME}"
@@ -7,8 +7,8 @@ account_dir="${BADON_ACCOUNT_DIR:-$HOME}"
 public_dir="$account_dir/public_html"
 backup_root="$account_dir/badon-site-backups"
 [[ -d "$public_dir" && ! -L "$public_dir" && ! -L "$backup_root" ]] || exit 1
-files=(assets/css/sites-service.css assets/js/sites-service.js servicos/sites.html)
-for dir in assets assets/css assets/js servicos; do
+files=(assets/css/sites-service.css assets/js/sites-service.js assets/img/cases/paginas-de-vendas/black-vitalicia-site.webp assets/img/cases/paginas-de-vendas/davi-guedes-site.webp assets/img/cases/paginas-de-vendas/davi-guedes-site-completo.webp servicos/sites.html)
+for dir in assets assets/css assets/js assets/img assets/img/cases assets/img/cases/paginas-de-vendas servicos; do
   [[ -d "$public_dir/$dir" && ! -L "$public_dir/$dir" ]] || exit 1
 done
 for file in "${files[@]}"; do
@@ -33,4 +33,4 @@ for file in "${files[@]}"; do
   chmod 644 "$stage"
   mv "$stage" "$public_dir/$file"
 done
-echo 'Página de sites e dois assets publicados. Demais páginas, apps, banco e rotas preservados.'
+echo 'Página de sites e assets publicados. Demais páginas, apps, banco e rotas preservados.'

@@ -7,8 +7,8 @@ account_dir="${BADON_ACCOUNT_DIR:-$HOME}"
 public_dir="$account_dir/public_html"
 backup_root="$account_dir/badon-site-backups"
 [[ -d "$public_dir" && ! -L "$public_dir" && ! -L "$backup_root" ]] || exit 1
-files=(assets/css/service-pages.css assets/css/sites-service.css assets/js/sites-service.js servicos/sites.html servicos/identidade-visual.html servicos/trafego-pago.html servicos/google-meu-negocio.html)
-for dir in assets assets/css assets/js servicos; do
+files=(assets/css/service-pages.css assets/css/sites-service.css assets/js/sites-service.js assets/img/cases/paginas-de-vendas/black-vitalicia-site.webp assets/img/cases/paginas-de-vendas/davi-guedes-site.webp assets/img/cases/paginas-de-vendas/davi-guedes-site-completo.webp servicos/sites.html servicos/identidade-visual.html servicos/trafego-pago.html servicos/google-meu-negocio.html)
+for dir in assets assets/css assets/js assets/img assets/img/cases assets/img/cases/paginas-de-vendas servicos; do
   [[ -d "$public_dir/$dir" && ! -L "$public_dir/$dir" ]] || exit 1
 done
 for file in "${files[@]}"; do
