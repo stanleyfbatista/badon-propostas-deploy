@@ -7,6 +7,8 @@
 .journal-width{width:calc(100% - 80px);max-width:1160px;margin-inline:auto}
 .journal-header{background:var(--ink);color:var(--white);padding:24px 0}
 .journal-header>.journal-width{display:flex;align-items:center;justify-content:space-between;gap:30px}
+.journal-header>.journal-width>a{flex-shrink:0}
+.journal-header img{object-fit:contain;height:auto}
 .journal-header nav{display:flex;align-items:center;gap:30px;font-size:13px}
 .journal-contact{border:1px solid #68686d;padding:12px 20px;border-radius:40px}
 .journal a:hover{text-decoration:underline;text-underline-offset:5px}

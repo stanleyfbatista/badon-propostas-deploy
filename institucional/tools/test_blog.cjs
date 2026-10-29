@@ -7,6 +7,7 @@ const articles = ['cara-de-empresa-grande', 'antes-de-anunciar', 'site-e-contato
 const archive = read('blog/index.html');
 const home = read('index.html');
 const script = read('assets/js/main.js');
+assert.match(read('assets/css/blog.css'), /\.journal-header img\{object-fit:contain;height:auto\}/, 'Logo deve preservar a proporção sem cortar as letras');
 for (const slug of articles) {
   const html = read('blog/' + slug + '.html');
   assert.match(archive, new RegExp(slug + '\\.html'));
