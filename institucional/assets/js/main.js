@@ -170,7 +170,6 @@
     "image": "blog/marca.webp",
     "alt": "Amostras de cores para uma identidade visual consistente",
     "summary": "8 cuidados para apresentar bem o seu negócio e transmitir mais confiança.",
-    "minutes": 9,
     "height": 933,
     "displayDate": "29 OUT 2026"
   },

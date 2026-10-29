@@ -18,6 +18,9 @@ const structured = JSON.parse(html.match(/<script type="application\/ld\+json">(
 assert.equal(structured['@type'], 'BlogPosting');
 assert.equal(structured.author['@type'],'Person');
 assert.equal(structured.author.name,'Stanley Batista');
+assert.doesNotMatch(html, /min de leitura/);
+const articleCard = fs.readFileSync(path.join(root,'public/blog/index.html'),'utf8').split('data-category="Presença profissional"')[1].split('</article>')[0];
+assert.doesNotMatch(articleCard, /min de leitura/);
 assert.match(html, /class="business-author-photo" src="\.\.\/assets\/img\/hero-stanley.webp" alt="Stanley Batista" width="42" height="42"/);
 assert.doesNotMatch(html, /Quero melhorar minha apresentação|Redação Bādon/);
 const opening = html.match(/<div class="business-jump">([\s\S]*?)<\/div>/)[1];
