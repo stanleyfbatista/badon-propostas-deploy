@@ -11,6 +11,13 @@ assert.doesNotMatch(section,/service-tabs|auto-tabs|service-direct-links|ILUSTRA
 for(const slug of ['trafego-pago','sites','google-meu-negocio','identidade-visual'])assert.ok(section.includes('href="servicos/'+slug+'.html"'));
 for(const [,src] of section.matchAll(/src="([^"]+)"/g))assert.ok(fs.existsSync(path.join(root,'public',src)),src);
 const css=read('public/assets/css/home-services.css');
+for(const file of ['trafego-pago-google-meta-mockup-v2.webp','google-meu-negocio-badon-mockup-v2.webp']){
+  assert.ok(section.includes('assets/img/'+file));
+  assert.ok(fs.statSync(path.join(root,'public/assets/img',file)).size<200000);
+  assert.ok(read('deploy/publish-home-navigation.sh').includes(file));
+}
+assert.doesNotMatch(section,/home-service-monitor|home-service-platforms|src="assets\/img\/blog\/trafego.webp"/);
+assert.match(css,/\.home-service-media--ads>img,\.home-service-media--google>img\{object-fit:contain\}/);
 assert.match(css,/repeat\(2,minmax\(0,1fr\)\)/);
 assert.match(css,/@media\(max-width:800px\)/);
 assert.match(css,/grid-template-columns:1fr/);

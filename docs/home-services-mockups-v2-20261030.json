@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-30",
+  "tool": "Built-in image_gen",
+  "purpose": "Substituição dos mockups de tráfego pago e Google Meu Negócio da home",
+  "notes": [
+    "Google: composição gerada com captura do perfil público da Bādon como referência; não é captura nativa de interface mobile.",
+    "Tráfego: interface conceitual de configuração de campanha, sem resultados financeiros ou métricas atribuídos a clientes.",
+    "Não implica parceria ou certificação Google/Meta."
+  ],
+  "references": [
+    "https://www.google.com/maps?cid=13259353907984930597",
+    "https://support.google.com/google-ads/answer/13717903?hl=en",
+    "https://support.google.com/business/answer/145585?hl=en"
+  ],
+  "assets": [
+    {
+      "path": "institucional/assets/img/trafego-pago-google-meta-mockup-v2.webp",
+      "width": 1536,
+      "height": 1024,
+      "prompt": "Use case: product-mockup / ui-mockup.\nAsset type: premium website service-card visual, landscape 3:2.\nCreate a photorealistic high-end 3D studio composition illustrating Google Ads and Meta advertising for a Brazilian agency. A graphite premium laptop sits opened at three-quarter angle, floating just above a seamless surface, full laptop visible. The screen shows a polished realistic Google Ads NEW CAMPAIGN SETUP UI in Portuguese: Google Ads logo and text at top left, heading 'Nova campanha', subheading 'Escolha seu objetivo', a clean grid of 3 large objective tiles with small icons labelled 'Vendas', 'Leads', 'Tráfego do site', with Leads selected using a fine blue outline. At bottom a blue 'Continuar' button. This is a concept campaign setup not a customer performance dashboard: NO metrics, NO fabricated results, NO graphs, NO sales figures. In front to the right is a premium upright smartphone with an Instagram ad preview for 'Bādon', a sophisticated blue black creative with only the headline 'Sua marca, mais perto.' and CTA 'Saiba mais'; no metrics, no follower counts, no fake testimonials. Two physically realistic floating small white rounded-square acrylic plaques: one recognizable authentic Google Ads multicolor triangular symbol to upper left and one authentic Meta blue infinity symbol to upper right. Clear accurate symbols, not invented generic logos. Dark charcoal navy #101116 studio backdrop with subtle cobalt rim lighting and gentle blue ambient light, controlled shadows, premium aluminum and glass, crisp readable UI. Centered compact composition fills 80% canvas, generous margins so no device clipped. All physical device geometry coherent. No extra headline outside screens, no watermark, no coffee cup, no hands, no decorative arrows or growth charts, no clutter."
+    },
+    {
+      "path": "institucional/assets/img/google-meu-negocio-badon-mockup-v2.webp",
+      "width": 1536,
+      "height": 1024,
+      "prompt": "Use case: compositing / product-mockup.\nAsset type: premium website service-card image, landscape 3:2.\nCreate an elegant photorealistic 3D product studio composition for a Brazilian digital agency's Google Business Profile service. Supporting insert Image 1 is the ACTUAL public Google Maps listing of Produtora Bādon: preserve its identity and content when inserting it on the desktop display. Main subject: large ultra-thin silver desktop monitor slightly rotated three-quarter, full device visible, with the provided Google Maps listing filling its screen; a smaller upright premium smartphone in front to the right shows a closely cropped mobile adaptation of the same listing and map, not a different business. A single sculptural red Google Maps location pin floats above the phone. All devices have credible materials, correct perspective, sharp screen glass, fine aluminum edges. The readable name is 'Produtora Bādon'; do not invent additional reviews, ratings, results, awards, contacts or statistics. Preserve Google map attribution on the screen. Scene: deep charcoal navy seamless studio backdrop #101116 with restrained cobalt blue light spill, soft floor contact shadows, elegant photographic lighting and depth. Layout: centered compact cluster filling 80% of canvas, generous clear edges, devices entirely inside image. Beautiful but clear not busy. No giant headline, no external captions, no cubes, no random abstract UI shapes, no stock office photo, no people. High-end agency portfolio visual, not a flat illustration."
+    }
+  ]
+}
