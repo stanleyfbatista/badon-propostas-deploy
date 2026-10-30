@@ -76,89 +76,7 @@
     navLinks.forEach(link => { const section = $(link.hash); if (section) observer.observe(section); });
   }
 
-  // Tabs use progressive enhancement: without JS all four services remain visible.
-  const tabList = $('.service-tabs');
-  const tabs = $$('.service-tab');
-  const panels = $$('.service-panel');
-  const autoButton = $('.auto-tabs');
-  const glow = $('.tab-glow');
-  let activeTab = 0, autoAllowed = !reducedMotion.matches, tabsVisible = false;
-  let autoTimer = null, serviceAnimation = null;
-  function moveGlow(animate = true) {
-    if (!glow || !tabs.length) return;
-    const target = tabs[activeTab];
-    const values = { x: target.offsetLeft, width: target.offsetWidth };
-    if (window.gsap && !reducedMotion.matches && animate) gsap.to(glow, { ...values, duration: .4, ease: 'power2.out', overwrite: true });
-    else { glow.style.transform = 'translateX(' + values.x + 'px)'; glow.style.width = values.width + 'px'; }
-  }
-  function stopAuto() {
-    autoAllowed = false;
-    if (autoButton) { autoButton.setAttribute('aria-pressed', 'false'); autoButton.innerHTML = 'Ativar troca automática <span aria-hidden="true">▶</span>'; }
-    clearInterval(autoTimer); autoTimer = null;
-  }
-  function scheduleAuto() {
-    clearInterval(autoTimer); autoTimer = null;
-    if (!autoAllowed || !tabsVisible || document.hidden || reducedMotion.matches) return;
-    autoTimer = setInterval(() => showTab((activeTab + 1) % tabs.length, false), 6000);
-  }
-  function showTab(index, userInitiated = true) {
-    if (!tabs.length) return;
-    if (userInitiated) stopAuto();
-    activeTab = index;
-    serviceAnimation?.kill();
-    tabs.forEach((tab, i) => {
-      tab.classList.toggle('active', i === index);
-      tab.setAttribute('aria-selected', String(i === index));
-      tab.tabIndex = i === index ? 0 : -1;
-    });
-    panels.forEach((panel, i) => {
-      panel.hidden = i !== index;
-      panel.style.opacity = '';
-      panel.style.transform = '';
-    });
-    moveGlow();
-    if (window.gsap && !reducedMotion.matches) {
-      serviceAnimation = gsap.fromTo(panels[index], { opacity: .3 }, { opacity: 1, duration: .4, clearProps: 'opacity' });
-      gsap.fromTo($$('.art-piece', panels[index]), { scale: .8, y: 16 }, { scale: 1, y: 0, duration: .55, stagger: .06, ease: 'power3.out', overwrite: true, clearProps: 'transform' });
-    }
-    window.ScrollTrigger?.refresh();
-  }
-  if (tabList) {
-    tabList.setAttribute('role', 'tablist');
-    tabs.forEach((tab, i) => {
-      tab.setAttribute('role', 'tab');
-      panels[i].setAttribute('role', 'tabpanel');
-      panels[i].tabIndex = 0;
-      tab.addEventListener('click', () => showTab(i));
-      tab.addEventListener('keydown', event => {
-        let next = i;
-        if (event.key === 'ArrowRight') next = (i + 1) % tabs.length;
-        else if (event.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
-        else if (event.key === 'Home') next = 0;
-        else if (event.key === 'End') next = tabs.length - 1;
-        else return;
-        event.preventDefault(); showTab(next); tabs[next].focus();
-      });
-    });
-    showTab(0, false);
-    autoButton.hidden = reducedMotion.matches;
-    autoButton.addEventListener('click', () => {
-      if (autoAllowed) stopAuto();
-      else { autoAllowed = true; autoButton.setAttribute('aria-pressed', 'true'); autoButton.innerHTML = 'Pausar troca automática <span aria-hidden="true">Ⅱ</span>'; scheduleAuto(); }
-    });
-    // Never replace a panel while someone is reading or using its controls.
-    $('.service-content').addEventListener('focusin', stopAuto);
-    tabList.addEventListener('focusin', stopAuto);
-    $('.services').addEventListener('pointerenter', () => { clearInterval(autoTimer); });
-    $('.services').addEventListener('pointerleave', scheduleAuto);
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(entries => {
-        tabsVisible = entries[0].isIntersecting; scheduleAuto();
-      }, { threshold: .3 }).observe(tabList);
-    }
-    addEventListener('resize', () => moveGlow(false), { passive: true });
-    document.addEventListener('visibilitychange', scheduleAuto);
-  }
+  // All home services stay visible without interaction.
 
   // Local editorial preview. Each entry has its own static article page.
   const posts = [
@@ -428,7 +346,7 @@
     gsap.registerPlugin(ScrollTrigger);
     let ticker = null;
     if (window.Lenis) {
-      lenis = new Lenis({ duration: 1.1, smoothWheel: true, prevent: node => node.closest?.('dialog, .service-tabs, .primary-nav.open') });
+      lenis = new Lenis({ duration: 1.1, smoothWheel: true, prevent: node => node.closest?.('dialog, .primary-nav.open') });
       lenis.on('scroll', ScrollTrigger.update);
       ticker = time => lenis?.raf(time * 1000);
       gsap.ticker.add(ticker);
@@ -490,8 +408,7 @@
   const requestedPost = new URLSearchParams(location.search).get('artigo');
   if (requestedPost && posts.some(post => post.id === requestedPost)) location.replace('blog/' + postPath(requestedPost));
   reducedMotion.addEventListener('change', () => {
-    if (reducedMotion.matches) { stopAuto(); serviceAnimation?.kill(); panels.forEach(panel => { panel.style.opacity = ''; }); }
-    if (autoButton) autoButton.hidden = reducedMotion.matches;
+
     setupMotion();
   });
 })();

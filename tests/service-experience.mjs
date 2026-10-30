@@ -12,7 +12,8 @@ assert.match(home,/>Início<\/a>/);
 assert.doesNotMatch(home,/>Home<\/a>/);
 assert.match(home,/<details class="services-menu"/);
 assert.equal((home.match(/class="button button-blue service-page-link"/g)||[]).length,4);
-assert.match(home,/service-direct-links/);
+assert.doesNotMatch(home,/service-direct-links|class="service-tabs"|auto-tabs/);
+assert.equal((home.match(/class="home-service-card"/g)||[]).length,4);
 const sites=read('public/servicos/sites.html');
 assert.doesNotMatch(sites,/Mockup ilustrativo do projeto Davi/);
 assert.match(sites,/data-tilt/);
@@ -49,7 +50,7 @@ for(const reduced of [false,true]){
   observe([{isIntersecting:false}]);observe([{isIntersecting:true}]);assert.equal(frames.size,0);
 }
 const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'badon-navigation-'));
-for(const dir of ['assets/css','assets/js'])fs.mkdirSync(path.join(fixture,'public_html',dir),{recursive:true});
+for(const dir of ['assets/css','assets/js','assets/svg','assets/img','assets/img/blog','assets/img/cases/paginas-de-vendas','assets/img/cases/becare'])fs.mkdirSync(path.join(fixture,'public_html',dir),{recursive:true});
 fs.writeFileSync(path.join(fixture,'public_html/index.html'),'previous-home');
 fs.writeFileSync(path.join(fixture,'public_html/.htaccess'),'routing-sentinel');
 execFileSync('bash',[path.join(root,'deploy/publish-home-navigation.sh')],{env:{...process.env,BADON_ACCOUNT_DIR:fixture}});

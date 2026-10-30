@@ -1,0 +1,12 @@
+{
+  "scope": "Homepage service cards, 2026-10-30",
+  "assets": [
+    {"file": "assets/img/home-google-profile-v1.webp", "source": "https://www.google.com/maps?cid=13259353907984930597", "type": "Public Badon listing screenshot; map attribution preserved, account avatar excluded; snapshot not live data"},
+    {"file": "assets/svg/google-ads.svg", "source": "https://www.gstatic.com/images/branding/productlogos/ads/v5/192px.svg", "type": "Product identification only, no endorsement claim"},
+    {"file": "assets/svg/google-business.svg", "source": "https://www.gstatic.com/images/branding/productlogos/google_my_business/v7/192px.svg", "type": "Product identification only, no endorsement claim"},
+    {"file": "assets/svg/meta.svg", "source": "https://cdn.simpleicons.org/meta/0866FF", "type": "Meta symbol via Simple Icons; product identification only"},
+    {"file": "assets/img/blog/trafego.webp", "source": "Existing institutional editorial asset", "type": "Analytics notebook photograph; not presented as Badon campaign results"},
+    {"file": "assets/img/cases/paginas-de-vendas/badon-sites-notebook-recortado-v2.webp", "source": "Existing Davi Guedes website mockup"},
+    {"file": "assets/img/cases/becare/identidade-embalagens.webp", "source": "Existing BeCare identity portfolio asset"}
+  ]
+}
