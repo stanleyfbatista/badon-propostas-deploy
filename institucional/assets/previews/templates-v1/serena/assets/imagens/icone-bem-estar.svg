@@ -1,0 +1,5 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Bem-estar e equilíbrio">
+  <circle cx="32" cy="32" r="27" fill="#f8f4f1" stroke="#0a0a0a" stroke-opacity=".14" stroke-width="1.5"/>
+  <path d="M18 44c-1-18 10-28 29-25 1 18-8 29-25 29-2 0-3-2-4-4Z" fill="#c0f85f" stroke="#0a0a0a" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M20 47c7-10 14-16 24-23M29 37l-1-9M35 32l9 1" stroke="#0a0a0a" stroke-width="2.3" stroke-linecap="round"/>
+</svg>

@@ -18,7 +18,7 @@ assert.match(html, /não são resultados medidos dos nossos sites/);
 assert.match(html, /não garante posicionamento nem vendas/);
 assert.doesNotMatch(html.split('</header>')[0], /identidade-visual.html|trafego-pago.html|google-meu-negocio.html/);
 assert.ok(html.indexOf('id="other-services-title"') > html.indexOf('id="contato"'));
-assert.deepEqual([...html.matchAll(/data-open-project="([^"]+)"/g)].map(m=>m[1]),['davi','clp','juliana']);
+assert.deepEqual([...html.matchAll(/data-open-project="([^"]+)"/g)].map(m=>m[1]),['davi','clp','juliana','forma-norte','serena','eixo','entrelacos']);
 assert.doesNotMatch(html,/Ferramentas de IA podem|Core Web Vitals|Carregar prévia ao vivo|data-project-external/);
 assert.match(html.split('</header>')[0],/href="..\/index.html">Início/);
 assert.doesNotMatch(html, /<iframe/);

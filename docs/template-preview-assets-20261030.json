@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-30",
+  "kind": "Purchased template demonstrations with fictional brands",
+  "sources": [
+    "/Users/produtorabadon/Downloads/Arquiteto Minimalista.zip",
+    "/Users/produtorabadon/Downloads/saude-astheric.zip",
+    "/Users/produtorabadon/Downloads/Insititucional Clean.zip",
+    "/Users/produtorabadon/Downloads/Lançamento Relacionamento.zip"
+  ],
+  "rights": "User states templates were purchased. Licenses for bundled fonts and photographs were not independently verified. No claim of real clients or original Bādon authorship.",
+  "mode": "Built-in image_gen, product-mockup with actual page screenshot as screen reference. Optimized to WebP with cwebp -q 86.",
+  "assets": [
+    {
+      "slug": "forma-norte",
+      "name": "Forma Norte Arquitetura",
+      "sourceScreen": "/tmp/badon-templates-sVZ0TE/forma-norte-screen.png",
+      "generatedOriginal": "/Users/produtorabadon/.codex/generated_images/019ff70e-a80f-7be0-a06a-3375e641a42a/exec-b7632501-6a80-4694-a7d3-8b93baa03d0f.png",
+      "savedPath": "institucional/assets/img/cases/paginas-de-vendas/forma-norte-notebook-v1.webp",
+      "prompt": "Use case: product-mockup. Asset: website portfolio cover, landscape 4:3 aspect ratio. Create one premium photorealistic notebook mockup. Input image 1 is the exact website SCREEN INSERT, preserve its layout, photographs, colors, brand name and Portuguese text faithfully; fit the entire hero screenshot naturally inside the notebook display, without browser chrome. An open silver premium notebook on a pale concrete drafting desk, architectural studio daylight. Three-quarter angle seen from slightly above LEFT. One rolled tracing sheet and a subtle technical pencil near frame edge, no clutter. Warm grey mineral palette. The notebook fills about 80 percent of the frame with comfortable 7 percent margins, fully visible screen and keyboard. Realistic hinge, screen perspective, reflections subtle enough to read the design. No captions or text outside the laptop, no watermark, no extra logos or devices. Distinctive professional composition, the website is the hero."
+    },
+    {
+      "slug": "serena",
+      "name": "Serena Saúde & Estética",
+      "sourceScreen": "/tmp/badon-templates-sVZ0TE/serena-screen.png",
+      "generatedOriginal": "/Users/produtorabadon/.codex/generated_images/019ff70e-a80f-7be0-a06a-3375e641a42a/exec-17a917d6-06c2-428b-b5d3-be927b135338.png",
+      "savedPath": "institucional/assets/img/cases/paginas-de-vendas/serena-notebook-v1.webp",
+      "prompt": "Use case: product-mockup. Asset: website portfolio cover, landscape 4:3 aspect ratio. Create one premium photorealistic notebook mockup. Input image 1 is the exact website SCREEN INSERT, preserve its layout, photographs, colors, brand name and Portuguese text faithfully; fit the entire hero screenshot naturally inside the notebook display, without browser chrome. An open champagne-silver thin notebook on an ivory travertine slab in a calm wellness studio. Near frontal three-quarter angle from RIGHT, with a tiny sage leaf shadow and soft cream curtains in the distance, fresh diffuse morning light. Organic cream, sage and warm skin palette. The notebook fills about 80 percent of the frame with comfortable 7 percent margins, fully visible screen and keyboard. Realistic hinge, screen perspective, reflections subtle enough to read the design. No captions or text outside the laptop, no watermark, no extra logos or devices. Distinctive professional composition, the website is the hero."
+    },
+    {
+      "slug": "eixo",
+      "name": "Eixo Gestão",
+      "sourceScreen": "/tmp/badon-templates-sVZ0TE/eixo-screen.png",
+      "generatedOriginal": "/Users/produtorabadon/.codex/generated_images/019ff70e-a80f-7be0-a06a-3375e641a42a/exec-6953f7c5-87cc-4994-ad39-59b7d120271a.png",
+      "savedPath": "institucional/assets/img/cases/paginas-de-vendas/eixo-notebook-v1.webp",
+      "prompt": "Use case: product-mockup. Asset: website portfolio cover, landscape 4:3 aspect ratio. Create one premium photorealistic notebook mockup. Input image 1 is the exact website SCREEN INSERT, preserve its layout, photographs, colors, brand name and Portuguese text faithfully; fit the entire hero screenshot naturally inside the notebook display, without browser chrome. An open dark graphite premium notebook floating at a subtle dynamic 15-degree diagonal in a clean deep navy studio, cool edge lighting, restrained violet glow echoed from the purple website. No pedestal, no desk, just a soft natural shadow. Device screen faces viewer with very mild perspective. Crisp polished product render. The notebook fills about 80 percent of the frame with comfortable 7 percent margins, fully visible screen and keyboard. Realistic hinge, screen perspective, reflections subtle enough to read the design. No captions or text outside the laptop, no watermark, no extra logos or devices. Distinctive professional composition, the website is the hero."
+    },
+    {
+      "slug": "entrelacos",
+      "name": "Entrelaços — Jornada a Dois",
+      "sourceScreen": "/tmp/badon-templates-sVZ0TE/entrelacos-screen.png",
+      "generatedOriginal": "/Users/produtorabadon/.codex/generated_images/019ff70e-a80f-7be0-a06a-3375e641a42a/exec-cdcdd6c1-0f02-4c03-8f40-debbfa688936.png",
+      "savedPath": "institucional/assets/img/cases/paginas-de-vendas/entrelacos-notebook-v1.webp",
+      "prompt": "Use case: product-mockup. Asset: website portfolio cover, landscape 4:3 aspect ratio. Create one premium photorealistic notebook mockup. Input image 1 is the exact website SCREEN INSERT, preserve its layout, photographs, colors, brand name and Portuguese text faithfully; fit the entire hero screenshot naturally inside the notebook display, without browser chrome. An open pale silver notebook on a warm walnut side table beside folded natural linen, intimate golden late-afternoon light, muted olive background. Three-quarter angle, camera eye-level and slightly to the left, a quiet editorial lifestyle composition. No people outside the screen. The notebook fills about 80 percent of the frame with comfortable 7 percent margins, fully visible screen and keyboard. Realistic hinge, screen perspective, reflections subtle enough to read the design. No captions or text outside the laptop, no watermark, no extra logos or devices. Distinctive professional composition, the website is the hero."
+    }
+  ],
+  "safety": [
+    "noindex,nofollow on four preview pages",
+    "sandbox allow-scripts without allow-same-origin",
+    "CSP connect-src none and form-action none",
+    "No outgoing contact, account or checkout action",
+    "No additional tracking",
+    "Opaque institutional vendor JavaScript bundles omitted, CSS motion retained and accordion replaced with small local script",
+    "Unsubstantiated testimonial block and numerical claims removed",
+    "Reduced-motion handling and mobile health header/title correction"
+  ],
+  "validation": [
+    "Static preview checks",
+    "JavaScript syntax",
+    "Scoped deployment fixture with backup",
+    "Four desktop and mobile modal previews visually inspected",
+    "Health section navigation",
+    "Institutional accordion expansion",
+    "Launch checkout shows demo-only toast"
+  ],
+  "publication": "Prepared for scoped publish-sites.sh; production verification recorded separately in handoff."
+}

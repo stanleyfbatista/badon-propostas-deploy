@@ -133,7 +133,11 @@
   const projects = {
     davi:{url:'../assets/previews/davi-v1/index.html',local:true},
     clp:{url:'https://clpfacilcursos.com/clp-do-zero-ao-avancado/Alt-jul26-001/'},
-    juliana:{url:'https://www.julianagalvaopsi.com.br/birra-sob-controle/'}
+    juliana:{url:'https://www.julianagalvaopsi.com.br/birra-sob-controle/'},
+    'forma-norte':{url:'../assets/previews/templates-v1/forma-norte/index.html',local:true,template:true},
+    serena:{url:'../assets/previews/templates-v1/serena/index.html',local:true,template:true},
+    eixo:{url:'../assets/previews/templates-v1/eixo/index.html',local:true,template:true},
+    entrelacos:{url:'../assets/previews/templates-v1/entrelacos/index.html',local:true,template:true}
   };
   let opener;
   const clearFrame = () => frameSlot.replaceChildren();
@@ -146,7 +150,9 @@
     clearFrame();
     imageSlot.hidden=true;
     heading.textContent=title.textContent;
-    description.textContent=project.local
+    description.textContent=project.template
+      ? 'Projeto demonstrativo com marca fictícia, adaptado de template adquirido. Explore a página e as animações nesta janela. Contatos, cadastros e compras estão desativados.'
+      : project.local
       ? 'Prévia interativa de demonstração, hospedada no portfólio. Menus e animações disponíveis; contatos externos desativados. Não é uma transmissão ao vivo do site original.'
       : 'Prévia ao vivo do site externo. Ao abrir este projeto, seu navegador acessa serviços e cookies próprios dele. Navegue dentro desta janela.';
     status.textContent='Carregando a prévia…';

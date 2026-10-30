@@ -14,10 +14,10 @@ done
 # Explicit manifest: only the approved public portfolio preview.
 preview_files=()
 while IFS= read -r file; do
-  [[ "$file" =~ ^assets/previews/davi-v1/[a-zA-Z0-9/_.-]+$ && "$file" != *..* ]] || exit 1
+  [[ "$file" =~ ^assets/previews/(davi-v1|templates-v1)/[a-zA-Z0-9/_.-]+$ && "$file" != *..* ]] || exit 1
   preview_files+=("$file")
 done < "$repo_dir/deploy/sites-preview-files.txt"
-files=("${preview_files[@]}" "${files[@]}")
+files=("${preview_files[@]}" "${files[@]}" assets/img/cases/paginas-de-vendas/forma-norte-notebook-v1.webp assets/img/cases/paginas-de-vendas/serena-notebook-v1.webp assets/img/cases/paginas-de-vendas/eixo-notebook-v1.webp assets/img/cases/paginas-de-vendas/entrelacos-notebook-v1.webp)
 for file in "${files[@]}"; do
   parent_dir="$public_dir"
   IFS='/' read -r -a path_parts <<< "$(dirname "$file")"
