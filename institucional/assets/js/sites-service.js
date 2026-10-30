@@ -130,7 +130,7 @@
     imageSlot.hidden=true;
     heading.textContent=title.textContent;
     description.textContent=project.template
-      ? 'Projeto demonstrativo adaptado de template adquirido. Explore a página e as animações nesta janela. Contatos, cadastros e compras estão desativados.'
+      ? card.querySelector('[data-project-summary]').textContent + ' Nesta prévia demonstrativa, contatos, cadastros e compras estão desativados.'
       : project.local
       ? 'Prévia interativa de demonstração, hospedada no portfólio. Menus e animações disponíveis; contatos externos desativados. Não é uma transmissão ao vivo do site original.'
       : 'Prévia ao vivo do site externo. Ao abrir este projeto, seu navegador acessa serviços e cookies próprios dele. Navegue dentro desta janela.';
