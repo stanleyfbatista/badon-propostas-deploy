@@ -11,7 +11,7 @@ for(const slug of slugs){
  const file=path.join(base,slug,'index.html'),html=fs.readFileSync(file,'utf8');
  assert.match(html,/<meta name="robots" content="noindex, nofollow">/);
  assert.match(html,/Projeto demonstrativo/);
- assert.match(html,/Marca fictícia · Adaptado de template/);
+ assert.match(html,/Adaptado de template/);
  assert.match(html,/connect-src 'none'; form-action 'none'/);
  assert.doesNotMatch(html,/<form\b|<iframe\b|<script\b(?![^>]*\bsrc=)/i);
  assert.doesNotMatch(html,/\b(?:href|src|action)=["'](?:https?:|\/\/|mailto:|tel:|javascript:)/i);

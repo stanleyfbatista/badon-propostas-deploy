@@ -22,6 +22,11 @@ assert.deepEqual([...html.matchAll(/data-open-project="([^"]+)"/g)].map(m=>m[1])
 assert.doesNotMatch(html,/Ferramentas de IA podem|Core Web Vitals|Carregar prévia ao vivo|data-project-external/);
 assert.match(html.split('</header>')[0],/href="..\/index.html">Início/);
 assert.doesNotMatch(html, /<iframe/);
+assert.doesNotMatch(html, /marcas? fictícias?|data-project-next|data-project-prev|role horizontalmente/i);
+assert.match(html, /Galeria com 7 sites/);
+assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+assert.match(css, /\.sales-project-track\{grid-template-columns:1fr/);
+assert.doesNotMatch(css, /grid-auto-flow:column|scroll-snap-type:x/);
 assert.match(html, /<dialog[^>]+aria-labelledby="project-dialog-title"/);
 assert.doesNotMatch(css, /animation-timeline:view/);
 assert.match(js, /Math.exp/);

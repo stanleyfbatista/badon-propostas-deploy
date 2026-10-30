@@ -130,14 +130,11 @@
 .sales-method-steps li:before{content:counter(method,decimal-leading-zero);position:absolute;left:0;top:29px;font-size:13px;color:#9fc8ff}
 .sales-method-steps h3{font-size:23px}
 .sales-method-steps p{color:#bac5d5;font-size:15px}
-.sales-projects{padding-block:100px}
+.sales-projects{padding-block:100px;max-width:1440px}
 .sales-projects-heading{display:flex;justify-content:space-between;gap:32px;align-items:end;margin-bottom:42px}
 .sales-projects-heading p{color:#526075;max-width:65ch;font-size:16px;margin-top:24px}
-.sales-carousel-controls{display:flex;gap:10px;flex-shrink:0}
-.sales-carousel-controls button{border:1px solid #afc2df;border-radius:50%;background:#fff;color:#0053c3;width:48px;height:48px;font-size:22px;cursor:pointer}
-.sales-carousel-controls button:disabled{opacity:.3;cursor:default}
-.sales-project-track{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 32px)/2);gap:32px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 8px;padding:8px 8px 26px;margin-inline:-8px;scrollbar-width:thin;scrollbar-color:#0053c3 #edf3fc}
-.sales-project{scroll-snap-align:start;min-width:0}
+.sales-project-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:64px 32px}
+.sales-project{min-width:0}
 .sales-project-open{cursor:pointer;border:0;padding:0;width:100%;text-align:left;display:block;border-radius:12px;overflow:hidden;position:relative;background:#edf3fc}
 .sales-project-open img{aspect-ratio:4/3;width:100%;height:auto;object-fit:cover;object-position:top;display:block;transition:transform .4s var(--sales-ease)}
 .sales-project-open:hover img{transform:scale(1.02)}
@@ -145,7 +142,6 @@
 .sales-project-type{font-size:12px;color:#526075;margin-top:22px}
 .sales-project h3{margin:9px 0 12px;font-size:27px}
 .sales-project>p:last-child{font-size:14px;color:#526075;max-width:65ch}
-.sales-project-hint{font-size:12px;color:#526075;margin-top:20px}
 .sales-faq{padding-block:30px 100px;display:grid;grid-template-columns:1fr 1fr;gap:80px}
 .sales-faq details{border-bottom:1px solid var(--sales-line);padding-block:0 14px;margin-bottom:14px}
 .sales-faq summary{font-size:16px;font-weight:500;cursor:pointer;min-height:44px;padding:12px 4px;line-height:1.6;list-style-position:outside;margin-left:20px}
@@ -206,7 +202,7 @@ body.sales-modal-open{overflow:hidden}
  .sales-build-map{padding:26px}.sales-map-branches span{padding:12px}
  .sales-measure-flow,.sales-formats-grid{grid-template-columns:1fr;gap:26px}
  .sales-projects-heading{align-items:start;flex-direction:column;gap:24px}
- .sales-project-track{grid-auto-columns:88%;gap:20px}
+ .sales-project-track{grid-template-columns:1fr;gap:40px}
  .sales-faq{padding-block:10px 60px}
  .sales-contact{padding-block:60px}.sales-contact .container>p{font-size:15px}
  .sales-other-services{padding-block:48px}.sales-other-services nav{grid-template-columns:1fr;gap:12px}

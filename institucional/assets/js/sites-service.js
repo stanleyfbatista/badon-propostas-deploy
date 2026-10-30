@@ -57,27 +57,6 @@
     }
   }
 
-  const track = document.getElementById('project-track');
-  const prev = document.querySelector('[data-project-prev]');
-  const next = document.querySelector('[data-project-next]');
-  if (track && prev && next) {
-    const refresh = () => {
-      prev.disabled = track.scrollLeft <= 2;
-      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
-    };
-    const move = direction => {
-      const card = track.querySelector('.sales-project');
-      const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
-      track.scrollBy({left:direction * ((card ? card.getBoundingClientRect().width : track.clientWidth) + gap), behavior:motion.matches ? 'instant' : 'smooth'});
-    };
-    prev.addEventListener('click', () => move(-1));
-    next.addEventListener('click', () => move(1));
-    track.addEventListener('scroll', refresh, {passive:true});
-    window.addEventListener('resize', refresh, {passive:true});
-    const controls = document.querySelector('.sales-carousel-controls');
-    if (controls) controls.hidden = false;
-    refresh();
-  }
 
   // Scroll interpolation smooths wheel steps without running a perpetual animation.
   const marquee = document.querySelector('.sales-marquee');
@@ -151,7 +130,7 @@
     imageSlot.hidden=true;
     heading.textContent=title.textContent;
     description.textContent=project.template
-      ? 'Projeto demonstrativo com marca fictícia, adaptado de template adquirido. Explore a página e as animações nesta janela. Contatos, cadastros e compras estão desativados.'
+      ? 'Projeto demonstrativo adaptado de template adquirido. Explore a página e as animações nesta janela. Contatos, cadastros e compras estão desativados.'
       : project.local
       ? 'Prévia interativa de demonstração, hospedada no portfólio. Menus e animações disponíveis; contatos externos desativados. Não é uma transmissão ao vivo do site original.'
       : 'Prévia ao vivo do site externo. Ao abrir este projeto, seu navegador acessa serviços e cookies próprios dele. Navegue dentro desta janela.';
