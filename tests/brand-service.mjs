@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+const root=path.resolve(import.meta.dirname,'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const html=read('public/servicos/identidade-visual.html');
+const js=read('public/assets/js/brand-service.js');
+const css=read('public/assets/css/brand-service.css');
+assert.equal((html.match(/class="brand-step"/g)||[]).length,6);
+assert.equal((html.match(/alt="Logotipo /g)||[]).length,8);
+assert.match(html,/Estratégia e identidade verbal são etapas opcionais/);
+assert.match(html,/Produção física, impressão e registro no INPI são tratados separadamente/);
+assert.doesNotMatch(html,/Lorem ipsum|R\$|garantid|Metodologia NAVE/i);
+assert.match(css,/prefers-reduced-motion:reduce/);
+assert.doesNotMatch(js,/fetch\(|localStorage|document.cookie|setInterval/);
+assert.match(read('public/servicos/sites.html'),/davi-guedes-macbook-v1\.webp/);
+for(const [,id] of html.matchAll(/aria-controls="([^"]+)"/g))assert.ok(html.includes('id="'+id+'"'),id);
+const events=()=>({handlers:{},addEventListener(k,fn){this.handlers[k]=fn;}});
+for(const reduced of [false,true]){
+  const steps=Array.from({length:6},(_,i)=>({...events(),open:false,dataset:{step:String(i+1).padStart(2,'0'),stepLabel:'Etapa '+(i+1)}}));
+  const number={},label={},progress={style:{}},controls={hidden:true};
+  const previous=events(),next=events();
+  let scroll;
+  const track={...events(),scrollLeft:0,scrollWidth:2000,clientWidth:1000,firstElementChild:{getBoundingClientRect:()=>({width:240})},scrollBy:options=>scroll=options};
+  const elements={'[data-process-number]':number,'[data-process-label]':label,'[data-process-progress]':progress,'[data-brand-prev]':previous,'[data-brand-next]':next,'.brand-carousel-controls':controls};
+  const document={querySelector:s=>elements[s]||null,querySelectorAll:s=>s==='.brand-step'?steps:[],getElementById:()=>track};
+  vm.runInNewContext(js,{document,window:events(),matchMedia:()=>({matches:reduced})});
+  assert.equal(controls.hidden,false);assert.equal(previous.disabled,true);assert.equal(next.disabled,false);
+  steps[3].open=true;steps[3].handlers.toggle();
+  assert.equal(number.textContent,'04');assert.equal(label.textContent,'Etapa 4');assert.ok(parseFloat(progress.style.width)>66);
+  next.handlers.click();assert.equal(scroll.left,256);assert.equal(scroll.behavior,reduced?'instant':'smooth');
+  previous.handlers.click();assert.equal(scroll.left,-256);
+  let prevented=false;track.handlers.keydown({target:track,key:'ArrowRight',preventDefault:()=>prevented=true});assert.equal(prevented,true);
+  track.scrollLeft=1000;track.handlers.scroll();assert.equal(next.disabled,true);assert.equal(previous.disabled,false);
+}
+console.log('PASS: processo real, oito marcas, disclosures, carrossel por teclado, movimento reduzido e ausência de rastreamento novo.');

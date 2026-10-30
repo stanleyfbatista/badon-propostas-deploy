@@ -12,7 +12,7 @@ for (const slug of slugs) {
   const description = html.match(/name="description" content="([^"]+)"/)[1];
   titles.add(title); descriptions.add(description);
   assert.equal((html.match(/<h1\b/g)||[]).length, 1);
-  assert.equal((html.match(/<details>/g)||[]).length, slug === 'sites' ? 9 : 4);
+  assert.equal((html.match(/<details>/g)||[]).length, slug === 'sites' ? 9 : slug === 'identidade-visual' ? 6 : 4);
   assert.equal((html.match(/aria-current="page"/g)||[]).length, slug === 'sites' ? 0 : 1);
   assert.match(html, /index, follow/);
   assert.doesNotMatch(html, /noindex|<form|fbq\(|gtag\(/);
