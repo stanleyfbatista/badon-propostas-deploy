@@ -1,0 +1,452 @@
+[
+  {
+    "numero": 1,
+    "categoria": "Curiosidade",
+    "gancho": "Quase ninguém percebe este detalhe em [situação].",
+    "quando_usar_e_por_que": "Use quando houver um detalhe específico que seu público costuma ignorar. A abertura convida a olhar de novo para algo familiar.",
+    "exemplo": "Quase ninguém percebe este detalhe antes de comprar um sofá.",
+    "como_desenvolver": "Mostre o detalhe logo na primeira cena, explique a consequência e ensine como conferir. Pode ser a profundidade do assento em relação ao espaço disponível.",
+    "cuidado": "Não esconda o detalhe até o final nem trate uma opinião como uma descoberta comprovada."
+  },
+  {
+    "numero": 2,
+    "categoria": "Curiosidade",
+    "gancho": "Antes de [ação], vale entender uma coisa sobre [tema].",
+    "quando_usar_e_por_que": "Ajuda quem está prestes a tomar uma decisão. A curiosidade tem uma utilidade clara: preparar a pessoa para agir melhor.",
+    "exemplo": "Antes de impulsionar um post, vale entender uma coisa sobre a página de destino.",
+    "como_desenvolver": "Mostre o que acontece depois do clique e um ajuste que melhora a clareza da página. Termine com uma tarefa que a pessoa possa executar.",
+    "cuidado": "Não desvie para uma aula genérica sobre marketing; entregue o ponto anunciado."
+  },
+  {
+    "numero": 3,
+    "categoria": "Curiosidade",
+    "gancho": "Você já reparou que [situação observável]?",
+    "quando_usar_e_por_que": "Use para abrir uma análise com uma observação que o público possa reconhecer. A identificação prepara o caminho para a explicação.",
+    "exemplo": "Você já reparou que algumas fotos de comida parecem mais apetitosas perto da janela?",
+    "como_desenvolver": "Compare duas imagens feitas por você, descreva a diferença de luz e mostre como reproduzir a condição de forma simples.",
+    "cuidado": "Evite afirmar que uma preferência visual é universal. Mostre o que está comparando."
+  },
+  {
+    "numero": 4,
+    "categoria": "Curiosidade",
+    "gancho": "O que acontece quando você muda apenas [variável]?",
+    "quando_usar_e_por_que": "Funciona como abertura de demonstração. A pessoa tem um motivo concreto para acompanhar o teste e ver a diferença.",
+    "exemplo": "O que acontece quando você muda apenas a primeira frase do seu vídeo?",
+    "como_desenvolver": "Apresente duas aberturas para o mesmo assunto e explique a diferença de clareza. Se houver resultados reais do teste, contextualize como foram obtidos.",
+    "cuidado": "Sem dados, apresente uma comparação editorial, não uma prova de aumento de alcance."
+  },
+  {
+    "numero": 5,
+    "categoria": "Curiosidade",
+    "gancho": "Tem uma parte de [processo] que costuma ficar fora da conversa.",
+    "quando_usar_e_por_que": "Use para explicar uma etapa pouco mostrada, especialmente em serviços. A abertura amplia a percepção do trabalho.",
+    "exemplo": "Tem uma parte de reformar a cozinha que costuma ficar fora da conversa: medir a abertura das portas.",
+    "como_desenvolver": "Mostre o problema com um desenho ou uma medição real. Explique em que momento essa checagem entra no planejamento.",
+    "cuidado": "Não insinue que outras pessoas escondem informações de propósito sem evidência."
+  },
+  {
+    "numero": 6,
+    "categoria": "Curiosidade",
+    "gancho": "Este [objeto ou resultado] revela um detalhe sobre [tema].",
+    "quando_usar_e_por_que": "Uma evidência visual torna a curiosidade concreta. Use quando você tiver algo para mostrar, em vez de depender só da fala.",
+    "exemplo": "Este pão revela um detalhe sobre o tempo de fermentação.",
+    "como_desenvolver": "Mostre o corte do pão, aponte o sinal relevante e explique o que você observou no seu preparo. Dê uma orientação proporcional ao exemplo.",
+    "cuidado": "Não atribua um resultado a uma única causa quando várias condições podem influenciar."
+  },
+  {
+    "numero": 7,
+    "categoria": "Curiosidade",
+    "gancho": "A pergunta que vale fazer antes de [decisão] é esta.",
+    "quando_usar_e_por_que": "Use para simplificar uma escolha. A promessa é uma pergunta útil, não uma resposta definitiva para todo mundo.",
+    "exemplo": "A pergunta que vale fazer antes de contratar um site é esta: o que o visitante precisa conseguir fazer nele?",
+    "como_desenvolver": "Faça a pergunta no começo, mostre duas respostas possíveis e explique como cada uma muda o projeto.",
+    "cuidado": "Não transforme a pergunta em pretexto para vender antes de ajudar a pessoa a decidir."
+  },
+  {
+    "numero": 8,
+    "categoria": "Curiosidade",
+    "gancho": "Você consegue identificar [diferença] nestes dois exemplos?",
+    "quando_usar_e_por_que": "Use quando a comparação puder ser vista ou ouvida. A participação do público faz parte do conteúdo.",
+    "exemplo": "Você consegue identificar qual destas duas legendas deixa o próximo passo mais claro?",
+    "como_desenvolver": "Exiba exemplos legíveis, dê uma breve oportunidade de comparar e explique o critério usado. Mostre a correção na tela.",
+    "cuidado": "Evite uma pausa longa só para aumentar o tempo do vídeo; a resposta precisa valer a espera."
+  },
+  {
+    "numero": 9,
+    "categoria": "Curiosidade",
+    "gancho": "O que [situação comum] tem a ver com [tema do seu nicho]?",
+    "quando_usar_e_por_que": "Uma conexão inesperada pode ajudar a ensinar uma ideia abstrata. Use uma analogia simples que leve a uma conclusão prática.",
+    "exemplo": "O que organizar uma mala tem a ver com planejar uma semana de conteúdo?",
+    "como_desenvolver": "Relacione escolher o destino a definir o objetivo, selecionar itens a escolher temas e tirar excessos a editar. Feche com uma ação aplicável.",
+    "cuidado": "Não force a analogia nem gaste o vídeo inteiro explicando uma comparação complicada."
+  },
+  {
+    "numero": 10,
+    "categoria": "Curiosidade",
+    "gancho": "Vou te mostrar uma diferença que passa despercebida em [situação].",
+    "quando_usar_e_por_que": "Use para destacar contraste entre duas execuções parecidas. A abertura promete uma observação concreta.",
+    "exemplo": "Vou te mostrar uma diferença que passa despercebida em fotos de produto: a distância do fundo.",
+    "como_desenvolver": "Mostre o antes e o depois com condições semelhantes, explique a mudança e ensine como testar usando o que a pessoa já tem.",
+    "cuidado": "Não use retoques ou condições diferentes para exagerar artificialmente o resultado."
+  },
+  {
+    "numero": 11,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Se você [sintoma], confira [ponto] antes de [ação].",
+    "quando_usar_e_por_que": "Use quando o público tende a agir sem investigar uma causa possível. O gancho oferece uma checagem, não um diagnóstico fechado.",
+    "exemplo": "Se você recebe visitas no site e poucos contatos, confira o formulário antes de aumentar os anúncios.",
+    "como_desenvolver": "Mostre como testar o formulário no celular, identificar campos desnecessários e verificar se o envio funciona.",
+    "cuidado": "Não prometa que essa única mudança resolverá todo o problema de conversão."
+  },
+  {
+    "numero": 12,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Você pode estar complicando [tarefa] nesta etapa.",
+    "quando_usar_e_por_que": "Use para revelar um obstáculo que possa ser simplificado. O conteúdo deve mostrar a alternativa, sem culpar quem está começando.",
+    "exemplo": "Você pode estar complicando a gravação do seu Reel na hora de escrever o texto.",
+    "como_desenvolver": "Compare um parágrafo escrito para leitura com frases curtas para fala. Reescreva um trecho e demonstre em voz alta.",
+    "cuidado": "Evite chamar o público de preguiçoso ou incapaz. Foque na etapa e na solução."
+  },
+  {
+    "numero": 13,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "[Resultado indesejado] pode começar em [etapa anterior].",
+    "quando_usar_e_por_que": "Ajuda a explicar uma relação de causa possível. Use quando você puder mostrar o caminho entre a etapa e o efeito.",
+    "exemplo": "Uma entrega de design confusa pode começar em um briefing sem prioridade.",
+    "como_desenvolver": "Apresente um pedido vago, mostre as dúvidas que ele gera e sugira três informações que deixam o briefing mais claro.",
+    "cuidado": "Mantenha o “pode” quando não houver evidência suficiente para atribuir a causa."
+  },
+  {
+    "numero": 14,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Três sinais de que vale revisar [processo].",
+    "quando_usar_e_por_que": "Use para dar critérios de autoavaliação. Os sinais precisam ser observáveis, relacionados e úteis para uma decisão.",
+    "exemplo": "Três sinais de que vale revisar a página de vendas do seu serviço.",
+    "como_desenvolver": "Mostre sinais como oferta difícil de entender, contato escondido e formulário quebrado. Para cada um, explique uma ação de revisão.",
+    "cuidado": "Não transforme a lista em um teste com conclusão automática ou promessa de resultado."
+  },
+  {
+    "numero": 15,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Se [solução comum] não resolveu, olhe para [outro ponto].",
+    "quando_usar_e_por_que": "Use para ampliar a investigação de quem já tentou algo. A abertura reconhece o esforço e propõe uma hipótese nova.",
+    "exemplo": "Se trocar a câmera não resolveu seu vídeo escuro, olhe para a posição da luz.",
+    "como_desenvolver": "Demonstre a mesma câmera em duas posições de iluminação. Explique o ajuste e indique como repetir o teste.",
+    "cuidado": "Não desqualifique a solução anterior; explique em que situação ela não era o principal fator."
+  },
+  {
+    "numero": 16,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "O erro aqui está em [ação específica].",
+    "quando_usar_e_por_que": "Use em uma demonstração em que o erro seja claro e verificável. A pessoa deve conseguir enxergar o problema.",
+    "exemplo": "O erro aqui está em cortar o título do carrossel antes de completar a ideia.",
+    "como_desenvolver": "Mostre uma capa fictícia, explique o trecho que gera ambiguidade e reescreva de forma mais clara.",
+    "cuidado": "Critique a execução, não uma pessoa. Use exemplos próprios ou autorizados."
+  },
+  {
+    "numero": 17,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Antes de desistir de [objetivo], teste [ajuste possível].",
+    "quando_usar_e_por_que": "Use quando existir um ajuste simples que mereça ser testado. A abertura oferece um próximo passo viável.",
+    "exemplo": "Antes de desistir de gravar conteúdo, teste explicar uma única pergunta por vídeo.",
+    "como_desenvolver": "Escolha uma pergunta real do público, responda em três frases e mostre como esse recorte facilita a gravação.",
+    "cuidado": "Não minimize dificuldades pessoais nem sugira que insistir sempre é a melhor escolha."
+  },
+  {
+    "numero": 18,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "O que está faltando neste [material]?",
+    "quando_usar_e_por_que": "Use para ensinar revisão com um exemplo concreto. A lacuna deve ter relação direta com o objetivo do material.",
+    "exemplo": "O que está faltando neste anúncio de uma aula experimental?",
+    "como_desenvolver": "Mostre uma peça fictícia sem local ou próximo passo. Identifique a lacuna e apresente uma versão corrigida.",
+    "cuidado": "Não monte um exemplo deliberadamente absurdo só para parecer fácil de resolver."
+  },
+  {
+    "numero": 19,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Você faz [ação], mas deixa [etapa] para depois?",
+    "quando_usar_e_por_que": "Use para destacar uma etapa frequentemente esquecida. O tom é de convite à revisão, não de bronca.",
+    "exemplo": "Você publica o Reel, mas deixa a resposta aos comentários para depois?",
+    "como_desenvolver": "Mostre como separar um momento para responder dúvidas relevantes e aproveitar perguntas para conteúdos futuros.",
+    "cuidado": "Não apresente resposta a comentários como garantia de distribuição pelo algoritmo."
+  },
+  {
+    "numero": 20,
+    "categoria": "Problemas e diagnóstico",
+    "gancho": "Este hábito pode estar dificultando [tarefa].",
+    "quando_usar_e_por_que": "Use para explicar um comportamento específico e uma alternativa. Evite rótulos sobre a identidade do público.",
+    "exemplo": "Este hábito pode estar dificultando sua gravação: tentar decorar o roteiro inteiro.",
+    "como_desenvolver": "Demonstre a gravação por blocos de ideia, com palavras de apoio, e compare a experiência com a leitura decorada.",
+    "cuidado": "Não transforme uma preferência de processo em regra para todos os criadores."
+  },
+  {
+    "numero": 21,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Como [ação específica] sem [obstáculo comum].",
+    "quando_usar_e_por_que": "Use quando houver um procedimento acessível que reduza uma dificuldade. A promessa deve caber no conteúdo.",
+    "exemplo": "Como gravar um vídeo explicativo sem decorar cada palavra.",
+    "como_desenvolver": "Mostre o método de tópicos, organize abertura, explicação e fechamento e grave uma demonstração curta.",
+    "cuidado": "“Sem” precisa ser verdadeiro. Não esconda custos, etapas ou ferramentas necessários."
+  },
+  {
+    "numero": 22,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Faça esta checagem antes de [ação].",
+    "quando_usar_e_por_que": "Use para ensinar uma verificação curta e relevante. O valor está em evitar um problema concreto.",
+    "exemplo": "Faça esta checagem antes de enviar seu arquivo para a gráfica.",
+    "como_desenvolver": "Explique como conferir tamanho, margens e orientação conforme as especificações da gráfica. Mostre um arquivo de exemplo.",
+    "cuidado": "Não trate suas medidas como universais; a especificação do fornecedor deve orientar o trabalho."
+  },
+  {
+    "numero": 23,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Vou te mostrar [processo] do começo ao fim.",
+    "quando_usar_e_por_que": "Use para um processo curto ou um recorte bem definido. A abertura cria expectativa de demonstração completa.",
+    "exemplo": "Vou te mostrar como transformar uma pergunta de cliente em um roteiro curto, do começo ao fim.",
+    "como_desenvolver": "Exiba a pergunta, selecione uma ideia, escreva o gancho, desenvolva a resposta e conclua com um próximo passo.",
+    "cuidado": "Se não couber, reduza o escopo anunciado em vez de pular etapas importantes."
+  },
+  {
+    "numero": 24,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Você só precisa começar por [primeiro passo].",
+    "quando_usar_e_por_que": "Use para destravar o início de uma tarefa. Deixe claro que esse é o começo do processo, não tudo que será necessário.",
+    "exemplo": "Para organizar sua primeira semana de conteúdo, você só precisa começar por uma pergunta: quem quero ajudar?",
+    "como_desenvolver": "Defina uma pessoa e uma dificuldade concreta. Mostre como isso gera três ideias de conteúdo que se conectam.",
+    "cuidado": "Não prometa que um passo isolado substitui planejamento ou resolve todo o trabalho."
+  },
+  {
+    "numero": 25,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Aqui está um jeito de [ação] usando [recurso disponível].",
+    "quando_usar_e_por_que": "Use para ensinar uma possibilidade acessível. A especificidade do recurso ajuda a pessoa a visualizar a aplicação.",
+    "exemplo": "Aqui está um jeito de fotografar seus produtos usando uma janela e uma cartolina.",
+    "como_desenvolver": "Mostre a montagem, a posição do produto e uma imagem resultante. Explique os ajustes que a pessoa pode testar.",
+    "cuidado": "Não apresente o exemplo como equivalente a qualquer produção profissional."
+  },
+  {
+    "numero": 26,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Vamos transformar [situação inicial] em [entrega concreta].",
+    "quando_usar_e_por_que": "Use para mostrar uma transformação de trabalho. O vídeo acompanha decisões, não apenas o resultado final.",
+    "exemplo": "Vamos transformar este áudio com uma ideia solta em um roteiro de Reel.",
+    "como_desenvolver": "Transcreva o ponto central, elimine repetições, escolha uma abertura e organize a explicação. Mostre a versão final.",
+    "cuidado": "Não invente que o material veio de um cliente real; identifique exemplos fictícios."
+  },
+  {
+    "numero": 27,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Salve este passo a passo para quando precisar [tarefa].",
+    "quando_usar_e_por_que": "Use quando o conteúdo realmente servir como consulta. A utilidade futura justifica a sugestão de salvar.",
+    "exemplo": "Salve este passo a passo para quando precisar revisar a capa de um carrossel.",
+    "como_desenvolver": "Apresente uma sequência curta: ideia central, legibilidade, contraste e coerência com o conteúdo. Demonstre cada verificação.",
+    "cuidado": "Não peça para salvar antes de dizer claramente o que a pessoa vai aprender."
+  },
+  {
+    "numero": 28,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Na prática, [conceito] se parece com isto.",
+    "quando_usar_e_por_que": "Use para traduzir uma ideia abstrata em uma cena, objeto ou decisão. A explicação deve acompanhar a demonstração.",
+    "exemplo": "Na prática, um briefing claro se parece com isto.",
+    "como_desenvolver": "Mostre um exemplo com objetivo, público, mensagem e entrega. Explique por que cada informação ajuda quem vai executar.",
+    "cuidado": "Evite empilhar termos técnicos. O exemplo deve ser mais simples que o conceito."
+  },
+  {
+    "numero": 29,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Em vez de começar por [etapa], experimente começar por [outra].",
+    "quando_usar_e_por_que": "Use para propor uma ordem diferente de trabalho. Mostre por que a mudança ajuda naquele contexto.",
+    "exemplo": "Em vez de começar escolhendo a música, experimente começar pela ideia do seu vídeo.",
+    "como_desenvolver": "Defina a mensagem, selecione as cenas necessárias e escolha o áudio que acompanha o ritmo. Mostre essa sequência.",
+    "cuidado": "Não apresente sua ordem como obrigatória; alguns formatos podem exigir outro processo."
+  },
+  {
+    "numero": 30,
+    "categoria": "Ensino e demonstração",
+    "gancho": "Este é o checklist que uso para revisar [entrega].",
+    "quando_usar_e_por_que": "Use quando você realmente tiver um processo próprio. A abertura dá acesso a um instrumento de trabalho útil.",
+    "exemplo": "Este é o checklist que uso para revisar um roteiro antes de gravar.",
+    "como_desenvolver": "Mostre os critérios que você de fato usa: clareza, promessa, exemplo e fechamento. Aplique-os a um trecho.",
+    "cuidado": "Se ainda não usa o checklist, diga “um checklist para revisar” em vez de inventar experiência."
+  },
+  {
+    "numero": 31,
+    "categoria": "Comparação e decisão",
+    "gancho": "[Opção A] ou [opção B] para [situação]?",
+    "quando_usar_e_por_que": "Use quando a escolha depender do contexto. A abertura organiza uma dúvida que o público já tem.",
+    "exemplo": "Reel falado ou demonstração sem fala para mostrar meu serviço?",
+    "como_desenvolver": "Compare objetivo, material disponível e tipo de explicação. Dê um cenário em que cada formato faz sentido.",
+    "cuidado": "Não declare um vencedor universal nem compare opções com critérios diferentes."
+  },
+  {
+    "numero": 32,
+    "categoria": "Comparação e decisão",
+    "gancho": "Quando faz sentido escolher [opção]?",
+    "quando_usar_e_por_que": "Use para ajudar o público a avaliar adequação, sem pressionar a compra. Entregue critérios de decisão.",
+    "exemplo": "Quando faz sentido criar uma página só para um serviço?",
+    "como_desenvolver": "Explique situações em que uma oferta específica precisa de detalhes próprios, prova e próximo passo. Mostre também quando uma página existente pode bastar.",
+    "cuidado": "Não conclua que toda empresa precisa comprar a solução que você vende."
+  },
+  {
+    "numero": 33,
+    "categoria": "Comparação e decisão",
+    "gancho": "Antes de escolher [produto ou serviço], compare estes pontos.",
+    "quando_usar_e_por_que": "Use em decisões com várias alternativas. A lista deve ensinar a comparar, não apenas destacar suas vantagens.",
+    "exemplo": "Antes de escolher quem vai fazer seu site, compare estes pontos.",
+    "como_desenvolver": "Explique escopo, responsabilidades, manutenção e acesso aos arquivos. Mostre como perguntar sobre cada item.",
+    "cuidado": "Evite insinuar que concorrentes não entregam esses itens sem ter informação sobre eles."
+  },
+  {
+    "numero": 34,
+    "categoria": "Comparação e decisão",
+    "gancho": "O que muda entre [versão A] e [versão B]?",
+    "quando_usar_e_por_que": "Use quando houver diferenças que o público confunde. Um exemplo lado a lado ajuda a esclarecer.",
+    "exemplo": "O que muda entre um vídeo para apresentar um serviço e um vídeo para responder uma dúvida?",
+    "como_desenvolver": "Compare a primeira frase, a informação principal e a chamada final. Mostre dois roteiros curtos para o mesmo negócio.",
+    "cuidado": "Não confunda diferença de objetivo com uma hierarquia em que um formato sempre é melhor."
+  },
+  {
+    "numero": 35,
+    "categoria": "Comparação e decisão",
+    "gancho": "[Solução] pode ajudar, mas primeiro confira [condição].",
+    "quando_usar_e_por_que": "Use para mostrar uma condição importante antes de recomendar algo. A abertura equilibra oportunidade e contexto.",
+    "exemplo": "Anúncios podem ajudar a divulgar sua oferta, mas primeiro confira se ela está clara.",
+    "como_desenvolver": "Mostre como verificar para quem é a oferta, o que ela inclui e como entrar em contato. Use um exemplo simples.",
+    "cuidado": "Não garanta retorno financeiro nem apresente uma condição como garantia de sucesso."
+  },
+  {
+    "numero": 36,
+    "categoria": "Comparação e decisão",
+    "gancho": "Para [objetivo], eu avaliaria estas duas opções.",
+    "quando_usar_e_por_que": "Use para explicar seu raciocínio profissional sem impor uma única resposta. A situação precisa ser específica.",
+    "exemplo": "Para apresentar uma coleção pequena, eu avaliaria estas duas opções de conteúdo.",
+    "como_desenvolver": "Compare um vídeo de demonstração e um carrossel de detalhes. Explique o material necessário e o papel de cada um.",
+    "cuidado": "Deixe claro quando está dando uma sugestão editorial, e não uma conclusão baseada em teste."
+  },
+  {
+    "numero": 37,
+    "categoria": "Comparação e decisão",
+    "gancho": "Não escolha [opção] só por [critério limitado].",
+    "quando_usar_e_por_que": "Use quando um único critério estiver dominando uma decisão que exige outros cuidados. Ajude a ampliar a análise.",
+    "exemplo": "Não escolha a plataforma do seu site só pelo preço da mensalidade.",
+    "como_desenvolver": "Inclua facilidade de atualização, recursos necessários e custos adicionais. Mostre como montar uma comparação simples.",
+    "cuidado": "Não use a abertura para justificar automaticamente a alternativa mais cara."
+  },
+  {
+    "numero": 38,
+    "categoria": "Comparação e decisão",
+    "gancho": "Se sua prioridade é [objetivo], observe [critério].",
+    "quando_usar_e_por_que": "Use para alinhar a escolha à necessidade real. A abertura ajuda a pessoa a definir o que importa naquele momento.",
+    "exemplo": "Se sua prioridade é mostrar os detalhes do produto, observe a distância da câmera.",
+    "como_desenvolver": "Demonstre enquadramentos e explique como eles mudam a leitura do detalhe. Convide a testar com o próprio produto.",
+    "cuidado": "Não trate uma escolha técnica isolada como suficiente para alcançar todo o objetivo."
+  },
+  {
+    "numero": 39,
+    "categoria": "Comparação e decisão",
+    "gancho": "Qual destas versões explica melhor [ideia]?",
+    "quando_usar_e_por_que": "Use para ensinar clareza por comparação. O público pode acompanhar o raciocínio e aplicar o critério depois.",
+    "exemplo": "Qual destas versões explica melhor o que uma consultoria entrega?",
+    "como_desenvolver": "Mostre uma frase vaga e uma versão com escopo concreto. Explique o que mudou e por que ficou mais compreensível.",
+    "cuidado": "Não confunda sua preferência de estilo com uma prova de desempenho comercial."
+  },
+  {
+    "numero": 40,
+    "categoria": "Comparação e decisão",
+    "gancho": "Você precisa de [recurso] agora ou pode começar com [alternativa]?",
+    "quando_usar_e_por_que": "Use para orientar prioridades e reduzir uma barreira desnecessária. Mostre os limites de cada opção.",
+    "exemplo": "Você precisa de uma câmera agora ou pode começar gravando com o celular?",
+    "como_desenvolver": "Compare as necessidades do conteúdo com os recursos disponíveis. Mostre um teste de áudio, luz e enquadramento.",
+    "cuidado": "Não diga que as duas opções são iguais; explique o que cada uma permite fazer."
+  },
+  {
+    "numero": 41,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Foi assim que eu resolvi [problema específico].",
+    "quando_usar_e_por_que": "Use para contar um caso verdadeiro com uma decisão central. A experiência precisa ser sua ou estar autorizada para divulgação.",
+    "exemplo": "Foi assim que eu resolvi um roteiro que tinha três assuntos disputando atenção.",
+    "como_desenvolver": "Apresente a versão inicial, explique o critério de corte e mostre o trecho final. Concentre a história na decisão que o público pode aprender.",
+    "cuidado": "Não invente cliente, resultado ou experiência. Um exercício deve ser identificado como exercício."
+  },
+  {
+    "numero": 42,
+    "categoria": "Bastidores e experiência",
+    "gancho": "O que eu faria primeiro se estivesse começando em [atividade].",
+    "quando_usar_e_por_que": "Use para organizar prioridades com base no que você conhece. A abertura é uma recomendação, não uma promessa de atalho.",
+    "exemplo": "O que eu faria primeiro se estivesse começando a criar conteúdo para meu negócio.",
+    "como_desenvolver": "Escolha uma prioridade, explique o motivo e mostre uma tarefa pequena para o primeiro dia. Evite uma lista longa de ferramentas.",
+    "cuidado": "Não transforme sua trajetória em regra universal para contextos diferentes."
+  },
+  {
+    "numero": 43,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Uma decisão que mudou meu jeito de [trabalhar].",
+    "quando_usar_e_por_que": "Use para compartilhar uma mudança real de processo e o que aprendeu com ela. O valor está no raciocínio.",
+    "exemplo": "Uma decisão que mudou meu jeito de escrever roteiros: escolher a ideia antes da abertura.",
+    "como_desenvolver": "Conte como trabalhava, o que mudou e dê um exemplo atual. Diferencie percepção pessoal de resultado medido.",
+    "cuidado": "Não acrescente números de melhoria que você não registrou."
+  },
+  {
+    "numero": 44,
+    "categoria": "Bastidores e experiência",
+    "gancho": "O bastidor de [entrega] começa antes de [etapa visível].",
+    "quando_usar_e_por_que": "Use para mostrar trabalho que o público não costuma acompanhar. Explique por que a etapa existe.",
+    "exemplo": "O bastidor de um ensaio de produto começa antes de ligar a câmera.",
+    "como_desenvolver": "Mostre a preparação: objetivo das fotos, lista de imagens e organização dos produtos. Conecte cada etapa ao que será entregue.",
+    "cuidado": "Não use o bastidor apenas para parecer ocupado; mostre a utilidade de cada decisão."
+  },
+  {
+    "numero": 45,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Este foi o primeiro ajuste que fiz em [projeto].",
+    "quando_usar_e_por_que": "Use para demonstrar um critério de prioridade em um trabalho real ou em um exercício claramente identificado.",
+    "exemplo": "Neste exercício de revisão de site, este foi o primeiro ajuste que fiz: explicar a oferta no início da página.",
+    "como_desenvolver": "Mostre o trecho original, a mudança e o motivo de começar por ali. Termine com uma pergunta de revisão para o público.",
+    "cuidado": "Não atribua aumento de vendas a uma mudança sem dados que sustentem a conclusão."
+  },
+  {
+    "numero": 46,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Uma pergunta que sempre aparece quando falo de [tema].",
+    "quando_usar_e_por_que": "Use quando a pergunta realmente se repetir no seu atendimento ou comunidade. A abertura conecta o conteúdo a uma dúvida relevante.",
+    "exemplo": "Uma pergunta que sempre aparece quando falo de conteúdo: preciso aparecer em todos os vídeos?",
+    "como_desenvolver": "Responda diretamente, mostre alternativas e explique quando a presença da pessoa ajuda a mensagem.",
+    "cuidado": "Se não for recorrente, diga apenas “uma pergunta importante sobre” em vez de exagerar."
+  },
+  {
+    "numero": 47,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Vamos revisar juntos este [material].",
+    "quando_usar_e_por_que": "Use para ensinar por análise. A pessoa acompanha seu olhar e aprende a identificar melhorias.",
+    "exemplo": "Vamos revisar juntos esta primeira frase de um Reel.",
+    "como_desenvolver": "Leia a abertura, identifique o que está vago e proponha uma versão mais específica. Explique a escolha sem jargão.",
+    "cuidado": "Use material próprio, autorizado ou fictício. Não exponha informações de clientes."
+  },
+  {
+    "numero": 48,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Eu testei [duas abordagens] e percebi [diferença].",
+    "quando_usar_e_por_que": "Use para compartilhar um teste que você realmente realizou. Explique o que foi comparado e qual diferença observou.",
+    "exemplo": "Eu testei gravar lendo e gravar por tópicos e percebi uma diferença no meu ritmo de fala.",
+    "como_desenvolver": "Mostre trechos comparáveis, descreva o que mudou e conte qual abordagem pretende repetir. Se mediu algo, diga como.",
+    "cuidado": "Sem controle suficiente, não apresente o teste pessoal como prova de uma regra geral."
+  },
+  {
+    "numero": 49,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Se eu pudesse simplificar [tema] em uma orientação, seria esta.",
+    "quando_usar_e_por_que": "Use para priorizar uma ideia que você consiga defender e demonstrar. A abertura ajuda quem está sobrecarregado.",
+    "exemplo": "Se eu pudesse simplificar a criação de conteúdo em uma orientação, seria esta: responda uma pergunta por vez.",
+    "como_desenvolver": "Escolha uma pergunta ampla, recorte uma parte e mostre como isso melhora a organização do roteiro.",
+    "cuidado": "Não reduza um tema complexo a uma regra que apague condições importantes."
+  },
+  {
+    "numero": 50,
+    "categoria": "Bastidores e experiência",
+    "gancho": "Peguei esta dúvida e transformei em [conteúdo].",
+    "quando_usar_e_por_que": "Use para mostrar como as perguntas do público viram material útil. Pode ser uma demonstração com dúvida fictícia identificada.",
+    "exemplo": "Peguei a dúvida “o que postar na primeira semana?” e transformei em três ideias de Reel.",
+    "como_desenvolver": "Mostre a pergunta, separe três respostas possíveis e desenvolva uma delas. Convide o público a trazer dúvidas relacionadas.",
+    "cuidado": "Não finja que a pergunta veio de um seguidor se você mesmo a criou para o exemplo."
+  }
+]

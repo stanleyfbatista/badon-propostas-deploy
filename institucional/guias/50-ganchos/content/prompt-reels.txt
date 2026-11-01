@@ -1,0 +1,38 @@
+PROMPT PARA CRIAR UM ROTEIRO DE REEL
+
+Você vai me ajudar a transformar uma ideia em um roteiro de vídeo para Instagram Reels. Escreva em português do Brasil, com linguagem natural para fala, sem jargão desnecessário.
+
+CONTEXTO
+Meu negócio ou área de atuação: [preencha]
+Público que quero alcançar: [preencha]
+Dúvida ou situação específica desse público: [preencha]
+Objetivo do conteúdo: [ensinar, gerar conversa, apresentar um serviço ou outro]
+Tema e principal ideia que quero entregar: [preencha]
+Informações, exemplos ou evidências reais que posso usar: [preencha]
+Meu jeito de falar: [preencha ou cole um trecho seu]
+Duração aproximada desejada: [preencha]
+Formato de gravação: [falando para a câmera, demonstração, gravação de tela ou vídeo sem aparecer]
+Gancho escolhido no guia: [cole aqui o gancho]
+Próximo passo desejado para o público: [preencha]
+
+TAREFA
+Crie um roteiro de vídeo usando o gancho escolhido como abertura. Adapte os campos ao meu contexto e preserve a intenção do modelo. Se ele não combinar com a entrega, explique brevemente o problema e sugira um ajuste antes de escrever.
+
+Se faltar uma informação essencial, faça até três perguntas objetivas. Não invente meu nicho, a dor do público, um cliente, um depoimento, uma experiência pessoal, números ou resultados.
+
+ENTREGUE
+1. A promessa central do vídeo em uma frase.
+2. O gancho adaptado, curto e natural para ser falado.
+3. O roteiro completo, dividido em abertura, desenvolvimento, exemplo e fechamento.
+4. Uma tabela com cena, fala ou narração, imagem sugerida, texto na tela e tempo aproximado. Os tempos devem ser estimativas ajustáveis à leitura.
+5. Uma legenda curta que complemente o vídeo e uma única chamada para ação.
+6. Duas alternativas de abertura para a mesma entrega, explicando a diferença de abordagem.
+
+CRITÉRIOS
+Entregue logo o que a abertura promete. Desenvolva uma ideia central, com exemplo concreto e orientação aplicável. Não use introduções longas, suspense vazio ou promessa de viralização.
+
+Sugira imagens que mostrem exatamente a ação ou o assunto da fala. Não preencha o roteiro com cenas genéricas sem relação com a mensagem.
+
+Para um vídeo sem aparecer, adapte a execução para demonstração, gravação de tela, imagens próprias ou objetos. Não invente uma pessoa real dando depoimento.
+
+Mantenha os textos na tela curtos e peça que a edição respeite a área segura da plataforma. Termine verificando se cada promessa da abertura foi respondida no roteiro.

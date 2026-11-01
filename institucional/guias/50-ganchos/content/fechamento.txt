@@ -1,0 +1,114 @@
+COMO USAR OS PROMPTS COM SUA IA
+
+Você pode usar os prompts em uma IA de texto de sua preferência. Não é necessário usar uma ferramenta específica.
+
+1. Escolha o gancho e copie o modelo.
+2. Preencha o contexto com informações do seu negócio.
+3. Cole o gancho no campo indicado do prompt.
+4. Escolha o prompt de Reel ou de carrossel.
+5. Leia a resposta, corrija informações e ajuste ao seu jeito de falar.
+6. Confirme se você consegue produzir as cenas ou exemplos sugeridos.
+
+Evite enviar somente “crie um vídeo sobre meu negócio”. A IA precisa entender quem vai assistir, qual dúvida será respondida e o que você pode mostrar. Quanto melhor o contexto, mais fácil avaliar e ajustar o resultado.
+
+Não precisa compartilhar dados pessoais de clientes nem informações confidenciais para obter um bom roteiro. Descreva a situação sem identificar as pessoas.
+
+UM EXEMPLO DE PREENCHIMENTO
+
+Negócio: fotografia de produtos para pequenos negócios.
+Público: quem vende produtos artesanais e fotografa com o celular.
+Dúvida: como fazer uma foto mais clara sem equipamento profissional.
+Entrega: demonstrar uma montagem simples usando luz de janela e cartolina.
+Evidência: duas fotos próprias feitas no mesmo local, com o mesmo produto.
+Gancho: “Aqui está um jeito de fotografar seus produtos usando uma janela e uma cartolina.”
+Formato: demonstração com narração.
+Próximo passo: testar a montagem com um produto e observar a diferença.
+
+Com esse contexto, a IA consegue propor um roteiro mais específico. Você ainda precisa conferir se as instruções correspondem ao que sabe fazer e às condições reais da gravação.
+
+PROMPTS COPIÁVEIS
+
+Use “Prompt para escolher e adaptar ganchos” quando ainda estiver decidindo a abertura.
+Use “Prompt para criar um roteiro de Reel” para transformar o gancho em vídeo.
+Use “Prompt para criar um carrossel” para transformar o gancho em uma sequência de slides.
+
+Botões de cada bloco: Copiar prompt
+Mensagem após copiar: Prompt copiado. Preencha os campos antes de enviar à sua IA.
+Mensagem se a cópia não funcionar: Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.
+
+CHECKLIST ANTES DE PUBLICAR
+
+□ Está claro para quem é o conteúdo?
+□ O gancho apresenta uma ideia específica?
+□ O desenvolvimento entrega o que a abertura promete?
+□ Existe um exemplo ou uma demonstração concreta?
+□ As informações e experiências citadas são verdadeiras?
+□ A fala soa natural quando lida em voz alta?
+□ O texto na tela pode ser lido no celular?
+□ As cenas correspondem ao que está sendo explicado?
+□ Os textos essenciais ficam longe das áreas cobertas pela interface?
+□ Há uma chamada final coerente com o conteúdo?
+
+COMO DESCOBRIR O QUE FUNCIONA PARA VOCÊ
+
+Antes de publicar, defina o que espera observar. Em um conteúdo educativo, pode ser a qualidade das dúvidas e dos comentários. Em uma apresentação de serviço, pode ser a chegada de conversas relevantes. Quando houver métricas de retenção disponíveis, elas também ajudam a entender onde as pessoas continuam ou saem do vídeo.
+
+Compare conteúdos parecidos e registre o contexto. Se você muda tema, duração, abertura e formato ao mesmo tempo, fica difícil atribuir a diferença apenas ao gancho.
+
+Use um registro simples:
+Data | Tema | Gancho | Formato | Objetivo | O que observei | O que testar depois
+
+Um único vídeo não define uma regra. Procure padrões ao longo de várias publicações e combine os números com a qualidade das interações. Visualização, conversa e contratação são resultados diferentes.
+
+PERGUNTAS FREQUENTES
+
+Posso usar os ganchos exatamente como estão?
+Pode usar a estrutura, mas preencha os campos e adapte a frase ao seu público. Se o modelo não combinar com o que você vai entregar, escolha outro. Não invente uma história apenas para encaixar um gancho.
+
+Esses ganchos são validados?
+São estruturas estratégicas de abertura reunidas e adaptadas para orientar a criação. Este guia não apresenta um teste de desempenho dos 50 modelos em todos os nichos. A validação mais útil para o seu negócio vem de testar com sua audiência, cumprir a promessa e observar a resposta.
+
+Eles garantem que meu conteúdo vai viralizar?
+Não. O gancho é uma parte do conteúdo. Assunto, clareza, execução, contexto e interesse do público também importam. Use a lista para criar melhor e testar com intenção, não como garantia de alcance.
+
+Preciso aparecer no Reel?
+Não necessariamente. Você pode demonstrar um processo, gravar a tela, mostrar produtos ou usar cenas próprias com narração e texto. Escolha o formato que melhor explica a ideia.
+
+Posso usar o mesmo gancho mais de uma vez?
+Sim, quando a entrega for diferente e a abertura continuar coerente. Observe se você está variando o conteúdo ou apenas repetindo uma promessa sem acrescentar algo útil.
+
+O gancho precisa ter uma duração exata?
+Não existe uma duração única que sirva para toda abertura. Apresente o motivo para continuar o quanto antes, sem cortar informações necessárias para entender a ideia. Leia, grave e ajuste o ritmo.
+
+Qual IA devo usar?
+Use uma IA de texto com a qual você já consiga trabalhar. Os prompts foram escritos sem depender de uma ferramenta específica. Confira as informações e ajuste a resposta antes de publicar.
+
+Como transformo um gancho de vídeo em carrossel?
+Use a abertura como base da capa, desenvolva a resposta em etapas e conclua com um próximo passo. O prompt de carrossel ajuda a organizar essa adaptação sem apenas dividir um roteiro em pedaços.
+
+Posso adaptar para qualquer nicho?
+As estruturas permitem adaptações, mas as informações precisam ser adequadas à sua área. Em assuntos técnicos ou sensíveis, revise a exatidão da orientação e não transforme um exemplo genérico em recomendação individual.
+
+PRÓXIMO PASSO
+
+Comece por um gancho e uma pergunta real do seu público. Escreva a abertura, desenvolva a resposta e grave uma primeira versão. Depois, revise o que ficou claro e o que ainda pode melhorar.
+
+Você não precisa usar os 50. Precisa encontrar uma boa conexão entre o que sabe, o que seu público quer entender e o que consegue mostrar.
+
+QUER AJUDA PARA TRANSFORMAR ESSAS IDEIAS EM CONTEÚDO PARA O SEU NEGÓCIO?
+
+Eu sou Stanley Batista, da Produtora Bādon. Se você quer apoio para planejar e criar conteúdo ou entender como o marketing pode ajudar o seu negócio, vamos conversar.
+
+Posso ajudar você a organizar a comunicação da sua marca e avaliar o que faz sentido para o momento da empresa: produção de conteúdo, consultoria de marketing, site, comunicação de produto ou gestão de tráfego.
+
+Conte o que você faz, quem quer alcançar e qual é sua principal dificuldade hoje. A partir disso, podemos conversar sobre o trabalho mais adequado para o seu contexto.
+
+Botão principal: Conversar com Stanley no WhatsApp
+Texto de apoio: Conte um pouco sobre seu negócio e o que você quer melhorar.
+Botão secundário: Conhecer o trabalho da Bādon
+
+Mensagem sugerida para iniciar a conversa:
+“Oi, Stanley! Acessei o guia dos 50 ganchos. Meu negócio é [negócio] e quero ajuda com [conteúdo, consultoria, site, produto ou tráfego]. Hoje minha principal dificuldade é [descreva].”
+
+Sobre o material
+Conteúdo editorial de Stanley Batista e Produtora Bādon. Modelos e exemplos para adaptar à sua realidade. Use este guia como apoio à criação e revise cada conteúdo antes de publicar.

@@ -1,0 +1,34 @@
+PROMPT PARA CRIAR UM CARROSSEL
+
+Você vai me ajudar a transformar uma ideia em um carrossel para Instagram. Escreva em português do Brasil, com clareza e sem jargão desnecessário.
+
+CONTEXTO
+Meu negócio ou área de atuação: [preencha]
+Público: [preencha]
+Dúvida ou situação específica: [preencha]
+Objetivo do conteúdo: [preencha]
+Ideia principal que quero ensinar ou demonstrar: [preencha]
+Informações, exemplos e evidências reais disponíveis: [preencha]
+Tom de voz: [preencha]
+Quantidade desejada de slides: [preencha; se não souber, sugira a necessária]
+Gancho escolhido no guia: [cole aqui o gancho]
+Próximo passo desejado: [preencha]
+
+TAREFA
+Crie um carrossel usando o gancho escolhido como base da capa. Adapte-o ao meu contexto. Se a abertura prometer algo que o conteúdo não consegue entregar, proponha um ajuste.
+
+Se faltar informação essencial, faça até três perguntas objetivas. Não invente dados, casos, clientes, depoimentos, experiências ou resultados.
+
+ENTREGUE
+1. Uma frase com a promessa e o público do carrossel.
+2. O texto de cada slide, identificando capa, desenvolvimento e fechamento.
+3. Para cada slide: título, texto de apoio curto e sugestão visual diretamente relacionada à mensagem.
+4. Uma legenda complementar e uma única chamada para ação.
+5. Duas alternativas de capa que levem à mesma entrega.
+
+CRITÉRIOS
+Cada slide deve avançar uma ideia. Comece a responder à promessa já no desenvolvimento inicial. Use exemplos concretos, evite blocos longos e não dependa de frases vagas como “arraste para descobrir o segredo”.
+
+Não copie o mesmo texto da capa em todos os slides. Não peça para salvar, comentar e compartilhar ao mesmo tempo. Escolha a ação mais coerente com o objetivo.
+
+O último slide deve concluir a ideia, não apenas interromper a explicação com uma oferta. Revise se o conjunto cumpre a promessa da capa e se pode ser entendido por alguém que não conhece meu trabalho.

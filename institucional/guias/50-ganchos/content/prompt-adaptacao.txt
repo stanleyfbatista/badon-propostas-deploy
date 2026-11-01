@@ -1,0 +1,15 @@
+PROMPT PARA ESCOLHER E ADAPTAR GANCHOS
+
+Meu negócio ou área: [preencha]
+Meu público: [preencha]
+Dúvida que quero responder: [preencha]
+Entrega concreta do conteúdo: [preencha]
+Exemplo real que posso mostrar: [preencha]
+Tom de voz: [preencha]
+
+Aqui estão os ganchos que estou considerando:
+[cole de três a cinco modelos do guia]
+
+Escolha os dois que melhor combinam com a entrega. Explique a escolha em linguagem simples e adapte cada um ao meu contexto. Não escolha apenas o que parece mais chamativo: priorize clareza, relevância para o público e uma promessa que o conteúdo consiga cumprir.
+
+Para cada opção, entregue o gancho adaptado, o ponto que o conteúdo precisa explicar e uma ideia de demonstração. Se faltar informação essencial, pergunte antes de inventar. Não use números, histórias ou resultados que eu não tenha fornecido.
