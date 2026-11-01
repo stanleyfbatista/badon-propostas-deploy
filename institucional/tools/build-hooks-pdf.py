@@ -73,7 +73,7 @@ closing=(SOURCE/'content/fechamento.txt').read_text()
 story=[Spacer(1,30),para('Parabéns, aqui está o seu presente.','h2'),para('50 ganchos para seus próximos conteúdos.','h1')]
 story += [para('Um guia para escolher uma abertura, adaptar à sua marca e transformar a ideia em Reel ou carrossel.')]
 portrait=Image(str(SOURCE/'stanley-batista.webp'),width=105,height=105)
-bio=para('Eu sou Stanley Batista, gestor de marca à frente da Produtora Bādon. Há mais de 6 anos, crio e cuido de marcas. Preparei este material para ajudar você a dar o próximo passo no seu conteúdo.')
+bio=para('Eu sou Stanley Batista, gestor de marketing à frente da Produtora Bādon. Há mais de 6 anos, crio e cuido de marcas. Preparei este material para ajudar você a dar o próximo passo no seu conteúdo.')
 table=Table([[portrait,bio]],colWidths=[125,370]);table.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),15)]))
 story += [Spacer(1,18),table,Spacer(1,25),para('Como consultar este guia','h2'),para('Comece pelas orientações. Depois, escolha entre as cinco categorias, personalize os campos entre colchetes e use os prompts completos na IA de sua preferência. Todos os 50 ganchos têm exemplo, desenvolvimento e cuidado.'),para('As estruturas são pontos de partida para adaptar e testar. Não há promessa de visualizações, seguidores ou vendas.'),para('Versão de 31 de outubro de 2026. Texto selecionável, com prompts completos e links clicáveis.','small'),PageBreak()]
 story += editorial(intro)

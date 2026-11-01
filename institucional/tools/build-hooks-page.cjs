@@ -36,7 +36,7 @@ const html=`<!doctype html>
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Seu presente: 50 ganchos para criar conteúdo | Stanley Batista · Bādon</title>
-<meta name="description" content="Seu guia gratuito com 50 ganchos explicados, exemplos e prompts copiáveis para Reels e carrosséis. Por Stanley Batista, gestor de marca da Produtora Bādon.">
+<meta name="description" content="Seu guia gratuito com 50 ganchos explicados, exemplos e prompts copiáveis para Reels e carrosséis. Por Stanley Batista, gestor de marketing da Produtora Bādon.">
 <meta name="theme-color" content="#0a0a0c"><meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://produtorabadon.com/presentes/50-ganchos/">
 <meta property="og:type" content="website"><meta property="og:locale" content="pt_BR">
@@ -44,7 +44,7 @@ const html=`<!doctype html>
 <meta property="og:description" content="50 ganchos, exemplos e prompts para tirar suas próximas ideias do papel. Um presente de Stanley Batista e da Bādon.">
 <meta property="og:url" content="https://produtorabadon.com/presentes/50-ganchos/">
 <meta property="og:image" content="https://produtorabadon.com/presentes/50-ganchos/stanley-batista.webp">
-<meta property="og:image:alt" content="Stanley Batista, gestor de marca da Produtora Bādon">
+<meta property="og:image:alt" content="Stanley Batista, gestor de marketing da Produtora Bādon">
 <link rel="icon" href="simbolo-badon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="guia.css?v=20261031-1"><script src="guia.js?v=20261031-1" defer></script>
 </head>
@@ -61,7 +61,7 @@ const html=`<!doctype html>
 <div class="gift-content"><p class="gift-label">Guia prático de criação de conteúdo</p><h2>50 ganchos para seus<br class="desktop-break"> próximos conteúdos.</h2><p>Encontre uma boa abertura, entenda como usar e transforme a ideia em Reel ou carrossel com a ajuda da IA.</p>
 <div class="hero-actions"><a class="button primary" href="#biblioteca">Explorar os 50 ganchos <span aria-hidden="true">↓</span></a></div>
 <p class="download-note">Gratuito. Sem cadastro. Para consultar, copiar e adaptar.</p></div>
-<div class="author"><img src="stanley-batista.webp" alt="Stanley Batista" width="900" height="900" fetchpriority="high"><div><h3>Eu sou Stanley Batista.</h3><p>Gestor de marca, à frente da Produtora Bādon. Há mais de 6 anos, crio e cuido de marcas.</p><p class="author-note">Preparei este guia para ajudar você a mostrar o que sabe, com mais clareza e com o seu jeito de falar.</p></div></div>
+<div class="author"><img src="stanley-batista.webp" alt="Stanley Batista" width="900" height="900" fetchpriority="high"><div><h3>Eu sou Stanley Batista.</h3><p>Gestor de marketing, à frente da Produtora Bādon. Há mais de 6 anos, crio e cuido de marcas.</p><p class="author-note">Preparei este guia para ajudar você a mostrar o que sabe, com mais clareza e com o seu jeito de falar.</p></div></div>
 </div>
 </section>
 <nav class="guide-nav wrap" aria-label="Navegação do presente"><a href="#como-usar">Como usar</a><a href="#biblioteca">Os 50 ganchos</a><a href="#prompts">Prompts para IA</a><a href="#conversar">Falar comigo</a></nav>
@@ -102,7 +102,7 @@ const html=`<!doctype html>
 fs.writeFileSync(path.join(source,'index.html'),html);
 fs.writeFileSync(path.join(source,'ganchos-data.json'),JSON.stringify({hooks,prompts},null,2)+'\n');
 // Plain text uses exactly the same editorial sources and all full prompt fields.
-const fullText=['Parabéns, aqui está o seu presente.','Eu sou Stanley Batista, gestor de marca. Há mais de 6 anos, crio e cuido de marcas.',read('abertura.txt').split('\n').filter(l=>!l.startsWith('Botão')).join('\n'),...hooks.map(h=>Object.entries(h).map(([k,v])=>k+': '+v).join('\n')),beforePrompts,...prompts.map(p=>p.text),closing.slice(closing.indexOf('CHECKLIST ANTES DE PUBLICAR'))].join('\n\n');
+const fullText=['Parabéns, aqui está o seu presente.','Eu sou Stanley Batista, gestor de marketing. Há mais de 6 anos, crio e cuido de marcas.',read('abertura.txt').split('\n').filter(l=>!l.startsWith('Botão')).join('\n'),...hooks.map(h=>Object.entries(h).map(([k,v])=>k+': '+v).join('\n')),beforePrompts,...prompts.map(p=>p.text),closing.slice(closing.indexOf('CHECKLIST ANTES DE PUBLICAR'))].join('\n\n');
 fs.writeFileSync(path.join(source,'guia-50-ganchos-badon.txt'),fullText);
 const files=['index.html','guia.css','guia.js','ganchos-data.json','stanley-batista.webp','logo-badon.svg','simbolo-badon.svg','guia-50-ganchos-badon.pdf','guia-50-ganchos-badon.txt'];
 fs.mkdirSync(target,{recursive:true});
