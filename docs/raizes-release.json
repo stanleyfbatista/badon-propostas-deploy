@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "raizes/app.js",
-      "bytes": 16259,
-      "sha256": "42af5b511d9aa7f8ae9f65b11b4fe187b445d18b1fbab9d5161b2b9989ed1e95"
+      "bytes": 16307,
+      "sha256": "2636ee7d9f86201e682e2139fee2221bc03025f53b3545b3ef9b0d9d7fd47b89"
     },
     {
       "path": "raizes/assets/raizes-terra/03-profissional-consultando-ipad-v1.webp",
@@ -358,8 +358,8 @@
     },
     {
       "path": "raizes/assets/raizes-terra/launch.js",
-      "bytes": 3149,
-      "sha256": "871a8f951fe282bd7235bb44d68dfb036e30a55d88337f127313e408bdc699fa"
+      "bytes": 2681,
+      "sha256": "f0137f4f168fd007d30241537dcec8ec935dc1f64ed5f3b4a8b3c87f8b12a6d9"
     },
     {
       "path": "raizes/assets/raizes-terra/offer/bosque-encontro.webp",
@@ -578,13 +578,13 @@
     },
     {
       "path": "raizes/index.html",
-      "bytes": 37998,
-      "sha256": "444475faec761ae90eb6befe79d36f13dfda00704a4241aa16d3351e9fb4ee26"
+      "bytes": 40972,
+      "sha256": "8f76da06c9603dcc44dcb40bb97de6c2d520635458b282cfcf9e6dc99ab4d218"
     },
     {
       "path": "raizes/refinements.css",
-      "bytes": 15090,
-      "sha256": "247f442b08bf87b22107e83cdaefbd998e2dc8467daef24af0a70edb459a43db"
+      "bytes": 16847,
+      "sha256": "fb9056a755ffb9aa9c002c403d82a22a0d0e21cb7ab2d2e9010aff12b8f60e73"
     },
     {
       "path": "raizes/styles.css",
@@ -602,6 +602,6 @@
       "sha256": "1e2785c8540c2040f6ab319d5cb4946a9dff244a2e286a5b91e60d4ed9eb9018"
     }
   ],
-  "revision": "2026-11-02-readiness",
-  "measurement": "Events prepared and QA tested; remote collection and random experiment disabled pending real IDs and confirmed purchase integration."
+  "revision": "2026-11-02-copy",
+  "measurement": "Meta Pixel pending by user decision; no remote collection. Local QA event hooks only."
 }

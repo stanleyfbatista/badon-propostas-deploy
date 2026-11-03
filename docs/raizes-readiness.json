@@ -1,6 +1,6 @@
 {
   "checked_at": "2026-11-02T22:31:01.299835-03:00",
-  "status": "Página em revisão; lançamento comercial pendente de informações e aprovação editorial.",
+  "status": "Revisão dos documentos confirmada pelo usuário; copy aplicada. Checkout, condições operacionais e Pixel Meta pendentes.",
   "catalog": {
     "identities": [
       "Jardim Clássico",
@@ -33,7 +33,7 @@
       "limpa",
       "exemplo preenchido"
     ],
-    "approval": "Nenhum registro de aprovação editorial final encontrado. Índice ao vivo indica revisão da Bia pendente."
+    "approval": "Usuário confirmou nesta conversa que Beatriz já revisou os documentos."
   },
   "format_limits": [
     "PDFs são exemplos orientados; formulários online ativos não estão incluídos.",
@@ -45,7 +45,7 @@
     "live_index": "https://docs.google.com/document/d/1J7y9tF0N2MwfeC3I4dznS37lLiOu3i-Xl7KgE5WxxBE/edit",
     "handoff": "/Users/produtorabadon/Downloads/Relatorio_Handoff_Colecao_Raizes.pdf",
     "inventory": "outputs/ENTREGA_ATUAL.json",
-    "author_audio": "../Documentos/Pack de documentos para psicologas/01-transcricao-audio-beatriz.md",
+    "author_audio": "/Users/produtorabadon/Documents/Clientes/Beatriz Jardim/Documentos/Pack de documentos para psicologas/01-transcricao-audio-beatriz.md",
     "dashboard": "https://docs.google.com/spreadsheets/d/100d5s5-a76koE2qgZT7nSPC8gt4aSmr5N0AyJSJ8zjw/edit"
   },
   "implemented": [
@@ -54,18 +54,17 @@
     "Painel financeiro atual exportado do Google Planilhas; rolagem dentro do MacBook permite ver o painel completo.",
     "História de criação baseada na transcrição do áudio real da Beatriz; sem currículo ou CRP inventado.",
     "Dois heros: ?hero=organizacao e ?hero=quantidade; testes comparáveis com o mesmo restante da página.",
-    "Eventos locais de visualização, oferta e interação; envio remoto desativado até conectar medição."
+    "Eventos locais de visualização, oferta e interação; envio remoto desativado até conectar medição.",
+    "Copy do documento aplicada a todas as dobras pertinentes, preservando a biografia atual e corrigindo itens obsoletos do catálogo."
   ],
   "launch_dependencies": [
-    "Aprovação editorial final dos arquivos pela Beatriz.",
-    "Biografia profissional e CRP aprovados.",
-    "URL e plataforma de checkout.",
-    "Forma e prazo de entrega e teste de acesso do comprador em conta separada.",
+    "URL real do checkout Kiwify.",
+    "Forma e prazo de entrega e teste de acesso do comprador.",
     "Meios de pagamento, suporte, política de garantia e reembolso.",
-    "Propriedade de análise, privacidade/consentimento e confirmação autenticada de pagamentos."
+    "Pixel da Meta: usuário configurará posteriormente no domínio definitivo."
   ],
   "measurement": {
-    "state": "prepared_not_connected",
+    "state": "Pendente por decisão do usuário; Pixel Meta será configurado depois. Adapter de eventos local permanece sem transmissão.",
     "events": [
       "page_view",
       "view_item",
@@ -75,7 +74,7 @@
       "personalization_compare",
       "checkout_click (somente com checkout real configurado)"
     ],
-    "purchase": "Não disparado pela landing page. Integrar à confirmação real de pagamento, com transaction_id único, value=67, currency=BRL, items e deduplicação. Associar a variante ao pedido conforme a plataforma.",
+    "purchase": "Pendente de integração do Pixel Meta com a confirmação de pagamento Kiwify. A landing page não marca cliques como compras.",
     "ab": "Links de prévia não enviam eventos à propriedade. Experimento aleatório desativado; ativar somente após atribuição de compras estar testada.",
     "acceptance": [
       "1 page_view por carregamento",
@@ -84,9 +83,16 @@
       "reembolso e compra somente por dados confirmados da plataforma",
       "validar compra de teste autorizada e cancelamento/reembolso conforme plataforma antes do tráfego"
     ],
-    "references": [
-      "https://developers.google.com/analytics/devguides/collection/ga4/views",
-      "https://developers.google.com/analytics/devguides/collection/ga4/ecommerce"
-    ]
+    "references": [],
+    "provider": "Meta Pixel; instalação futura pelo usuário."
+  },
+  "author": "Manter apresentação atual sem CRP, conforme instrução do usuário.",
+  "commercial": {
+    "platform": "Kiwify",
+    "price_brl": 67,
+    "checkout_url": null,
+    "support": null,
+    "delivery": null,
+    "refund_policy": null
   }
 }

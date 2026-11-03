@@ -3,8 +3,8 @@
  'use strict';
  const settings = Object.freeze({
   checkoutUrl: '',
-  analyticsEnabled: false,
-  ga4MeasurementId: '',
+  measurementProvider: 'meta',
+  measurementPending: true,
   experimentEnabled: false,
   experimentId: 'raizes-hero-v1'
  });
@@ -22,25 +22,16 @@
  document.documentElement.dataset.hero = variant;
  const item = {item_id:'colecao-raizes',item_name:'Coleção Raízes',price:67,quantity:1};
  const events = [];
- // A QA link never sends data to the live property. No raw URL/query/PII is sent.
- const active = settings.analyticsEnabled && /^G-[A-Z0-9]+$/.test(settings.ga4MeasurementId) && !preview;
- if (active) {
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function () { window.dataLayer.push(arguments); };
-  gtag('js', new Date());
-  gtag('config',settings.ga4MeasurementId,{send_page_view:false});
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = 'https://www.googletagmanager.com/gtag/js?id=' + settings.ga4MeasurementId;
-  document.head.append(script);
- }
+ // Meta Pixel will be installed later by the owner on the final domain.
+ // Keep QA events local: no third-party scripts, cookies, or remote collection.
+ const active = false;
  function track(name, details={}) {
   const parameters = {hero_variant:variant,experiment_id:settings.experimentId,preview_mode:preview,...details};
   const event = {name,parameters};
   events.push(event);
   if (events.length > 50) events.shift();
   document.dispatchEvent(new CustomEvent('raizes:measurement',{detail:event}));
-  if (active) gtag('event',name,parameters);
+
  }
  let checkout = null;
  try {

@@ -222,3 +222,32 @@ html[data-hero="quantidade"] .hero h1 > .headline-quantity { display:block; }
 .hero-description-quantity { display:none; }
 html[data-hero="quantidade"] .hero-description-organization { display:none; }
 html[data-hero="quantidade"] .hero-description-quantity { display:block; }
+
+/* Sales copy supplied for the final revision. */
+html:not([data-hero="quantidade"]) .hero h1 { font-size:clamp(40px,3.65vw,53px); line-height:1.08; max-width:590px; }
+.hero-description { margin-block:23px 18px; }
+.hero-investment { font-size:13px; color:var(--brown); margin:0 0 22px; }
+.hero-investment strong { font-weight:750; }
+.intro { max-width:1020px; }
+.intro h2 { font-size:clamp(32px,3.2vw,46px); line-height:1.12; }
+.intro-narrative { max-width:710px; margin:30px auto 0; }
+.intro-narrative p { font-size:15px; line-height:1.85; color:var(--muted); margin:20px 0; }
+.intro-narrative .intro-emphasis { color:var(--ink); font-size:22px; line-height:1.5; letter-spacing:-.02em; margin:30px 0; }
+.payment-platform { font-size:11px; color:#d8cbb8; margin-top:9px; }
+.payment-platform strong { color:#fff; font-size:14px; letter-spacing:-.04em; }
+.professional-note { background:#e7e1d8; padding-block:60px; }
+.professional-note .wrap { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:70px; }
+.professional-note h2 { font-size:clamp(25px,2.5vw,34px); line-height:1.2; }
+.professional-note p { font-size:13px; line-height:1.85; color:var(--muted); }
+.closing-copy { max-width:600px; margin:0 auto 22px; font-size:14px; line-height:1.8; color:var(--muted); }
+.closing-price { margin-bottom:25px; font-size:14px; }
+@media(max-width:600px) {
+ html:not([data-hero="quantidade"]) .hero h1 { font-size:clamp(31px,8.7vw,44px); }
+ .hero-description { font-size:14px; }
+ .intro-narrative p { font-size:13px; text-align:left; }
+ .intro-narrative .intro-emphasis { font-size:20px; }
+ .professional-note .wrap { display:block; }
+ .professional-note p { margin-top:25px; }
+ .closing h2 { font-size:31px; }
+ .closing-copy { font-size:13px; }
+}

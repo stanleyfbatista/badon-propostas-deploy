@@ -233,7 +233,7 @@ syncDocumentWall();
 
 // Repeated entries and exits follow the reading flow. No-JS content stays visible.
 const motionSelectors = [
- '.section-heading', '.intro h2', '.intro>p:not(.eyebrow)', '.audience-notes',
+ '.section-heading', '.intro h2', '.intro-narrative', '.professional-note .wrap', '.intro>p:not(.eyebrow)', '.audience-notes',
  '.showcase-info', '.template-picker', '.document-photo', '.document-groups',
  '.use-copy', '.personalization-demo', '.real-previews', '.sheets-copy', '.bonus-device', '.formats-heading',
  '.formats-grid', '.author-photo', '.author-copy', '.offer-story', '.offer-card',
