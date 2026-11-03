@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "raizes/app.js",
-      "bytes": 16307,
-      "sha256": "2636ee7d9f86201e682e2139fee2221bc03025f53b3545b3ef9b0d9d7fd47b89"
+      "bytes": 20895,
+      "sha256": "0fcb2d023b4030afb12abe990976ebc5d2cdba15200d50b13c91233e69ae7616"
     },
     {
       "path": "raizes/assets/raizes-terra/03-profissional-consultando-ipad-v1.webp",
@@ -237,6 +237,46 @@
       "sha256": "b3af892296b474b78c64b715d877d3180bd7334b7f2ac827960f72d85fc6cd8b"
     },
     {
+      "path": "raizes/assets/raizes-terra/inside/claro-01.webp",
+      "bytes": 20608,
+      "sha256": "24cf01c56b0833a0cb8a41bbbdc259d0e26d2f4f99d5824eb9bf8955d8e7b23b"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/claro-02.webp",
+      "bytes": 54182,
+      "sha256": "3c2f4fcff59da2623c8853a19207814c989e231896734e57977168032dd7d230"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/claro-03.webp",
+      "bytes": 37708,
+      "sha256": "5010e981ea75bd0cb10d2b57b4225224ffec127d553c8da2328c72980abae7ef"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/claro-07.webp",
+      "bytes": 53824,
+      "sha256": "ed7df295b7c6656443d5d428d9a78ed5bfcaf9bf2c7a938e5ae9cd8adeec7f9a"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/classico-01.webp",
+      "bytes": 22974,
+      "sha256": "362bd6a20ff861ca727af221e6cde082b9de5d5ea94c375d110ec0857daa3d9b"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/classico-02.webp",
+      "bytes": 53316,
+      "sha256": "1b6d185d0f8408c1da2ed1fdaaaeb191cc47356f0dec176e4f29da9698aa2103"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/classico-03.webp",
+      "bytes": 44694,
+      "sha256": "357af99eab829d0bec250df9dd6b941f81ecb99256a4d0b650819fc71e495d86"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/classico-07.webp",
+      "bytes": 61926,
+      "sha256": "0ece3860855f31c81baf14b129fa804fc4471b0748d12d03cf445b375ae39f3f"
+    },
+    {
       "path": "raizes/assets/raizes-terra/inside/grafite-01.webp",
       "bytes": 15030,
       "sha256": "3ecf04959638997a3145887ae8ae194a5f21b9b4406d2066f3c7202b51289561"
@@ -295,6 +335,26 @@
       "path": "raizes/assets/raizes-terra/inside/grafite-12.webp",
       "bytes": 36950,
       "sha256": "6974e0875515641f7250b3dc19f9ac397fd54a808a24128f21e23dd9102fdc7c"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/oliva-01.webp",
+      "bytes": 26112,
+      "sha256": "3d654331c144a025a8ddab6f0ca0941af00395939ec2d53e202879efce60eee2"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/oliva-02.webp",
+      "bytes": 62478,
+      "sha256": "c03427a331c01508c732c3ca2291626c91ae2ff7ca264e89fc7f4710815909bf"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/oliva-03.webp",
+      "bytes": 53524,
+      "sha256": "0ec7cf963be10a99f82626076ac2e27bccf87ded29e8ef8e95e65e2527a5d13e"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/oliva-07.webp",
+      "bytes": 75734,
+      "sha256": "00caa63d6933729071cf40ab346340310f54b2bc84fbf79dcd5f95ca0cc759fb"
     },
     {
       "path": "raizes/assets/raizes-terra/inside/terra-01.webp",
@@ -365,6 +425,11 @@
       "path": "raizes/assets/raizes-terra/offer/bosque-encontro.webp",
       "bytes": 57782,
       "sha256": "6079aed3cd095acc03b5138ef1dfcba2fcfc200bd6cb7b50031c52be3f9d6d21"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/paper-grain.svg",
+      "bytes": 324,
+      "sha256": "dc86a9faace1b4bb12f76fe83d6e2eacb34b9f58535956fc2261e7e5034042cc"
     },
     {
       "path": "raizes/assets/raizes-terra/personalizacao-exemplo.webp",
@@ -472,6 +537,36 @@
       "sha256": "d3009fbd33df4d440f6bb44df0044c33a1ec346505f85ddadab384a38a4ced29"
     },
     {
+      "path": "raizes/assets/raizes-terra/presentation/claro-03.webp",
+      "bytes": 39482,
+      "sha256": "509b9fdc4a5f366eb46590d6b4d13513b67920b9ba67c9ead487e0b993a7bde8"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/claro-04.webp",
+      "bytes": 24716,
+      "sha256": "6bbc65c85cdd18282362e6fff87a39d0d3a8e3a9844c824716f5cccedb6f3332"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/classico-03.webp",
+      "bytes": 39334,
+      "sha256": "43e79f80c0dc27d8bbc41f8b3daf3c2f77bc37b143c0514a64db8d627d613b03"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/classico-04.webp",
+      "bytes": 24622,
+      "sha256": "f777f0476b5f811bc27b346c15931700b1e09bc21e76a602f2bc55bb6cd8ace8"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/contorno-03.webp",
+      "bytes": 38440,
+      "sha256": "c5098ff7efd682cd760c403da8736a76806a9e2fc6b99e14f4280698aa7d9e1a"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/contorno-04.webp",
+      "bytes": 24752,
+      "sha256": "52af274f5964719d72d6aad50df780bd53c1ad8679ab4f0909a7ea0eaab4e3e5"
+    },
+    {
       "path": "raizes/assets/raizes-terra/presentation/grafite-01.webp",
       "bytes": 34804,
       "sha256": "6dc6f2ee1cd16d75bb76d40a2078d719c89290e8c58f26d43ca2290c44be8d91"
@@ -505,6 +600,16 @@
       "path": "raizes/assets/raizes-terra/presentation/grafite-07.webp",
       "bytes": 35052,
       "sha256": "ca7bdeb4e1224d22ec79cef7498ac17762f65125f1c9531dbd1a70700772e7fc"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/oliva-03.webp",
+      "bytes": 20978,
+      "sha256": "061b150f08e0b714623c0663ba1cf8b75ffa5c7e7c1399cefaac17b649b78800"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/oliva-04.webp",
+      "bytes": 19044,
+      "sha256": "4e4a5f24973e5c7ce9eee0e8ea09ac39183fc4be43aef5c53dc1b23e809fc05f"
     },
     {
       "path": "raizes/assets/raizes-terra/presentation/terra-01.webp",
@@ -578,13 +683,13 @@
     },
     {
       "path": "raizes/index.html",
-      "bytes": 40972,
-      "sha256": "8f76da06c9603dcc44dcb40bb97de6c2d520635458b282cfcf9e6dc99ab4d218"
+      "bytes": 41102,
+      "sha256": "d9ca7e45eb1e4f8109fe583f17e733a6c1b086e772646b73161e6871051019ab"
     },
     {
       "path": "raizes/refinements.css",
-      "bytes": 16847,
-      "sha256": "fb9056a755ffb9aa9c002c403d82a22a0d0e21cb7ab2d2e9010aff12b8f60e73"
+      "bytes": 23564,
+      "sha256": "f6bc8ca9f0d2e467ea76db08c1bd753e5a42919147d6bc52e36ac90cde10d336"
     },
     {
       "path": "raizes/styles.css",
@@ -602,6 +707,6 @@
       "sha256": "1e2785c8540c2040f6ab319d5cb4946a9dff244a2e286a5b91e60d4ed9eb9018"
     }
   ],
-  "revision": "2026-11-02-copy",
+  "revision": "2026-11-02: eight matching themes in the existing 2x2 preview grid; warm gradients, paper grain and lighting; professional name in the offer.",
   "measurement": "Meta Pixel pending by user decision; no remote collection. Local QA event hooks only."
 }

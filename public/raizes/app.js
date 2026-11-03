@@ -231,6 +231,109 @@ if ('IntersectionObserver' in window) {
 }
 syncDocumentWall();
 
+// The catalogue pairs one identity's cover, presentation and document interiors.
+const realPreviews = document.querySelector('.real-previews');
+const previewStage = realPreviews.querySelector('.preview-stage');
+const previewCollections = [
+ {slug:'terra',template:7,pages:[6,8]},
+ {slug:'aurora',template:5,pages:[3,4]},
+ {slug:'bosque',template:6,pages:[4,6]},
+ {slug:'grafite',template:3,pages:[3,4]},
+ {slug:'classico',template:0,pages:[3,4]},
+ {slug:'contorno',template:1,pages:[3,4]},
+ {slug:'claro',template:2,pages:[3,4]},
+ {slug:'oliva',template:4,pages:[3,4]}
+];
+let previewIndex = 0;
+let previewRound = 0;
+let previewVisible = !('IntersectionObserver' in window);
+let previewTimer = null;
+let previewChanging = false;
+let preparedPreview = null;
+let currentPreview = previewStage.firstElementChild;
+function previewsCanRun() {
+ return previewVisible && !document.hidden && !reducedMotion.matches && !offerDialog.open;
+}
+async function buildPreviewSet(index,round) {
+ const collection = previewCollections[index];
+ const name = templates[collection.template].name;
+ const pad = n => String(n).padStart(2,'0');
+ const documentPages = (index + round) % 2 ? [2,3] : [1,7];
+ const items = [
+  {path:`capa-${pad(collection.template+1)}.webp`,title:'Apresentação profissional',caption:`${name} · Capa`,alt:`Capa da apresentação ${name}`},
+  {path:`presentation/${collection.slug}-${pad(collection.pages[round%2])}.webp`,title:'Por dentro da apresentação',caption:'Seu trabalho, com a sua identidade.',alt:`Página interna da apresentação ${name}`},
+  ...documentPages.map(n => ({path:`inside/${collection.slug}-${pad(n)}.webp`,title:documentTitles[n-1],caption:'Modelo e exemplo orientado.',alt:`${documentTitles[n-1]} — ${name}`}))
+ ];
+ const scene = document.createElement('div');
+ scene.className = 'preview-set';
+ scene.dataset.theme = collection.slug;
+ const images = items.map(item => {
+  const figure = document.createElement('figure');
+  const img = new Image();
+  img.src = `assets/raizes-terra/${item.path}`;
+  img.width = 637; img.height = 900; img.alt = item.alt; img.decoding = 'async';
+  const caption = document.createElement('figcaption');
+  const title = document.createElement('strong'); title.textContent = item.title;
+  const text = document.createElement('span'); text.textContent = item.caption;
+  caption.append(title,text); figure.append(img,caption); scene.append(figure);
+  return img;
+ });
+ await Promise.all(images.map(img => img.decode()));
+ return scene;
+}
+function preparePreview() {
+ const next = (previewIndex+1)%previewCollections.length;
+ const round = previewRound + (next === 0 ? 1 : 0);
+ if (!preparedPreview) preparedPreview = buildPreviewSet(next,round).catch(() => null);
+ return preparedPreview;
+}
+async function changePreviewCollection() {
+ clearTimeout(previewTimer); previewTimer = null;
+ if (previewChanging) return;
+ previewChanging = true;
+ const incoming = await preparePreview();
+ if (!incoming || !previewsCanRun()) {
+  if (!incoming) preparedPreview = null;
+  previewChanging = false; syncPreviews(); return;
+ }
+ const outgoing = currentPreview;
+ incoming.setAttribute('aria-hidden','true');
+ previewStage.append(incoming);
+ if (incoming.animate) {
+  const options = {duration:950,easing:'ease-in-out'};
+  await Promise.allSettled([
+   outgoing.animate([{opacity:1},{opacity:0}],options).finished,
+   incoming.animate([{opacity:0},{opacity:1}],options).finished
+  ]);
+ }
+ outgoing.remove(); incoming.removeAttribute('aria-hidden');
+ currentPreview = incoming;
+ previewIndex = (previewIndex+1)%previewCollections.length;
+ if (previewIndex === 0) previewRound++;
+ realPreviews.setAttribute('aria-label',`Materiais ${templates[previewCollections[previewIndex].template].name}`);
+ preparedPreview = null; previewChanging = false;
+ syncPreviews();
+}
+function syncPreviews() {
+ if (!previewsCanRun()) {
+  clearTimeout(previewTimer); previewTimer = null;
+  if (reducedMotion.matches) previewStage.getAnimations({subtree:true}).forEach(animation => animation.finish());
+  return;
+ }
+ if (!previewChanging && !previewTimer) {
+  preparePreview();
+  previewTimer = setTimeout(changePreviewCollection,8000);
+ }
+}
+if ('IntersectionObserver' in window) {
+ new IntersectionObserver(entries => { previewVisible = entries[0].isIntersecting; syncPreviews(); }, {threshold:.1}).observe(realPreviews);
+}
+document.addEventListener('visibilitychange',syncPreviews);
+reducedMotion.addEventListener('change',syncPreviews);
+offerDialog.addEventListener('close',syncPreviews);
+offerDialog.addEventListener('toggle',syncPreviews);
+syncPreviews();
+
 // Repeated entries and exits follow the reading flow. No-JS content stays visible.
 const motionSelectors = [
  '.section-heading', '.intro h2', '.intro-narrative', '.professional-note .wrap', '.intro>p:not(.eyebrow)', '.audience-notes',
