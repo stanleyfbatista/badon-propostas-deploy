@@ -16,7 +16,7 @@
  width:292px; left:calc(50% - 146px); top:40px; cursor:default;
  box-shadow:-2px 3px 0 #b8afa0,0 18px 30px #0005;
  transform:translateX(calc(var(--offset)*132px)) translateZ(calc(var(--abs,0)*-85px)) rotateY(calc(var(--offset)*-13deg)) rotateZ(calc(var(--offset)*3deg)) scale(var(--scale,1));
- transition:transform 650ms var(--ease),opacity 500ms,box-shadow 300ms,filter 300ms;
+ transition:transform 1100ms cubic-bezier(.22,.61,.36,1),opacity 900ms ease-in-out,box-shadow 400ms,filter 400ms;
 }
 .deck-card[aria-hidden="false"]:hover {
  transform:translateY(-10px) scale(1.035);
@@ -31,13 +31,14 @@
 .round-button { transition:background .2s,transform .2s; }
 .round-button:hover { background:#ffffff28; transform:scale(1.08); }
 
-/* Two continuous strips: the Terra presentation, then its document interiors. */
+/* Two continuous strips change identity together, without changing their size. */
 .doc-demo { padding-bottom:0; background:#e8e3da; overflow:hidden; }
 .doc-demo .section-heading { margin-bottom:40px; }
 .editable-badge { display:inline-flex; align-items:center; gap:9px; padding:11px 18px; border-radius:30px; background:var(--brown); color:var(--white); font-size:12px; font-weight:600; line-height:1.4; white-space:nowrap; margin-bottom:4px; }
 .editable-badge svg { width:17px; height:17px; }
 .doc-demo .section-heading > p { max-width:390px; }
-.document-wall { --page-height:400px; --page-gap:0px; user-select:none; touch-action:pan-y; }
+.document-wall { --page-height:400px; --page-gap:0px; display:grid; user-select:none; touch-action:pan-y; }
+.document-scene { grid-area:1 / 1; min-width:0; pointer-events:none; }
 .document-lane + .document-lane { margin-top:0; }
 .lane-window { overflow:hidden; padding:0; }
 .document-track { display:flex; width:max-content; animation:document-drift var(--lane-duration,85s) linear infinite; animation-play-state:paused; }

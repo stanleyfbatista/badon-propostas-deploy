@@ -47,8 +47,9 @@ const thumbs = [...document.querySelectorAll('[data-template]')];
 const description = document.querySelector('#template-description');
 let active = 0;
 let carouselVisible = !('IntersectionObserver' in window);
-let hovering = false;
+let carouselInteracting = false;
 let timer = null;
+let carouselDrawn = false;
 function drawCarousel(index, manual = false) {
  active = (index + templates.length) % templates.length;
  const item = templates[active];
@@ -73,22 +74,31 @@ function drawCarousel(index, manual = false) {
   dot.style.setProperty('--swatch',color);
   return dot;
  }));
+ if (carouselDrawn && !reducedMotion.matches && description.animate) {
+  description.getAnimations().forEach(animation => animation.cancel());
+  description.animate([{opacity:.15,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}],{duration:650,easing:'ease-out'});
+ }
+ carouselDrawn = true;
  updateAutoplay();
 }
 function updateAutoplay() {
  clearTimeout(timer);
  timer = null;
- const keyboardReading = carouselSection.contains(document.activeElement) && document.activeElement.matches(':focus-visible');
- if (reducedMotion.matches || !carouselVisible || hovering || document.hidden || offerDialog.open || keyboardReading) return;
+ if (reducedMotion.matches || !carouselVisible || carouselInteracting || document.hidden || offerDialog.open) return;
  timer = setTimeout(() => drawCarousel(active + 1), 5000);
 }
 thumbs.forEach(button => button.addEventListener('click', () => drawCarousel(Number(button.dataset.template),true)));
 document.querySelector('#prev-template').addEventListener('click', () => drawCarousel(active - 1,true));
 document.querySelector('#next-template').addEventListener('click', () => drawCarousel(active + 1,true));
-deck.addEventListener('pointerenter', event => { if(event.pointerType === 'mouse') { hovering = true; updateAutoplay(); } });
-deck.addEventListener('pointerleave', () => { hovering = false; updateAutoplay(); });
-carouselSection.addEventListener('focusin', updateAutoplay);
-carouselSection.addEventListener('focusout', () => setTimeout(updateAutoplay,0));
+carouselSection.addEventListener('pointerdown', () => { carouselInteracting = true; updateAutoplay(); });
+function releaseCarousel() {
+ if (!carouselInteracting) return;
+ carouselInteracting = false;
+ updateAutoplay();
+}
+document.addEventListener('pointerup', releaseCarousel);
+document.addEventListener('pointercancel', releaseCarousel);
+window.addEventListener('blur', releaseCarousel);
 carouselSection.addEventListener('keydown', event => {
  if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
   event.preventDefault();
@@ -113,11 +123,102 @@ if ('IntersectionObserver' in window) {
 }
 drawCarousel(0);
 
-// Alternating rows show real pages. Duplicates are hidden from screen readers.
+// Matching presentations and document interiors crossfade together.
 const documentWall = document.querySelector('.document-wall');
+const documentCollections = [
+ {slug:'terra',name:'Terra',presentation:14},
+ {slug:'aurora',name:'Aurora',presentation:7},
+ {slug:'bosque',name:'Bosque',presentation:12},
+ {slug:'grafite',name:'Grafite Modular',presentation:7}
+];
+const documentTitles = ['Prontuário psicológico','Formulário pré-atendimento','Plano de acompanhamento','Jornada do novo paciente','Identificação do prontuário','Guia da primeira sessão','Contrato de psicoterapia','Guia do prontuário','Roteiro para Google Forms','Ficha de encerramento','Guia de personalização','Personalização do contrato'];
 let wallVisible = !('IntersectionObserver' in window);
+let wallIndex = 0;
+let wallTimer = null;
+let wallChanging = false;
+let preparedScene = null;
+let currentScene = document.createElement('div');
+currentScene.className = 'document-scene';
+currentScene.dataset.collection = 'terra';
+currentScene.append(...documentWall.children);
+documentWall.append(currentScene);
+
+function wallCanRun() {
+ return wallVisible && !document.hidden && !reducedMotion.matches && !offerDialog.open;
+}
+async function buildDocumentScene(collection) {
+ const scene = document.createElement('div');
+ scene.className = 'document-scene';
+ scene.dataset.collection = collection.slug;
+ const images = [];
+ for (const [kind,count,direction] of [['presentation',collection.presentation,'left'],['inside',12,'right']]) {
+  const lane = document.createElement('div');
+  lane.className = `document-lane ${kind === 'presentation' ? 'presentation-lane' : 'interior-lane'}`;
+  lane.dataset.direction = direction;
+  lane.setAttribute('role','group');
+  lane.setAttribute('aria-label',`${kind === 'presentation' ? 'Apresentação' : 'Documentos'} Jardim ${collection.name}`);
+  // The same page speed, regardless of the number of pages in each style.
+  lane.style.setProperty('--lane-duration',`${count * 8}s`);
+  const viewport = document.createElement('div'); viewport.className = 'lane-window';
+  const track = document.createElement('div'); track.className = 'document-track';
+  const run = document.createElement('div'); run.className = 'document-run';
+  for (let page = 1; page <= count; page++) {
+   const tile = document.createElement('figure'); tile.className = 'document-tile';
+   const img = new Image();
+   img.src = `assets/raizes-terra/${kind}/${collection.slug}-${String(page).padStart(2,'0')}.webp`;
+   img.width = 637; img.height = 900; img.decoding = 'async'; img.draggable = false;
+   img.alt = kind === 'presentation' ? `Apresentação Jardim ${collection.name}, página ${page} de ${count}` : `${documentTitles[page - 1]} — Jardim ${collection.name}`;
+   images.push(img);
+   tile.append(img); run.append(tile);
+  }
+  const duplicate = run.cloneNode(true); duplicate.setAttribute('aria-hidden','true');
+  track.append(run,duplicate); viewport.append(track); lane.append(viewport); scene.append(lane);
+ }
+ // Keep the current set visible if any file fails; never fade to unloaded pages.
+ await Promise.all(images.map(img => img.decode()));
+ return scene;
+}
+function prepareNextScene() {
+ if (!preparedScene) preparedScene = buildDocumentScene(documentCollections[(wallIndex + 1) % documentCollections.length]).catch(() => null);
+ return preparedScene;
+}
+async function changeDocumentCollection() {
+ wallTimer = null;
+ wallChanging = true;
+ const incoming = await prepareNextScene();
+ if (!incoming || !wallCanRun()) {
+  if (!incoming) preparedScene = null;
+  wallChanging = false;
+  syncDocumentWall();
+  return;
+ }
+ const outgoing = currentScene;
+ incoming.setAttribute('aria-hidden','true');
+ documentWall.append(incoming);
+ if (incoming.animate) {
+  const options = {duration:1100,easing:'ease-in-out'};
+  await Promise.allSettled([
+   outgoing.animate([{opacity:1},{opacity:0}],options).finished,
+   incoming.animate([{opacity:0},{opacity:1}],options).finished
+  ]);
+ }
+ outgoing.remove();
+ incoming.removeAttribute('aria-hidden');
+ currentScene = incoming;
+ wallIndex = (wallIndex + 1) % documentCollections.length;
+ documentWall.setAttribute('aria-label',`Apresentação e documentos Jardim ${documentCollections[wallIndex].name}`);
+ preparedScene = null;
+ wallChanging = false;
+ syncDocumentWall();
+}
 function syncDocumentWall() {
- documentWall.classList.toggle('is-running', wallVisible && !document.hidden && !reducedMotion.matches && !offerDialog.open);
+ const running = wallCanRun();
+ documentWall.classList.toggle('is-running', running);
+ if (!running) { clearTimeout(wallTimer); wallTimer = null; return; }
+ if (!wallChanging && !wallTimer) {
+  prepareNextScene();
+  wallTimer = setTimeout(changeDocumentCollection,12000);
+ }
 }
 if ('IntersectionObserver' in window) {
  new IntersectionObserver(entries => { wallVisible = entries[0].isIntersecting; syncDocumentWall(); }, {rootMargin:'60px'}).observe(documentWall);
@@ -145,11 +246,12 @@ if ('IntersectionObserver' in window) {
  });
 }
 
-// Price runs once per page visit, when visible: 97 → 67 in 1.9 seconds.
+// Every fresh entry restarts 97 → 67. Partial visibility never retriggers it.
 // The accessible value and the no-JS/reduced-motion fallback are always R$ 67.
 const price=document.querySelector('.price');
 const priceStrip=document.querySelector('#price-strip');
-let pricePlayed=false;
+let priceArmed=true;
+let priceVisible=false;
 let priceAnimation=null;
 function settlePrice(){
  priceAnimation?.cancel();priceAnimation=null;
@@ -158,8 +260,10 @@ function settlePrice(){
  priceStrip.style.willChange='auto';
 }
 function playPrice(){
- if(pricePlayed)return;
- pricePlayed=true;
+ if(!priceArmed||document.hidden)return;
+ priceArmed=false;
+ settlePrice();
+ price.classList.remove('is-settled');
  if(reducedMotion.matches||!Element.prototype.animate)return;
  priceStrip.replaceChildren(...Array.from({length:31},(_,i)=>Object.assign(document.createElement('span'),{textContent:String(97-i)})));
  const rowHeight=priceStrip.firstElementChild.getBoundingClientRect().height;
@@ -168,13 +272,19 @@ function playPrice(){
  priceAnimation.onfinish=()=>{settlePrice();price.classList.add('is-settled');};
 }
 if('IntersectionObserver' in window){
- const priceObserver=new IntersectionObserver(entries=>{if(entries[0].isIntersecting&&entries[0].intersectionRatio>=.7){playPrice();priceObserver.disconnect();}},{threshold:.7});
+ const priceObserver=new IntersectionObserver(entries=>{
+  const entry=entries[0];
+  priceVisible=entry.isIntersecting&&entry.intersectionRatio>=.7;
+  if(!entry.isIntersecting){priceArmed=true;settlePrice();}
+  else if(priceVisible)playPrice();
+ },{threshold:[0,.7]});
  priceObserver.observe(price);
 }
 
 document.addEventListener('visibilitychange', () => {
  updateAutoplay(); syncDocumentWall();
- if (document.hidden && priceAnimation) settlePrice();
+ if (document.hidden && priceAnimation) { settlePrice(); priceArmed=true; }
+ else if (!document.hidden && priceVisible) playPrice();
 });
 reducedMotion.addEventListener('change', () => {
  if (reducedMotion.matches) settlePrice();

@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "raizes/app.js",
-      "bytes": 9952,
-      "sha256": "102d1ba8e62079bca3cccbb94094e829a34d42a0275d1fa0bdd19c8dd701e8dd"
+      "bytes": 14726,
+      "sha256": "f358ac841fd7ceb420966923b2bb51dfefa0669e2baace879de516def9c53212"
     },
     {
       "path": "raizes/assets/raizes-terra/03-profissional-consultando-ipad-v1.webp",
@@ -112,6 +112,186 @@
       "sha256": "41379d3b01b2e25408a45f38b78899bc395591ad109dafd7955367e6fcf4270e"
     },
     {
+      "path": "raizes/assets/raizes-terra/inside/aurora-01.webp",
+      "bytes": 16206,
+      "sha256": "bfa1013a478634d2c4f91dcf59c840cc4ea8a194c3415ba35b721135748694e3"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-02.webp",
+      "bytes": 34750,
+      "sha256": "0b0a047d41435b1b931f451681ac707b2205620d66e46384ce0550228cef23fd"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-03.webp",
+      "bytes": 31314,
+      "sha256": "ea64d44542db7d21201b406066d5cbb52f6a51df137be23914963a58dd980edc"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-04.webp",
+      "bytes": 39466,
+      "sha256": "0f260f74c35d37740d72787fdd4823408d354ed7cf6cd7cc9b1c96655f295e71"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-05.webp",
+      "bytes": 29596,
+      "sha256": "a2502ea1eb9d30cb9c9d4b0cab7a93692a00f3ba8fe29911970120d2abbc3172"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-06.webp",
+      "bytes": 41334,
+      "sha256": "00aa8ab2e10ec7b052d5e8d94efbf8d7aec29c4f703981c81713916a967f329e"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-07.webp",
+      "bytes": 45586,
+      "sha256": "74af9d8b6c6a201cdf5c03d241f690a60d613c2d1cafc41e3e47f5bfe7b90b71"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-08.webp",
+      "bytes": 41834,
+      "sha256": "5190e1e909a4694f26ad0f2b2313ebf12826c53fdceece67fabbb5350588f498"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-09.webp",
+      "bytes": 37038,
+      "sha256": "964c1c1c5bc6c7a4d9e4896bce3ed515f0bb6ebe565f7e9cebcfc36665589b5c"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-10.webp",
+      "bytes": 21140,
+      "sha256": "cb0092c4a84f430ef7c04d48cda849537cf1d414c6af8bf49f746fad9d429a97"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-11.webp",
+      "bytes": 35494,
+      "sha256": "a50f338eb57ed2267a59cbb76140821072328572158b0da0286fe979b069fbcb"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/aurora-12.webp",
+      "bytes": 44690,
+      "sha256": "dbd000675cc91c4a8ceeb686bb10b33a1aa9fbc8fe5701e1d879db338df9614d"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-01.webp",
+      "bytes": 17170,
+      "sha256": "9f8206aefb9005c4aa2354026db3f04947123ade1921aff727161bf0f4f07ed3"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-02.webp",
+      "bytes": 42192,
+      "sha256": "b0f5af2edb5953e8b4fc9c6af69b6c65f84b2c0e55ad759a5905907a4013e3d5"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-03.webp",
+      "bytes": 28464,
+      "sha256": "783c9e3f9e9d707ac1a9b356ee8daaa443c68de3c5a2f0dc8c28f39bd5d6e923"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-04.webp",
+      "bytes": 33680,
+      "sha256": "97acdd469e6bbe149c4642ca32a0a43d46cbf168d6499aef5aa9ae832e2fe610"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-05.webp",
+      "bytes": 35870,
+      "sha256": "de98bf875425c8e9b0999c9904388c62e2a7d90272b76577763d4b79b812e093"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-06.webp",
+      "bytes": 45970,
+      "sha256": "2854526d66b6dbf4280acbd8709d74e398e2a1da67f629445005e0b37fb35387"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-07.webp",
+      "bytes": 40708,
+      "sha256": "469a3fb316071631511f0afc1ea37f1011b1bc39824556d0f171f66b038793bf"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-08.webp",
+      "bytes": 45182,
+      "sha256": "d8daaa2f946403a81714559d1c81655f2519a878aef99bf6ff64d95d26f39be6"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-09.webp",
+      "bytes": 40166,
+      "sha256": "1eaf093f64e19d640bc03e738be26cfec64d952a7bdcb5b831c18e65e7e9bf1f"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-10.webp",
+      "bytes": 12456,
+      "sha256": "619f82ff32f4827bf42c0474a6e6f4ed2eeba7a4344f767a5fee0f4b14e548ff"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-11.webp",
+      "bytes": 39092,
+      "sha256": "e712d388e51d1684e25ef1cfc570ebfad7ef4a23893bdf69f2a1fc847ec19391"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/bosque-12.webp",
+      "bytes": 41610,
+      "sha256": "b3af892296b474b78c64b715d877d3180bd7334b7f2ac827960f72d85fc6cd8b"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-01.webp",
+      "bytes": 15030,
+      "sha256": "3ecf04959638997a3145887ae8ae194a5f21b9b4406d2066f3c7202b51289561"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-02.webp",
+      "bytes": 36408,
+      "sha256": "6b872b74c715169e3a3911ad13ab8f1599720c23c958ff49bdcb04bac63935e5"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-03.webp",
+      "bytes": 25856,
+      "sha256": "3891591fa8af9a971505c73c3568b2f5e1ee48a607ba24b9cc33f4c8e6b98873"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-04.webp",
+      "bytes": 30594,
+      "sha256": "cde2ffc2e32d48a72b9849a46c72d4fd183368cbc4a0ce23e4a813bddf1395d6"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-05.webp",
+      "bytes": 31392,
+      "sha256": "b1841ec9476e31212547cd2b15f55893cee4eba17b1617e7bac7ab080d4c5224"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-06.webp",
+      "bytes": 40842,
+      "sha256": "00de3300770a80a263a6578ae41b7da2c8f25696d8f8ac187b882adf7e2c7cea"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-07.webp",
+      "bytes": 35844,
+      "sha256": "8519a9b71f00b416154a52356db973122a9292759469d3d569e4177e2c2775ea"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-08.webp",
+      "bytes": 39670,
+      "sha256": "67b33a2151dbe9ec15477d19469cde1558f234d07a913476ebbb4db2b4f5e5f1"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-09.webp",
+      "bytes": 35592,
+      "sha256": "4221a7cbe0393295183747c01b6c6767a7ff02001c34b0d2a12ccda4d91e97c0"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-10.webp",
+      "bytes": 12130,
+      "sha256": "134b517e5c5d51cb9e87793e450a094e4a6340bd30944170cfa58294c039844e"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-11.webp",
+      "bytes": 34672,
+      "sha256": "d8d20077e90c33fe3f7b0f83d65211373a1424ba4a2081f16fe815ae306e1fa7"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/inside/grafite-12.webp",
+      "bytes": 36950,
+      "sha256": "6974e0875515641f7250b3dc19f9ac397fd54a808a24128f21e23dd9102fdc7c"
+    },
+    {
       "path": "raizes/assets/raizes-terra/inside/terra-01.webp",
       "bytes": 14586,
       "sha256": "9b19112af3516cd9a614f2b2a08707b9980f95720e16c819b97db3e63f704a09"
@@ -175,6 +355,136 @@
       "path": "raizes/assets/raizes-terra/offer/bosque-encontro.webp",
       "bytes": 57782,
       "sha256": "6079aed3cd095acc03b5138ef1dfcba2fcfc200bd6cb7b50031c52be3f9d6d21"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-01.webp",
+      "bytes": 31004,
+      "sha256": "ea1ec578e66a5a0cca4b32ec4c6db52d314cf903225f4a1816cf46716cb683f9"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-02.webp",
+      "bytes": 29916,
+      "sha256": "346e635da46692498a596534f3a18cf1c92ac4e50aab00cd893726114b4efe1f"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-03.webp",
+      "bytes": 24558,
+      "sha256": "4b14fa6cdc12eb148b10b28d581f25ebfb64292bbc35f69e703d93a5149b3756"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-04.webp",
+      "bytes": 25176,
+      "sha256": "09b319fe6775f22d100e2ae6a4eff48dd502f170b7c15d36a6fa29b6ac24f560"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-05.webp",
+      "bytes": 17536,
+      "sha256": "94a63751b5be6b02fe90783d56688f2a4b541750366d6788dd74fc08213047f4"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-06.webp",
+      "bytes": 22838,
+      "sha256": "21ddef0487c36ed735d732493de79d9dd918a55c10940ead4a712e6431da47f0"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/aurora-07.webp",
+      "bytes": 24912,
+      "sha256": "1f3d26fe212d1401f3ed951b602702a5aafa932da57554af12cfa2658cc61739"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-01.webp",
+      "bytes": 47988,
+      "sha256": "790ec6e8281ed7a8a2379ce943d45d6776aa9753793ce92e025836ac510ef45b"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-02.webp",
+      "bytes": 41790,
+      "sha256": "d0f01c962ac87427ec360675b90725031fc8ec71de06fe2d17b02e708e50990a"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-03.webp",
+      "bytes": 46238,
+      "sha256": "c71260e9ea8b3b9b5e4166d8a4e4a22df49e4fff15094cdbe2020796c5a2c4d7"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-04.webp",
+      "bytes": 44872,
+      "sha256": "1ea08b8d46528017e6e8299106c22f8835332cb8a95d8df754976510d5da2981"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-05.webp",
+      "bytes": 37794,
+      "sha256": "613bd163b9dcef04b0993c31756e8e70588e891503193a3e5663dbffdd366454"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-06.webp",
+      "bytes": 42752,
+      "sha256": "803188010cd361c744575649116145f4def640518606d4fe94114f56ab24eb47"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-07.webp",
+      "bytes": 48894,
+      "sha256": "00de8765bd5cb5205a097cd49c9b362a0135c93bf3ad33f8377a9fe814ba7206"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-08.webp",
+      "bytes": 36984,
+      "sha256": "104038a8b0564d7d08e5240f337948255b37ee805440eb0772340d5d1d655992"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-09.webp",
+      "bytes": 43892,
+      "sha256": "a1ba7136e29fc98b7061c32ad96b6bd4b42db9a98a6cd6acad1ac10be201d2c6"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-10.webp",
+      "bytes": 36454,
+      "sha256": "512fbef4c4d58ef30799c9653145194545afd27cfe7931bfad46f530cf48254d"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-11.webp",
+      "bytes": 36910,
+      "sha256": "b9d9fb2635337a9cfbdabc427eaa562578c9bd48c31faef327f21da0aa812424"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/bosque-12.webp",
+      "bytes": 43624,
+      "sha256": "d3009fbd33df4d440f6bb44df0044c33a1ec346505f85ddadab384a38a4ced29"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-01.webp",
+      "bytes": 34804,
+      "sha256": "6dc6f2ee1cd16d75bb76d40a2078d719c89290e8c58f26d43ca2290c44be8d91"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-02.webp",
+      "bytes": 43868,
+      "sha256": "72348a062b299a35d3836d5d75a1eabdae8ed02dbddba30d9e1af4f43e075aa9"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-03.webp",
+      "bytes": 40726,
+      "sha256": "c2582dcf892fb79eba10e9d6826cbec7007db87d9caceb00741bc9ccca1b1c59"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-04.webp",
+      "bytes": 25672,
+      "sha256": "8d7ef696d98c7ddd8d7d4f29102be5407bb23ca96b8a874731214956ef47fe23"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-05.webp",
+      "bytes": 44264,
+      "sha256": "ca75bbb964bef05b6953db999308e8a5cab0d47bdc85a2a0684165bd70fd6ba9"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-06.webp",
+      "bytes": 38120,
+      "sha256": "b256e4696dda98ba5bc0c417b7e8ace46cd4fed3bc17b634cf9345d47c84176d"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/presentation/grafite-07.webp",
+      "bytes": 35052,
+      "sha256": "ca7bdeb4e1224d22ec79cef7498ac17762f65125f1c9531dbd1a70700772e7fc"
     },
     {
       "path": "raizes/assets/raizes-terra/presentation/terra-01.webp",
@@ -248,13 +558,13 @@
     },
     {
       "path": "raizes/index.html",
-      "bytes": 35627,
-      "sha256": "2a2a2fed2a0a9538ae321358395540417c4aa0426b073434d2c195fb67d3f3d5"
+      "bytes": 35663,
+      "sha256": "dea3331774d38824d214a13d4e3ddc95ba2659418363e3a50c015f14f4993b61"
     },
     {
       "path": "raizes/refinements.css",
-      "bytes": 11919,
-      "sha256": "245d00387c4c03a7d652a95564c27927cf611290a3324a4c5c49c62edfa9087b"
+      "bytes": 12034,
+      "sha256": "6fbda16df71b747e0f95fff430541d9b713d799bc6ff171686eecfb56b4b3b8f"
     },
     {
       "path": "raizes/styles.css",
@@ -271,5 +581,6 @@
       "bytes": 477,
       "sha256": "1e2785c8540c2040f6ab319d5cb4946a9dff244a2e286a5b91e60d4ed9eb9018"
     }
-  ]
+  ],
+  "revision": "20261102-motion"
 }

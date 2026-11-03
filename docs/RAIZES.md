@@ -14,3 +14,15 @@ O fluxo existente de `.cpanel.yml` executa `deploy/deploy.sh`, copiando `public/
 No cPanel: Git Version Control → badon-propostas-deploy → Update from Remote → conferir o SHA → Deploy HEAD Commit. Depois verificar a URL, o alias, as imagens e os arquivos JS/CSS no domínio.
 
 `raizes-release.json` registra caminhos públicos, tamanhos e SHA-256 para verificar a publicação. Em futuras atualizações, preservar uma cópia privada da rota anterior antes de substituir os arquivos. O deploy geral faz backup do institucional, mas essa rotina preexistente não inclui automaticamente a pasta raizes.
+
+## Atualização de movimento — 02/11/2026
+
+O preço repete 97 → 67 a cada nova entrada na tela. As capas avançam a cada 5 segundos, retomando o intervalo após navegação manual. A demonstração interna alterna Terra, Aurora, Bosque e Grafite Modular a cada 12 segundos, com dissolvência de 1,1 segundo das duas faixas em conjunto. As próximas imagens são decodificadas antes da troca; uma falha mantém o conjunto atual. Movimento reduzido e pausa fora da tela continuam preservados.
+
+Para atualizar somente esta landing page após `Update from Remote`, executar no terminal da conta:
+
+```bash
+/bin/bash "$HOME/repositories/badon-propostas-deploy/deploy/publish-raizes.sh"
+```
+
+Esse comando guarda a versão anterior em backup privado, preserva o `.htaccess` existente da rota e atualiza somente `public_html/raizes`. Não executa o deploy geral, não altera o institucional, suas regras, aplicações ou configurações privadas. O HTML é copiado por último e referencia JS/CSS com a versão `20261102-motion`.
