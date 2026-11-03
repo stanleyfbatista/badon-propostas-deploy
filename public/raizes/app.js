@@ -15,6 +15,12 @@ const templates = [
 const offerDialog = document.querySelector('#offer-dialog');
 let offerTrigger = null;
 document.querySelectorAll('[data-open-offer]').forEach(button => button.addEventListener('click', () => {
+ if (window.RaizesLaunch?.checkout) {
+  window.RaizesLaunch.track('checkout_click',{currency:'BRL',value:67,placement:'offer'});
+  location.assign(window.RaizesLaunch.checkout);
+  return;
+ }
+ window.RaizesLaunch?.track('offer_preview_click',{placement:'offer'});
  offerTrigger = button;
  offerDialog.showModal();
  document.body.classList.add('modal-open');
@@ -229,7 +235,7 @@ syncDocumentWall();
 const motionSelectors = [
  '.section-heading', '.intro h2', '.intro>p:not(.eyebrow)', '.audience-notes',
  '.showcase-info', '.template-picker', '.document-photo', '.document-groups',
- '.use-copy', '.use-photos', '.sheets-copy', '.bonus-device', '.formats-heading',
+ '.use-copy', '.personalization-demo', '.real-previews', '.sheets-copy', '.bonus-device', '.formats-heading',
  '.formats-grid', '.author-photo', '.author-copy', '.offer-story', '.offer-card',
  '.faq-heading', '.faq-list', '.closing .wrap'
 ];
@@ -290,3 +296,25 @@ reducedMotion.addEventListener('change', () => {
  if (reducedMotion.matches) settlePrice();
  updateAutoplay(); syncDocumentWall();
 });
+
+// A short before/after demonstration rendered from the actual Terra source.
+const personalization = document.querySelector('.personalization-demo');
+if (personalization) {
+ let demoVisible=false, demoTimer=null, custom=false;
+ const buttons=[...personalization.querySelectorAll('[data-personalization]')];
+ function setDemo(next,manual=false) {
+  custom=next;
+  personalization.classList.toggle('is-custom',custom);
+  buttons.forEach(button=>button.setAttribute('aria-pressed',String((button.dataset.personalization==='custom')===custom)));
+  if(manual) window.RaizesLaunch?.track('personalization_compare',{state:custom?'custom':'original'});
+  scheduleDemo();
+ }
+ function scheduleDemo() {
+  clearTimeout(demoTimer);
+  if(demoVisible&&!document.hidden&&!reducedMotion.matches) demoTimer=setTimeout(()=>setDemo(!custom),5000);
+ }
+ buttons.forEach(button=>button.addEventListener('click',()=>setDemo(button.dataset.personalization==='custom',true)));
+ if('IntersectionObserver' in window) new IntersectionObserver(entries=>{demoVisible=entries[0].isIntersecting;scheduleDemo();},{threshold:.3}).observe(personalization);
+ document.addEventListener('visibilitychange',scheduleDemo);
+ reducedMotion.addEventListener('change',scheduleDemo);
+}

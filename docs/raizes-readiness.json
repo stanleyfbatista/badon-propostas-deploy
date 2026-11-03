@@ -1,0 +1,92 @@
+{
+  "checked_at": "2026-11-02T22:31:01.299835-03:00",
+  "status": "Página em revisão; lançamento comercial pendente de informações e aprovação editorial.",
+  "catalog": {
+    "identities": [
+      "Jardim Clássico",
+      "Jardim Contorno",
+      "Jardim Claro Editorial",
+      "Jardim Grafite Modular",
+      "Jardim Oliva",
+      "Jardim Aurora",
+      "Jardim Bosque",
+      "Jardim Terra"
+    ],
+    "document_types_per_identity": 12,
+    "editable_editions": [
+      "modelo limpo",
+      "exemplo orientado"
+    ],
+    "editable_formats": [
+      "Canva",
+      "Google Docs"
+    ],
+    "canva_documents": 192,
+    "google_docs": 192,
+    "explanatory_pdfs": 96,
+    "presentations": 8,
+    "spreadsheet_types": [
+      "agenda semanal",
+      "controle financeiro"
+    ],
+    "spreadsheet_editions": [
+      "limpa",
+      "exemplo preenchido"
+    ],
+    "approval": "Nenhum registro de aprovação editorial final encontrado. Índice ao vivo indica revisão da Bia pendente."
+  },
+  "format_limits": [
+    "PDFs são exemplos orientados; formulários online ativos não estão incluídos.",
+    "Word é exportação do Google Docs; não há DOCX separado na entrega atual.",
+    "Planilhas nativas no Google Planilhas; exportação Excel não inclui automação SALVAR da agenda.",
+    "Uso de recursos gratuitos ou Pro do Canva ainda precisa de auditoria antes de prometer edição gratuita."
+  ],
+  "sources": {
+    "live_index": "https://docs.google.com/document/d/1J7y9tF0N2MwfeC3I4dznS37lLiOu3i-Xl7KgE5WxxBE/edit",
+    "handoff": "/Users/produtorabadon/Downloads/Relatorio_Handoff_Colecao_Raizes.pdf",
+    "inventory": "outputs/ENTREGA_ATUAL.json",
+    "author_audio": "../Documentos/Pack de documentos para psicologas/01-transcricao-audio-beatriz.md",
+    "dashboard": "https://docs.google.com/spreadsheets/d/100d5s5-a76koE2qgZT7nSPC8gt4aSmr5N0AyJSJ8zjw/edit"
+  },
+  "implemented": [
+    "Quatro páginas reais dos materiais substituem o mockup ilustrativo na seção de conteúdo.",
+    "Demonstração visual original/personalizado renderizada a partir do HTML real do Terra; não é gravação do editor Canva.",
+    "Painel financeiro atual exportado do Google Planilhas; rolagem dentro do MacBook permite ver o painel completo.",
+    "História de criação baseada na transcrição do áudio real da Beatriz; sem currículo ou CRP inventado.",
+    "Dois heros: ?hero=organizacao e ?hero=quantidade; testes comparáveis com o mesmo restante da página.",
+    "Eventos locais de visualização, oferta e interação; envio remoto desativado até conectar medição."
+  ],
+  "launch_dependencies": [
+    "Aprovação editorial final dos arquivos pela Beatriz.",
+    "Biografia profissional e CRP aprovados.",
+    "URL e plataforma de checkout.",
+    "Forma e prazo de entrega e teste de acesso do comprador em conta separada.",
+    "Meios de pagamento, suporte, política de garantia e reembolso.",
+    "Propriedade de análise, privacidade/consentimento e confirmação autenticada de pagamentos."
+  ],
+  "measurement": {
+    "state": "prepared_not_connected",
+    "events": [
+      "page_view",
+      "view_item",
+      "offer_view",
+      "collection_navigation",
+      "offer_preview_click",
+      "personalization_compare",
+      "checkout_click (somente com checkout real configurado)"
+    ],
+    "purchase": "Não disparado pela landing page. Integrar à confirmação real de pagamento, com transaction_id único, value=67, currency=BRL, items e deduplicação. Associar a variante ao pedido conforme a plataforma.",
+    "ab": "Links de prévia não enviam eventos à propriedade. Experimento aleatório desativado; ativar somente após atribuição de compras estar testada.",
+    "acceptance": [
+      "1 page_view por carregamento",
+      "sem purchase nem checkout_click ao abrir aviso de prévia",
+      "sem nome, email, prontuário ou query string nos eventos",
+      "reembolso e compra somente por dados confirmados da plataforma",
+      "validar compra de teste autorizada e cancelamento/reembolso conforme plataforma antes do tráfego"
+    ],
+    "references": [
+      "https://developers.google.com/analytics/devguides/collection/ga4/views",
+      "https://developers.google.com/analytics/devguides/collection/ga4/ecommerce"
+    ]
+  }
+}

@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "raizes/app.js",
-      "bytes": 14726,
-      "sha256": "f358ac841fd7ceb420966923b2bb51dfefa0669e2baace879de516def9c53212"
+      "bytes": 16259,
+      "sha256": "42af5b511d9aa7f8ae9f65b11b4fe187b445d18b1fbab9d5161b2b9989ed1e95"
     },
     {
       "path": "raizes/assets/raizes-terra/03-profissional-consultando-ipad-v1.webp",
@@ -75,6 +75,11 @@
       "path": "raizes/assets/raizes-terra/capa-08.webp",
       "bytes": 22822,
       "sha256": "b0f53791dd9c24ccb81758b529ac0c95b15929bba5a098cb4afd6b68af247114"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/dashboard-financeiro-v4.webp",
+      "bytes": 102056,
+      "sha256": "cee2cfb76b6d77075e11c1d60bc5e9cc27306977256db1e0ba094909da2aa33a"
     },
     {
       "path": "raizes/assets/raizes-terra/dashboard-financeiro.webp",
@@ -352,9 +357,24 @@
       "sha256": "4ea697685b8776f8daa78a2dd41be3c81a33435b0b7e7def832fa854bd6d3878"
     },
     {
+      "path": "raizes/assets/raizes-terra/launch.js",
+      "bytes": 3149,
+      "sha256": "871a8f951fe282bd7235bb44d68dfb036e30a55d88337f127313e408bdc699fa"
+    },
+    {
       "path": "raizes/assets/raizes-terra/offer/bosque-encontro.webp",
       "bytes": 57782,
       "sha256": "6079aed3cd095acc03b5138ef1dfcba2fcfc200bd6cb7b50031c52be3f9d6d21"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/personalizacao-exemplo.webp",
+      "bytes": 77614,
+      "sha256": "ce098ec71d8174af1ee20813144965ef97b2d3994be40f5dbde2cd56e39c13f4"
+    },
+    {
+      "path": "raizes/assets/raizes-terra/personalizacao-original.webp",
+      "bytes": 77884,
+      "sha256": "81dedfb5be8743f759f697ca32f182e1f953806e9afd2d21b2417c4dff535597"
     },
     {
       "path": "raizes/assets/raizes-terra/presentation/aurora-01.webp",
@@ -558,13 +578,13 @@
     },
     {
       "path": "raizes/index.html",
-      "bytes": 35663,
-      "sha256": "dea3331774d38824d214a13d4e3ddc95ba2659418363e3a50c015f14f4993b61"
+      "bytes": 37998,
+      "sha256": "444475faec761ae90eb6befe79d36f13dfda00704a4241aa16d3351e9fb4ee26"
     },
     {
       "path": "raizes/refinements.css",
-      "bytes": 12034,
-      "sha256": "6fbda16df71b747e0f95fff430541d9b713d799bc6ff171686eecfb56b4b3b8f"
+      "bytes": 15090,
+      "sha256": "247f442b08bf87b22107e83cdaefbd998e2dc8467daef24af0a70edb459a43db"
     },
     {
       "path": "raizes/styles.css",
@@ -582,5 +602,6 @@
       "sha256": "1e2785c8540c2040f6ab319d5cb4946a9dff244a2e286a5b91e60d4ed9eb9018"
     }
   ],
-  "revision": "20261102-motion"
+  "revision": "2026-11-02-readiness",
+  "measurement": "Events prepared and QA tested; remote collection and random experiment disabled pending real IDs and confirmed purchase integration."
 }
