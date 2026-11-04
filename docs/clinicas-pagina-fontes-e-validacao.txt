@@ -130,3 +130,8 @@ Cenário financeiro revisado — 04/11/2026 (substitui a simulação anterior):
 - Tour ajustado para não pausar quando o visitante alcança o rodapé de um
   painel alto; continua pausando quando sai inteiramente da área visível.
 - Build de produção e teste isolado de deploy/backup aprovados.
+- Publicação bc138a9 confirmada no cPanel em 04/11/2026 às 16:25:51.
+  Todos os 15 arquivos públicos do commit retornaram HTTP 200 e bytes iguais.
+- Na conferência pública, o JPG existente de Guilherme retornou 403 com
+  Referer desta página (200 sem Referer). Aplicada cópia WebP da mesma foto
+  na página de clínicas, sem alterar regras de proteção da hospedagem.
