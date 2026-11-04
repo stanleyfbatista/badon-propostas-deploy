@@ -7,7 +7,7 @@ const repo = path.resolve(__dirname,'../..');
 const root = path.join(repo,'public');
 const walk = dir => fs.readdirSync(dir,{withFileTypes:true}).flatMap(e => e.isDirectory() ? walk(path.join(dir,e.name)) : [path.join(dir,e.name)]);
 const pages = [path.join(root,'index.html'),...walk(path.join(root,'blog')),...walk(path.join(root,'servicos'))].filter(f=>f.endsWith('.html'));
-assert.equal(pages.length,16);
+assert.equal(pages.length,17);
 for (const file of pages) {
   const html = fs.readFileSync(file,'utf8');
   assert.match(html, /name="robots" content="index, follow"/);
@@ -21,7 +21,7 @@ for (const file of pages) {
   }
 }
 assert.equal((fs.readFileSync(path.join(root,'index.html'),'utf8').match(/class="client-logo"/g)||[]).length,30);
-assert.equal((fs.readFileSync(path.join(root,'sitemap.xml'),'utf8').match(/<loc>/g)||[]).length,16);
+assert.equal((fs.readFileSync(path.join(root,'sitemap.xml'),'utf8').match(/<loc>/g)||[]).length,17);
 for (const forbidden of ['REVISAO.md','VALIDACAO.md','FONTES-BLOG.md','tools','Iniciar-previa.command']) assert.ok(!fs.existsSync(path.join(root,forbidden)));
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(),'badon-site-deploy-'));
 const pub = path.join(fixture,'public_html');
@@ -44,4 +44,4 @@ assert.equal(fs.readFileSync(path.join(fixture,'badon-config/config.php'),'utf8'
 assert.match(fs.readFileSync(path.join(pub,'.htaccess'),'utf8'), /# hosting-rule-preserved/);
 assert.ok(fs.readFileSync(path.join(pub,'.htaccess'),'utf8').includes('^(?:app|forms)'));
 assert.equal(fs.readFileSync(path.join(pub,'index.html'),'utf8'),fs.readFileSync(path.join(root,'index.html'),'utf8'));
-console.log('PASS: 16 páginas públicas, links, SEO, 30 logos, backup e deploy repetido; configuração privada e rotas preservadas. Fixture: '+fixture);
+console.log('PASS: 17 páginas públicas, links, SEO, 30 logos, backup e deploy repetido; configuração privada e rotas preservadas. Fixture: '+fixture);

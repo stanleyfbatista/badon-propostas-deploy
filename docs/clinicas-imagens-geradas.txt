@@ -1,0 +1,20 @@
+Imagens originais — página de clínicas / 04-11-2026
+
+Método: ferramenta integrada image_gen (não CLI).
+Referências do Pinterest: somente direção de estilo, nenhuma fotografia fornecida incorporada.
+Personagem e ambiente são gerados e ilustrativos. Não representam cliente,
+equipe, depoimento nem clínica real. Não há alegação de exclusividade jurídica.
+
+Asset: institucional/assets/img/clinicas/gestora-clinica-premium.webp
+Original PNG: /Users/produtorabadon/.codex/generated_images/019ff70e-a80f-7be0-a06a-3375e641a42a/exec-66f62954-2645-418f-8af6-ae3812c8afb1.png
+Prompt integral:
+Use case: photorealistic-natural. Asset type: vertical photographic hero for a Brazilian marketing agency service page addressed to owners of upscale aesthetic clinics. Generate an entirely original fictional adult woman entrepreneur around 38 years old, medium warm skin tone, dark brown shoulder-length naturally wavy hair, wearing a beautifully tailored ivory blazer and champagne blouse with restrained earrings. Three-quarter portrait seated lightly on an oak desk, hands naturally resting together, confident approachable expression, looking toward camera. Environment: contemporary high-end aesthetic clinic consulting room, softly blurred warm oak panels, travertine counter, sheer curtains, subtle brass lighting and a discreet cream treatment chair in the far background. Lighting: natural window light with subtle warm practical lamps, editorial professional photography, realistic pores, fine natural expression lines, textured fabric, imperfect natural hair. Composition: vertical 4:5, subject centered with generous headroom, face well above center for responsive website cropping. Not a beauty advertisement, no procedure, no patients, no exaggerated retouch, no glamour pose. Do not depict or resemble any person from previously uploaded references. No logos, text, watermark, certificates or medical credentials. Realistic photographic optics, 50mm, sophisticated warm quiet atmosphere.
+
+Asset: institucional/assets/img/clinicas/recepcao-clinica-premium.webp
+Original PNG: /Users/produtorabadon/.codex/generated_images/019ff70e-a80f-7be0-a06a-3375e641a42a/exec-48abcb50-313d-49cb-9c7b-d6971cc8a3cd.png
+Prompt integral:
+Use case: photorealistic-natural. Asset type: landscape editorial architecture photograph for a Brazilian agency website addressing owners of upscale aesthetic clinics. Create a completely original invented sophisticated aesthetics clinic reception, not based on any exact real building. Wide 3:2 composition. Warm daylight through tall linen sheer curtains, pale travertine floor and a beautifully proportioned softly curved limestone reception desk, natural medium oak joinery, ivory upholstered lounge chairs, one olive-green plant in a handmade pot, subtle brushed brass pendant and warm indirect lighting. View from entrance toward reception and quiet consultation corridor. Architectural photography with realistic construction joints, natural shadows, genuine material grain and restrained warm white balance. Inviting boutique clinical consulting environment, not a hotel lobby or beauty salon; one unobtrusive consultation doorway, no product shelves. Quiet high-end Brazilian contemporary design. No people, no text, no brands, no signs, no watermark, no AI sheen, no bizarre curved architecture, no overly busy decor. 28mm lens, eye-level, straight vertical lines, realistic professional photograph rather than glossy render.
+
+Conversão: cwebp -q 84; originais preservados.
+Mockup: site-serena-tela.webp é captura de 1440x1000 do preview local Serena,
+convertida com cwebp -q 86 e apresentada dentro de dispositivo em CSS.

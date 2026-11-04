@@ -1,0 +1,132 @@
+Página de aquisição para clínicas — 04/11/2026
+
+Rota preparada: /servicos/clinicas-de-estetica.html
+Build editorial: node institucional/tools/build-clinics.cjs
+Exportação: node institucional/tools/build-production.cjs
+
+Base: index (1).html fornecido por Stanley, preservado em
+institucional/conteudo/clinicas-base.html. Scripts desse arquivo não são
+executados. O gerador reaproveita o texto e a estrutura, com visual e JS locais.
+
+Referência de produto: https://health-media-hub.vercel.app/
+Inspeção autorizada, em modo de leitura no Chrome: visão do cliente,
+anúncios/aprovações, filtros de período, dashboard, funil, CRM quadro/lista,
+roteiros, plano/entregas, análises, origem, mapas, conversas e automações.
+Fluxos de prévia da peça e abertura do roteiro conferidos também em /demo.
+Nenhum registro de produção foi alterado. Não copiamos dados privados,
+fotos de pacientes, credenciais ou números de campanhas para esta página.
+
+A demonstração Bādon é local e independente: não chama APIs, não salva
+registros, não importa contas HM e não é uma integração operacional.
+Contatos, valores e aprovação são exemplos. Automação de entrada e conversas
+dependem da conexão/configuração do WhatsApp e do escopo contratado.
+
+Fotografias reais — Pexels (não representam clientes ou equipe Bādon):
+Revisão de 04/11: as duas primeiras foram substituídas na abertura e nos
+criativos por imagens originais geradas com IA. Os arquivos anteriores
+foram preservados, mas não são mais usados nessas posições. A imagem
+espaco-beleza.webp permanece como terceira peça na demonstração.
+profissional-estetica.webp:
+Daniel & Hannah Snipes
+https://www.pexels.com/photo/skincare-professional-in-medical-aesthetics-office-34220286/
+https://images.pexels.com/photos/34220286/pexels-photo-34220286.jpeg
+
+ambiente-clinica.webp:
+Mike Giovinazzo
+https://www.pexels.com/photo/aesthetic-clinic-11024139/
+https://images.pexels.com/photos/11024139/pexels-photo-11024139.jpeg
+
+espaco-beleza.webp:
+Max Vakhtbovych
+https://www.pexels.com/photo/aesthetic-interior-of-modern-beauty-centre-13068363/
+https://images.pexels.com/photos/13068363/pexels-photo-13068363.jpeg
+
+Licença consultada: https://www.pexels.com/license/
+Uso permitido em sites e material promocional, com adaptação. Não afirmar
+endosso das pessoas ou estabelecimentos retratados. Imagens convertidas em WebP.
+Pinterest foi considerado como referência, não como comprovação de licença.
+
+Prévia de site: Serena Saúde & Estética, modelo demonstrativo já existente
+no portfólio local. Não apresentado como cliente real. Iframe isolado,
+sem formulários enviados, sem acesso ao documento pai.
+Cinco estrelas: elemento visual de exemplo, não classificação real nem schema Review.
+
+Contato inicial: WhatsApp 55 19 98325-6292.
+Sem formulário de qualificação ou nova coleta de dados nesta etapa.
+Sem rastreador novo ou dependência paga adicionada.
+
+Validação local em 04/11/2026:
+- build-clinics, build-production e node --check concluídos.
+- test-production: 17 páginas, links, SEO, 30 logos, backup e deploy repetido
+  em diretório temporário. Nenhum deploy executado na hospedagem.
+- test-clinics-browser.js: 49 verificações aprovadas. Cinco abas em cinco
+  larguras (320, 390, 768, 1024, 1440); CRM quadro/lista/avanço/reinício;
+  criativos período/ordem/aprovação simulada; roteiros; plano; teclado;
+  tour com pausa; prévia Serena/modal/Escape/foco; menu móvel; movimento
+  reduzido; conteúdo sem JavaScript; acesso pelo menu da página inicial.
+- Sem erros JavaScript, HTTP >=400 ou requisições externas na nova página
+  e na demonstração, incluindo a prévia isolada. A home conserva suas
+  dependências externas já existentes; elas não foram alteradas.
+- Capturas desktop/mobile inspecionadas. Corrigido tamanho intrínseco
+  das abas para impedir corte do painel em telas pequenas.
+- Prévia local: http://127.0.0.1:8176/servicos/clinicas-de-estetica.html
+- GitHub/cPanel/publicação: não executados nesta etapa de revisão visual.
+
+Revisão solicitada após a primeira prévia (04/11/2026):
+- Meta/Google: FAQ agora confirma criação, publicação, gestão e otimização
+  das campanhas. Verba de mídia separada da gestão.
+- Removidas a faixa de palavras-chave, as etiquetas sob os botões da hero,
+  a legenda de fotografias e a descrição redundante sob o mockup.
+- Mantidas as explicações úteis de diagnóstico e processo nas seções próprias.
+- Mockup com captura do próprio site Serena, sem mockup dentro de mockup.
+- Hub Bādon com identificação Serena Saúde & Estética, navegação horizontal,
+  Meu negócio hoje, resumo comentado, métricas e gráfico. CRM também inclui
+  coluna Perdido; o percurso guiado continua terminando em Vendas.
+- Demonstração continua independente e sem envio de dados. Nome de clínica
+  e números são exemplos, sem alegação de cliente ou resultado real.
+- Duas imagens geradas, sem incorporar fotos do Pinterest. Prompts completos,
+  nomes de arquivo e origem registrados em clinicas-imagens-geradas.txt.
+- Mantido somente o aviso de dados simulados no painel; não adicionamos
+  depoimentos ou endosso de pessoa/estabelecimento real.
+- Nova rodada: 56 verificações de navegador aprovadas, incluindo nomes,
+  imagens, limpeza de legendas, resposta aberta da FAQ e mockup correto.
+  Cinco larguras (320 a 1440 px), sem falhas JS/HTTP ou chamadas externas
+  na página de clínicas. Build de produção e git diff --check aprovados.
+  Ainda sem commit, push ou deploy público.
+
+Equipe e investimento simulado — revisão de 04/11/2026:
+- Dobra entre processo e Hub apresenta Stanley Batista (gestor de marketing)
+  e Guilherme Domério (gestor comercial), com fotos/nomenclatura já presentes
+  no index.html institucional. Sem credenciais ou resultados acrescentados.
+- Fonte da dobra: conteudo/clinicas-equipe.html; inserida pelo build-clinics.
+- Investimento mensal de exemplo: R$ 3.000, dividido em R$ 1.020, R$ 1.080
+  e R$ 900 nos três criativos. 67 contatos => R$ 44,78 de custo médio.
+  A visualização de 7 dias continua usando metade da verba (R$ 1.500).
+  Valores são simulação, não recomendação financeira nem retorno garantido.
+- 62 verificações de navegador aprovadas e teste de produção aprovado.
+  Publicação externa não executada.
+
+Cenário financeiro revisado — 04/11/2026 (substitui a simulação anterior):
+- 30 dias: R$ 3.000 de mídia; 100 contatos; CPL R$ 30; 30 agendamentos;
+  24 comparecimentos; 8 vendas. São hipóteses didáticas, não médias locais.
+- Ticket de exemplo: R$ 900 por protocolo facial de 3 sessões. Referência
+  pública consultada: https://keola.com.br/microagulhamento-precos.html
+  (Clínica Keola, Belo Horizonte: 1 sessão R$ 350; 3 sessões R$ 900).
+  Não é cotação de Limeira nem alegação de preço médio de alto padrão.
+- Receita bruta contratada: 8 × R$ 900 = R$ 7.200; receita/mídia 2,4×;
+  custo de mídia/venda R$ 375. Não representa lucro, caixa ou garantia.
+- Conversões hipotéticas: 30% agendam; 80% comparecem; 33,3% dos presentes
+  compram. Não houve evidência suficiente para chamar CPL/conversões de
+  benchmarks brasileiros. Relatório WordStream 2025 é de outro mercado
+  e moeda e não foi convertido para simular uma média brasileira.
+- Criativos: R$ 1.020/40 contatos; R$ 1.080/36; R$ 900/24.
+  Últimos 7 dias: R$ 750/25 contatos, contidos no mês, com gráfico
+  2+4+3+5+4+3+4. Filtro dos criativos usa os mesmos totais.
+- Painel explica premissas, custos excluídos e receita contratada versus
+  dinheiro recebido. Preço/indicação clínica definidos pela clínica.
+- Validação final: 69 verificações de navegador aprovadas, incluindo totais,
+  conversões, cinco larguras, navegação, modal, tour e ausência de chamadas
+  externas na demonstração. Bloco financeiro inspecionado em desktop/mobile.
+- Tour ajustado para não pausar quando o visitante alcança o rodapé de um
+  painel alto; continua pausando quando sai inteiramente da área visível.
+- Build de produção e teste isolado de deploy/backup aprovados.
